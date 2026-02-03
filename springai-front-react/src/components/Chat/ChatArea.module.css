@@ -1,0 +1,410 @@
+.container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    background: transparent;
+}
+
+/* Header */
+.header {
+    height: var(--header-height);
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: transparent;
+    position: relative;
+    z-index: 20;
+}
+
+.headerTitle {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.headerActions {
+    display: flex;
+    gap: 10px;
+}
+
+/* ============================================
+   WELCOME STATE - Centered GPT-style Layout
+   ============================================ */
+
+.welcomeMode {
+    justify-content: center;
+}
+
+.welcomeContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 32px;
+    margin-top: -60px;
+}
+
+.welcomeContent {
+    text-align: center;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.welcomeIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--gradient-avatar);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    color: white;
+    box-shadow: 0 8px 24px rgba(244, 114, 182, 0.3);
+}
+
+.welcomeTitle {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.welcomeInputArea {
+    width: 100%;
+    max-width: 680px;
+    padding: 0 20px;
+    animation: fadeIn 0.6s ease-out 0.2s backwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   CHAT STATE - Normal Message Layout
+   ============================================ */
+
+.messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    scroll-behavior: smooth;
+}
+
+.messageRow {
+    display: flex;
+    gap: 12px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    animation: slideIn 0.3s ease-out;
+}
+
+.userRow {
+    justify-content: flex-end;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* AI Icon */
+.aiIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--gradient-avatar);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    box-shadow: 0 2px 8px rgba(244, 114, 182, 0.25);
+}
+
+/* Message Bubbles */
+.bubble {
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    max-width: 100%;
+}
+
+.userBubble {
+    background: var(--gradient-button);
+    color: white;
+    border-radius: var(--radius-lg);
+    border-bottom-right-radius: var(--radius-sm);
+    box-shadow: var(--shadow-button);
+}
+
+.aiBubble {
+    background: transparent;
+    padding-left: 0;
+}
+
+/* ============================================
+   INPUT AREA
+   ============================================ */
+
+.inputArea {
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.inputWrapper {
+    width: 100%;
+    max-width: 680px;
+    position: relative;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    padding: 8px 8px 8px 20px;
+    display: flex;
+    align-items: center;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow-soft);
+    transition: all var(--transition-normal);
+}
+
+.inputWrapper:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: 0 4px 25px rgba(244, 114, 182, 0.2);
+}
+
+.textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    resize: none;
+    max-height: 200px;
+    padding: 8px 0;
+    font-family: inherit;
+    font-size: 1rem;
+    line-height: 1.5;
+    outline: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.textarea:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.textarea::placeholder {
+    color: var(--text-secondary);
+}
+
+/* Hide browser autocomplete styling */
+.textarea:-webkit-autofill,
+.textarea:-webkit-autofill:hover,
+.textarea:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+.sendBtn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    background: var(--gradient-button);
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-button);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sendBtn:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(244, 114, 182, 0.4);
+}
+
+.sendBtn:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Home Button */
+.homeBtn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(251, 113, 133, 0.1));
+    border: 1px solid var(--border-subtle);
+    color: var(--accent-primary);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+}
+
+.homeBtn:hover {
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.2), rgba(251, 113, 133, 0.2));
+    border-color: var(--accent-primary);
+    transform: translateY(-1px);
+}
+
+/* Status */
+.statusBubble {
+    display: flex;
+    align-items: center;
+}
+
+/* Thinking Animation */
+.thinking {
+    animation: pulse 1.5s ease-in-out infinite;
+    color: var(--text-secondary);
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Typing Cursor */
+.cursor {
+    display: inline-block;
+    margin-left: 2px;
+    animation: blink 1s step-end infinite;
+    color: var(--accent-primary);
+}
+
+@keyframes blink {
+
+    0%,
+    50% {
+        opacity: 1;
+    }
+
+    51%,
+    100% {
+        opacity: 0;
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .header {
+        padding: 0 16px;
+    }
+
+    .messages {
+        padding: 16px;
+        gap: 20px;
+    }
+
+    .messageRow {
+        gap: 10px;
+    }
+
+    .aiIcon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .bubble {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+
+    .inputArea,
+    .welcomeInputArea {
+        padding: 16px;
+    }
+
+    .inputWrapper {
+        padding: 6px 6px 6px 16px;
+    }
+
+    .textarea {
+        font-size: 0.95rem;
+    }
+
+    .sendBtn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .homeBtn span {
+        display: none;
+    }
+
+    .homeBtn {
+        padding: 8px;
+    }
+
+    .welcomeContainer {
+        margin-top: -40px;
+    }
+
+    .welcomeIcon {
+        width: 56px;
+        height: 56px;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .messageRow,
+    .welcomeContent,
+    .welcomeInputArea {
+        animation: none;
+    }
+
+    .sendBtn:hover:not(:disabled),
+    .homeBtn:hover {
+        transform: none;
+    }
+}

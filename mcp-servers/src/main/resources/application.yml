@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: mcp-servers
+  config:
+    import: optional:classpath:application-local.yml
+  profiles:
+    active: sse
+server:
+  port: 8127
+
+# Shared file save directory for tools (recommended to use an absolute path when running main app + mcp-servers separately)
+app:
+  file-save-dir: ${APP_FILE_SAVE_DIR:${user.dir}/tmp}
+
+# Pexels API key (do NOT hardcode secrets here). Prefer setting env var PEXELS_API_KEY.
+pexels:
+  api-key: ${PEXELS_API_KEY:}

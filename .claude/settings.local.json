@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(while read file)",
+      "Bash(done)",
+      "Bash(for dir in ~/.claude/plugins/marketplaces/*/skills/*)",
+      "Bash(do if [ -d \"$dir\" ])",
+      "Bash([ -f \"$dir/SKILL.md\" ])",
+      "Bash(then basename \"$dir\")",
+      "Bash(fi)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -Command \"Get-ChildItem -Path ''C:\\\\Users\\\\82628\\\\.claude\\\\plugins\\\\cache'' -Recurse -Directory -Filter ''frontend-design'' | Select-Object -ExpandProperty FullName\")",
+      "Bash(powershell -Command:*)",
+      "Bash($result = Get-ChildItem -Path 'C:\\\\Users\\\\82628\\\\.claude\\\\plugins\\\\cache' -Recurse -Directory -Filter $dup -ErrorAction SilentlyContinue)",
+      "Bash(skills)",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

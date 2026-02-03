@@ -1,0 +1,458 @@
+/* ============================================
+   MANUS PANEL - Terminal-style Computer Panel
+   ============================================ */
+
+.panelContainer {
+    width: 420px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    border-left: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    transition: width var(--transition-slow), opacity var(--transition-normal);
+    overflow: hidden;
+    position: relative;
+}
+
+.panelClosed {
+    width: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Panel Header */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background: linear-gradient(180deg, rgba(31, 19, 21, 0.95), rgba(31, 19, 21, 0.85));
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(10px);
+}
+
+.headerTitle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.headerIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--gradient-button);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.headerActions {
+    display: flex;
+    gap: 8px;
+}
+
+.actionBtn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.actionBtn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--border-highlight);
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.tab {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.tabActive {
+    background: rgba(244, 114, 182, 0.15);
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+/* Content Area */
+.content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Terminal Viewer */
+.terminal {
+    flex: 1;
+    background: #0d1117;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    padding: 16px;
+    overflow-y: auto;
+    color: #c9d1d9;
+}
+
+.terminalHeader {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.terminalDot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.dotRed {
+    background: #ff5f56;
+}
+
+.dotYellow {
+    background: #ffbd2e;
+}
+
+.dotGreen {
+    background: #27c93f;
+}
+
+.terminalLine {
+    margin-bottom: 4px;
+    word-break: break-all;
+}
+
+.terminalPrompt {
+    color: #7ee787;
+}
+
+.terminalCommand {
+    color: #58a6ff;
+}
+
+.terminalOutput {
+    color: #c9d1d9;
+    opacity: 0.9;
+}
+
+.terminalError {
+    color: #f85149;
+}
+
+/* Task Progress */
+.taskProgress {
+    padding: 16px;
+    border-top: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.progressHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.progressCount {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.taskList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.taskItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.taskItem.completed {
+    color: #7ee787;
+}
+
+.taskItem.active {
+    background: rgba(244, 114, 182, 0.1);
+    color: var(--accent-primary);
+}
+
+.taskIcon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.taskIcon.completed {
+    color: #7ee787;
+}
+
+.taskIcon.active {
+    color: var(--accent-primary);
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.6;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Content Preview */
+.previewContainer {
+    flex: 1;
+    padding: 16px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.previewCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.previewCard:hover {
+    border-color: var(--border-highlight);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.previewHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.previewIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.previewIconPdf {
+    background: #dc2626;
+}
+
+.previewIconImage {
+    background: #7c3aed;
+}
+
+.previewIconCode {
+    background: #0891b2;
+}
+
+.previewInfo {
+    flex: 1;
+}
+
+.previewTitle {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.previewMeta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.previewContent {
+    padding: 16px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.previewImage {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 8px;
+    object-fit: contain;
+}
+
+.previewPdf {
+    width: 100%;
+    height: 400px;
+    border: none;
+    border-radius: 8px;
+    background: white;
+}
+
+/* Empty State */
+.emptyState {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    text-align: center;
+    color: var(--text-secondary);
+}
+
+.emptyIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: var(--text-secondary);
+}
+
+.emptyTitle {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.emptyDescription {
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* Toggle Button (shown when panel is closed) */
+.toggleBtn {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--gradient-button);
+    border: none;
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-button);
+    transition: all var(--transition-normal);
+    z-index: 100;
+}
+
+.toggleBtn:hover {
+    transform: translateY(-50%) scale(1.05);
+    box-shadow: 0 6px 24px rgba(244, 114, 182, 0.4);
+}
+
+.toggleBtnHidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .panelContainer {
+        width: 360px;
+    }
+}
+
+@media (max-width: 900px) {
+    .panelContainer {
+        position: fixed;
+        right: 0;
+        top: 0;
+        width: 100%;
+        max-width: 420px;
+        z-index: 1000;
+        box-shadow: -4px 0 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .panelClosed {
+        transform: translateX(100%);
+        width: 100%;
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .panelContainer,
+    .toggleBtn,
+    .taskIcon.active {
+        animation: none;
+        transition: none;
+    }
+}

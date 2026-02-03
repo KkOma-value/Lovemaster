@@ -1,0 +1,160 @@
+.markdown {
+    line-height: 1.7;
+    word-wrap: break-word;
+}
+
+.markdown p {
+    margin: 0 0 12px;
+}
+
+.markdown p:last-child {
+    margin-bottom: 0;
+}
+
+.markdown h1,
+.markdown h2,
+.markdown h3 {
+    margin: 16px 0 8px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.markdown h1 {
+    font-size: 1.5rem;
+}
+
+.markdown h2 {
+    font-size: 1.3rem;
+}
+
+.markdown h3 {
+    font-size: 1.1rem;
+}
+
+.markdown ul,
+.markdown ol {
+    margin: 8px 0;
+    padding-left: 24px;
+}
+
+.markdown li {
+    margin: 4px 0;
+}
+
+.markdown li::marker {
+    color: var(--accent-primary);
+}
+
+.markdown blockquote {
+    margin: 12px 0;
+    padding: 8px 16px;
+    border-left: 3px solid var(--accent-primary);
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.08), rgba(251, 207, 232, 0.05));
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.markdown table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+}
+
+.markdown th,
+.markdown td {
+    padding: 8px 12px;
+    border: 1px solid var(--border-subtle);
+    text-align: left;
+}
+
+.markdown th {
+    background: var(--bg-tertiary);
+    font-weight: 600;
+}
+
+/* Code Blocks */
+.codeBlock {
+    margin: 12px 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #1F1315;
+    border: 1px solid var(--border-subtle);
+}
+
+.codeHeader {
+    padding: 6px 12px;
+    background: #2D1E23;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.codeLang {
+    font-size: 0.75rem;
+    color: var(--accent-tertiary);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.pre {
+    margin: 0;
+    padding: 12px;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.pre code {
+    background: transparent;
+    padding: 0;
+    color: #FAFAF9;
+}
+
+.inlineCode {
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.12), rgba(251, 207, 232, 0.08));
+    color: var(--accent-primary);
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9em;
+    border: 1px solid rgba(244, 114, 182, 0.15);
+}
+
+.link {
+    color: var(--accent-primary);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid transparent;
+}
+
+.link:hover {
+    border-bottom-color: var(--accent-primary);
+}
+
+/* Strong and Emphasis */
+.markdown strong {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.markdown em {
+    font-style: italic;
+    color: var(--accent-primary);
+}
+
+/* Horizontal Rule */
+.markdown hr {
+    border: none;
+    height: 2px;
+    background: var(--gradient-romantic);
+    margin: 20px 0;
+    border-radius: var(--radius-full);
+    opacity: 0.5;
+}
+
+/* Task lists */
+.markdown input[type="checkbox"] {
+    accent-color: var(--accent-primary);
+    margin-right: 8px;
+}

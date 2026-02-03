@@ -1,0 +1,14 @@
+spring:
+  mvc:
+    async:
+      # MCP SSE 需要长连接；默认 30s 超时会导致连接被关闭，进而引发客户端 callTool 超时。
+      # 这里设置一个较大的超时，避免长连接被 MVC async 超时打断。
+      request-timeout: 10m
+  ai:
+    mcp:
+      server:
+        name: mcp-servers
+        version: 0.0.1
+        type: SYNC
+        # sse
+        stdio: false

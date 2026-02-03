@@ -1,0 +1,143 @@
+.container {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: var(--radius-full);
+    font-size: 13px;
+    font-weight: 500;
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(251, 113, 133, 0.1));
+    color: var(--text-primary);
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.3s ease-out;
+    border: 1px solid var(--border-subtle);
+}
+
+.iconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-primary);
+}
+
+.label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+}
+
+/* Breathing/Pulse animation */
+.pulseIcon {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Spin animation */
+.spinIcon {
+    animation: spin 1s linear infinite;
+}
+
+/* Status type styles */
+.thinking {
+    background: linear-gradient(135deg, rgba(244, 114, 182, 0.15), rgba(251, 113, 133, 0.1));
+    border-color: rgba(244, 114, 182, 0.3);
+}
+
+.searching {
+    background: linear-gradient(135deg, rgba(251, 207, 232, 0.2), rgba(244, 114, 182, 0.1));
+    border-color: rgba(251, 207, 232, 0.4);
+}
+
+.analyzing {
+    background: linear-gradient(135deg, rgba(251, 113, 133, 0.15), rgba(244, 114, 182, 0.1));
+    border-color: rgba(251, 113, 133, 0.3);
+}
+
+.processing {
+    background: linear-gradient(135deg, rgba(249, 168, 212, 0.15), rgba(244, 114, 182, 0.1));
+    border-color: rgba(249, 168, 212, 0.3);
+}
+
+.tooling {
+    background: linear-gradient(135deg, rgba(233, 213, 255, 0.15), rgba(244, 114, 182, 0.1));
+    border-color: rgba(233, 213, 255, 0.3);
+}
+
+.done {
+    background: linear-gradient(135deg, rgba(134, 239, 172, 0.15), rgba(74, 222, 128, 0.1));
+    border-color: rgba(134, 239, 172, 0.3);
+    animation: fadeIn 0.3s ease-out, fadeOut 0.5s ease-in 1s forwards;
+}
+
+.error {
+    background: linear-gradient(135deg, rgba(252, 165, 165, 0.15), rgba(248, 113, 113, 0.1));
+    border-color: rgba(252, 165, 165, 0.3);
+}
+
+.default {
+    background: rgba(251, 207, 232, 0.1);
+    border-color: rgba(251, 207, 232, 0.2);
+}
+
+/* Animation Keyframes */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.6;
+        transform: scale(0.95);
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .container {
+        animation: none;
+    }
+
+    .pulseIcon,
+    .spinIcon {
+        animation: none;
+    }
+
+    .done {
+        animation: none;
+    }
+}

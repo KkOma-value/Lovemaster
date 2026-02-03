@@ -1,0 +1,12 @@
+# MCP Servers Local Configuration Template
+# Copy this file to application-local.yml and fill in your actual values
+# IMPORTANT: application-local.yml is excluded from version control via .gitignore
+
+# NOTE: For MCP servers, it's recommended to configure API keys in the main
+# application's application-local.yml. The main application will pass these
+# as environment variables when starting the MCP servers subprocess.
+
+# Pexels API key (optional if configured in main app)
+# Get your API key from: https://www.pexels.com/api/
+pexels:
+  api-key: ${PEXELS_API_KEY:}

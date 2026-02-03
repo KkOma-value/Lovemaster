@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 获取 Spring 属性 app.file-save-dir，默认 ${user.dir}/tmp -->
+    <springProperty scope="context" name="fileSaveDir" source="app.file-save-dir" defaultValue="${user.dir}/tmp"/>
+    <property name="MCP_LOG_DIR" value="${fileSaveDir}/mcp-log"/>
+
+    <!-- 控制台输出保持现状 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- MCP 专用文件日志：写入 tmp/mcp-log/mcp.log -->
+    <appender name="MCP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${MCP_LOG_DIR}/mcp.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${MCP_LOG_DIR}/mcp.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level %thread %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 默认根日志：保持控制台输出 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+    <!-- 仅 mcp 包的日志写入 MCP_FILE（不向上冒泡） -->
+    <logger name="org.example.springai_learn.mcp" level="INFO" additivity="false">
+        <appender-ref ref="MCP_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+</configuration>

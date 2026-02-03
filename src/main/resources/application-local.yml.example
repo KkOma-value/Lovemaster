@@ -1,0 +1,46 @@
+# 本地开发配置模板
+# 复制此文件为 application-local.yml 并填入真实值
+# 注意：application-local.yml 不应提交到版本控制
+
+spring:
+  # 数据库配置（如需使用向量存储功能）
+  datasource:
+    url: jdbc:postgresql://localhost:5432/springai
+    username: your_db_username
+    password: your_db_password
+
+  # AI 模型配置 - 阿里云通义千问 (DashScope)
+  # 本项目使用阿里云 DashScope 作为 AI 模型提供商
+  # 获取 API Key：https://dashscope.console.aliyun.com/
+  ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY:your_dashscope_api_key}
+    mcp:
+      client:
+        # MCP client 请求超时（适配冷启动/首次 npx 安装的场景；按需调整）
+        request-timeout: 60s
+
+  # 邮件配置（如需使用邮件发送功能）
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: ${SPRING_MAIL_USERNAME:your_qq_email@qq.com}
+    password: ${SPRING_MAIL_PASSWORD:your_qq_auth_code}  # QQ邮箱授权码，非QQ密码
+
+# 搜索 API 配置（如需使用网络搜索功能）
+search-api:
+  api-key: ${SEARCH_API_KEY:your_search_api_key}
+
+# 高德地图 API（如需使用 MCP 地图服务）
+# 推荐只在本地文件配置或用环境变量注入
+amap:
+  maps:
+    api-key: ${AMAP_MAPS_API_KEY:}
+
+# Pexels API（供 mcp-servers 使用；主程序会在启动 mcp-servers 子进程时透传为环境变量 PEXELS_API_KEY）
+pexels:
+  api-key: ${PEXELS_API_KEY:}
+
+# MCP 与工具共享文件目录（建议用绝对路径，便于主程序与 mcp-servers 一致读写）
+app:
+  file-save-dir: ${APP_FILE_SAVE_DIR:}

@@ -1,0 +1,46 @@
+# Local Development Configuration Template
+# Copy this file to application-local.yml and fill in your actual values
+# IMPORTANT: application-local.yml is excluded from version control via .gitignore
+
+spring:
+  ai:
+    dashscope:
+      # Get your API key from: https://dashscope.console.aliyun.com/
+      api-key: YOUR_DASHSCOPE_API_KEY_HERE
+      chat:
+        options:
+          model: qwen-turbo
+  mail:
+    host: smtp.qq.com
+    port: 465
+    # Your QQ email address
+    username: YOUR_QQ_EMAIL@qq.com
+    # QQ email authorization code (NOT your QQ password)
+    # Get it from QQ Mail Settings -> Account -> POP3/SMTP service
+    password: YOUR_QQ_EMAIL_AUTH_CODE
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+
+# Search API for web search functionality
+# Get your API key from: https://www.searchapi.io/
+search-api:
+  api-key: YOUR_SEARCH_API_KEY_HERE
+
+# Amap (高德地图) API key for map services
+# Get your API key from: https://console.amap.com/
+amap:
+  maps:
+    api-key: YOUR_AMAP_API_KEY_HERE
+
+# Pexels API key for image search
+# Get your API key from: https://www.pexels.com/api/
+pexels:
+  api-key: YOUR_PEXELS_API_KEY_HERE
+
+# File save directory for tools (use absolute path recommended)
+app:
+  file-save-dir: YOUR_FILE_SAVE_DIR_PATH
