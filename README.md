@@ -2,7 +2,7 @@
 
 ## 📖 项目简介
 
-Lovemaster 是一个基于 Spring Boot 3.4.5 和 Spring AI 框架构建的现代化AI应用学习项目。该项目展示了如何使用Spring AI框架集成各种AI模型和功能，包括大语言模型聊天、RAG（检索增强生成）、AI工具调用、向量存储等核心功能。
+Lovemaster 是一个全栈 AI 学习项目：后端基于 Spring Boot 3.4.5 + Spring AI，前端提供 React（Vite）与 Vue（Vite）两套界面，并包含独立的 MCP Servers 模块。项目展示了如何集成大语言模型聊天、RAG（检索增强生成）、AI 工具调用、向量存储等核心能力。
 
 ## 🚀 技术栈
 
@@ -10,6 +10,10 @@ Lovemaster 是一个基于 Spring Boot 3.4.5 和 Spring AI 框架构建的现代
 - **Spring Boot**: 3.4.5
 - **Spring AI**: 1.0.0-M6
 - **Java**: 21
+
+### 前端
+- **React** + **Vite**（`springai-front-react/`）
+- **Vue 3** + **Vite**（`springAI-front/`）
 
 ### AI 集成
 - **阿里云通义千问**: Spring AI Alibaba Starter 1.0.0-M6.1
@@ -68,6 +72,18 @@ Lovemaster 是一个基于 Spring Boot 3.4.5 和 Spring AI 框架构建的现代
 - **记忆持久化**: 对话记忆的存储和恢复
 
 ## 📁 项目结构
+
+### 仓库概览
+
+```
+Lovemaster/
+├── src/                         # Spring Boot 后端
+├── mcp-servers/                 # MCP Servers（独立 Spring Boot 应用）
+├── springai-front-react/        # React 前端（Vite）
+└── springAI-front/              # Vue 前端（Vite）
+```
+
+### 后端目录结构（src/）
 
 ```
 src/main/java/org/example/springai_learn/
@@ -238,7 +254,7 @@ cp src/main/resources/application-local.yml.example src/main/resources/applicati
 
 在 `application-local.yml` 中填入你的API密钥和数据库配置。
 
-### 3. 启动应用
+### 3. 启动后端
 
 ```bash
 # 使用Maven启动
@@ -249,11 +265,41 @@ mvn clean package
 java -jar target/Lovemaster-0.0.1-SNAPSHOT.jar
 ```
 
-### 4. 访问应用
+### 4. 启动 MCP Servers（可选）
+
+```bash
+cd mcp-servers
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+### 5. 启动前端（任选其一或同时）
+
+React 前端：
+
+```bash
+cd springai-front-react
+npm install
+npm run dev
+```
+
+Vue 前端：
+
+```bash
+cd springAI-front
+npm install
+npm run dev
+```
+
+### 6. 访问应用
 
 - **应用地址**: http://localhost:8088/api
 - **API文档**: http://localhost:8088/api/swagger-ui.html
 - **健康检查**: http://localhost:8088/api/health
+- **React 前端**: http://localhost:5173
+- **Vue 前端**: http://localhost:3000
+- **MCP Servers**: http://localhost:8127 (如已启动)
+
+前端开发模式下已配置 `/api` 代理到后端 `http://localhost:8088`。
 
 ## 📚 API 文档
 
