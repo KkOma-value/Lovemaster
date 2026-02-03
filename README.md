@@ -1,8 +1,8 @@
-# Spring AI 学习项目 (SpringAI_Learn)
+# Lovemaster - Spring AI 学习项目
 
 ## 📖 项目简介
 
-SpringAI_Learn 是一个基于 Spring Boot 3.4.5 和 Spring AI 框架构建的现代化AI应用学习项目。该项目展示了如何使用Spring AI框架集成各种AI模型和功能，包括大语言模型聊天、RAG（检索增强生成）、AI工具调用、向量存储等核心功能。
+Lovemaster 是一个基于 Spring Boot 3.4.5 和 Spring AI 框架构建的现代化AI应用学习项目。该项目展示了如何使用Spring AI框架集成各种AI模型和功能，包括大语言模型聊天、RAG（检索增强生成）、AI工具调用、向量存储等核心功能。
 
 ## 🚀 技术栈
 
@@ -224,8 +224,8 @@ app:
 ### 1. 克隆项目
 
 ```bash
-git clone <repository-url>
-cd SpringAI_Learn
+git clone https://github.com/KkOma-value/Lovemaster.git
+cd Lovemaster
 ```
 
 ### 2. 配置环境
@@ -246,7 +246,7 @@ mvn spring-boot:run
 
 # 或者编译后启动
 mvn clean package
-java -jar target/SpringAI_Learn-0.0.1-SNAPSHOT.jar
+java -jar target/Lovemaster-0.0.1-SNAPSHOT.jar
 ```
 
 ### 4. 访问应用
