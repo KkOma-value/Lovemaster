@@ -1,4 +1,4 @@
-# Lovemaster - Spring AI 学习项目
+# Lovemaster - Spring AI
 
 ## 📖 项目简介
 
