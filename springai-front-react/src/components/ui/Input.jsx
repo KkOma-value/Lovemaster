@@ -1,12 +1,24 @@
 import React from 'react';
-import styles from './Input.module.css';
 
 export const Input = ({ icon: Icon, className = '', ...props }) => {
     return (
-        <div className={`${styles.wrapper} ${className}`}>
-            {Icon && <Icon className={styles.icon} size={20} />}
+        <div className={`relative ${className}`}>
+            {Icon && (
+                <Icon
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-900 pointer-events-none"
+                    size={20}
+                />
+            )}
             <input
-                className={`${styles.input} ${Icon ? styles.withIcon : ''}`}
+                className={`
+                    w-full bg-white text-black font-medium
+                    border-[3px] border-black
+                    placeholder-gray-500
+                    py-3 ${Icon ? 'pl-12' : 'pl-4'} pr-4
+                    focus:outline-none focus:shadow-[4px_4px_0_0_#000] focus:-translate-y-1 focus:-translate-x-1
+                    transition-all duration-200 ease-out
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                `}
                 {...props}
             />
         </div>

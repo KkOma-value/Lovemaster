@@ -1,32 +1,37 @@
-import React, { useRef } from 'react';
-import styles from './Card.module.css';
+import React from 'react';
 
-export const Card = ({ children, className = '', hoverable = false, onClick }) => {
-    const cardRef = useRef(null);
+export const Card = ({
+    children,
+    className = '',
+    hoverable = false,
+    onClick,
+    style = {}
+}) => {
+    const [isHovered, setIsHovered] = React.useState(false);
 
-    const handleMouseMove = (e) => {
-        if (!hoverable || !cardRef.current) return;
-
-        const rect = cardRef.current.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        cardRef.current.style.setProperty('--mouse-x', `${x}px`);
-        cardRef.current.style.setProperty('--mouse-y', `${y}px`);
+    const baseStyle = {
+        backgroundColor: '#FFFFFF',
+        borderRadius: '24px',
+        padding: '24px',
+        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.06)',
+        transition: 'all 0.3s ease',
+        cursor: hoverable ? 'pointer' : 'default',
+        ...(hoverable && isHovered ? {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.1)'
+        } : {}),
+        ...style
     };
 
     return (
         <div
-            ref={cardRef}
-            className={`${styles.card} ${hoverable ? styles.hoverable : ''} ${className}`}
-            onMouseMove={handleMouseMove}
+            className={className}
+            style={baseStyle}
             onClick={onClick}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
         >
-            <div className={styles.content}>
-                {children}
-            </div>
+            {children}
         </div>
     );
 };
-
-export default Card;

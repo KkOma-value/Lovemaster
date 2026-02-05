@@ -1,96 +1,52 @@
 /* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Varela+Round&family=Nunito+Sans:wght@400;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 
-:root {
-  /* Romantic Pink Theme - Light Mode Base */
-  --bg-primary: #FFF1F2;
-  --bg-secondary: rgba(255, 255, 255, 0.8);
-  --bg-tertiary: #FECDD3;
-
-  /* Romantic Pink Accents */
-  --accent-primary: #F472B6;
-  /* Rose Pink */
-  --accent-secondary: #FB7185;
-  /* Coral Pink */
-  --accent-tertiary: #FBCFE8;
-  /* Soft Pink */
-  --accent-glow: rgba(244, 114, 182, 0.3);
-
-  /* Warm Gradient */
-  --gradient-romantic: linear-gradient(135deg, #FECDD3, #FBCFE8, #E9D5FF);
-  --gradient-button: linear-gradient(135deg, #F472B6, #FB7185);
-  --gradient-avatar: linear-gradient(135deg, #F472B6, #EC4899);
-
-  /* Text */
-  --text-primary: #44403C;
-  --text-secondary: #78716C;
-  --text-accent: #BE185D;
-  --text-on-accent: #FFFFFF;
-
-  /* Borders */
-  --border-subtle: rgba(244, 114, 182, 0.15);
-  --border-highlight: rgba(244, 114, 182, 0.4);
-
-  /* Shadows */
-  --shadow-soft: 0 4px 20px rgba(244, 114, 182, 0.1);
-  --shadow-card: 0 8px 32px rgba(244, 114, 182, 0.12);
-  --shadow-button: 0 4px 14px rgba(244, 114, 182, 0.3);
-
-  /* Layout */
-  --sidebar-width: 280px;
-  --header-height: 60px;
-  --panel-width: 420px;
-
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --radius-full: 9999px;
-
-  /* Transitions */
-  --transition-fast: 150ms ease-out;
-  --transition-normal: 250ms ease-out;
-  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-primary: #1F1315;
-    --bg-secondary: rgba(45, 30, 35, 0.9);
-    --bg-tertiary: #2D1E23;
-
-    --text-primary: #FAFAF9;
-    --text-secondary: #A8A29E;
-    --text-accent: #F9A8D4;
-
-    --border-subtle: rgba(244, 114, 182, 0.2);
-    --border-highlight: rgba(244, 114, 182, 0.5);
-
-    --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.3);
-    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
-  }
-}
-
+/* Soft Coral Pink Theme */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html {
-  scroll-behavior: smooth;
+:root {
+  /* Soft Coral Pink Palette (from reference) */
+  --pink-light: #FDE8EC;
+  --pink-soft: #FDD5E0;
+  --pink-medium: #FBBED0;
+  --pink-coral: #F9A8B4;
+
+  /* Background */
+  --bg-primary: linear-gradient(180deg, #FDF2F4 0%, #FAE8EB 100%);
+  --bg-card: #FFFFFF;
+
+  /* Text */
+  --text-primary: #1F2937;
+  --text-secondary: #9CA3AF;
+
+  /* Accent Gradient */
+  --gradient-pink: linear-gradient(135deg, #F9A8B4 0%, #FBBED0 35%, #FDD5E0 65%, #FDE8EC 100%);
+  --gradient-pink-button: linear-gradient(135deg, #F9A8B4 0%, #FBBED0 100%);
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+  --shadow-pink: 0 8px 24px rgba(249, 168, 180, 0.3);
+
+  /* Radius */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-xl: 32px;
 }
 
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Nunito Sans', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  line-height: 1.6;
+  min-height: 100vh;
 }
 
 h1,
@@ -99,56 +55,66 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Varela Round', 'Noto Sans SC', sans-serif;
-  font-weight: 600;
-  line-height: 1.3;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
-#root {
-  min-height: 100vh;
-  width: 100vw;
-  display: flex;
-}
-
-/* Scrollbar - Romantic Pink */
+/* Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #FAE8EB;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--accent-tertiary);
-  border-radius: var(--radius-full);
+  background: linear-gradient(180deg, #F9A8B4 0%, #FBBED0 100%);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-primary);
+  background: linear-gradient(180deg, #F9A8B4 0%, #F9A8B4 100%);
+}
+
+/* Animations */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Selection */
 ::selection {
-  background: var(--accent-tertiary);
-  color: var(--text-primary);
-}
-
-/* Focus styles */
-:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
-}
-
-/* Reduced motion */
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  background: #FBBED0;
+  color: #1F2937;
 }

@@ -500,7 +500,12 @@ const ChatPage = () => {
     }, []);
 
     return (
-        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <div style={{
+            display: 'flex',
+            height: '100vh',
+            overflow: 'hidden',
+            background: 'linear-gradient(180deg, #FFF1F2 0%, #FFE4E6 50%, #FDF2F8 100%)'
+        }}>
             <ChatSidebar
                 isOpen={isSidebarOpen}
                 onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -511,7 +516,14 @@ const ChatPage = () => {
                 onDeleteChat={handleDeleteChat}
             />
 
-            <main style={{ flex: 1, height: '100vh', position: 'relative', display: 'flex' }}>
+            <main style={{
+                flex: 1,
+                height: '100vh',
+                position: 'relative',
+                display: 'flex',
+                marginLeft: isSidebarOpen ? '280px' : '0',
+                transition: 'margin-left 0.2s ease'
+            }}>
                 <div style={{ flex: 1, height: '100%', minWidth: 0 }}>
                     <ChatArea
                         messages={messages}
