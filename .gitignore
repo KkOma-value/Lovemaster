@@ -35,10 +35,9 @@ dist/
 .pnpm-store/
 
 # Sensitive configuration files
-**/application-local.yml
 **/application-local.properties
 
 # Temporary files
-tmp/
+
 .codeartsdoer
 nul

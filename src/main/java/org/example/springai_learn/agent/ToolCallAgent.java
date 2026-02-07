@@ -19,6 +19,12 @@ import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.resolution.StaticToolCallbackResolver;
 
 import java.io.File;
+import java.net.URI;
+import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -68,6 +74,7 @@ public class ToolCallAgent extends ReActAgent {
     private static final int REQUEST_CHAR_BUDGET = 900_000;
     private static final int TOOL_RESPONSE_CHAR_BUDGET = 20_000;
     private static final String TRUNCATION_SUFFIX = "... [truncated]";
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s,]+");
 
     public ToolCallAgent(ToolCallback[] availableTools, ToolCallbackProvider... extraToolProviders) {
         super();
@@ -376,6 +383,20 @@ public class ToolCallAgent extends ReActAgent {
                     cleanResult.substring(0, Math.min(50, cleanResult.length())));
         }
 
+        // searchImage returns direct image URLs; send them as previews without downloading.
+        if ("searchImage".equals(toolName)) {
+            List<String> imageUrls = extractImageUrls(cleanResult);
+            if (!imageUrls.isEmpty()) {
+                for (int i = 0; i < imageUrls.size(); i++) {
+                    String url = imageUrls.get(i);
+                    String name = deriveFileNameFromUrl(url, i + 1);
+                    log.info("Detected image URL from searchImage: {}", url);
+                    sendFileCreated(currentEmitter, "image", name, url, url);
+                }
+            }
+        }
+
+
         try {
             String type = null;
             String filePath = null;
@@ -445,6 +466,56 @@ public class ToolCallAgent extends ReActAgent {
         } catch (Exception e) {
             log.warn("Failed to parse file path from tool result: {}", e.getMessage(), e);
         }
+    }
+
+    private List<String> extractImageUrls(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of();
+        }
+        Matcher matcher = URL_PATTERN.matcher(text);
+        Set<String> urls = new LinkedHashSet<>();
+        while (matcher.find()) {
+            String url = stripTrailingPunctuation(matcher.group());
+            if (url != null && !url.isBlank()) {
+                urls.add(url);
+            }
+        }
+        return new ArrayList<>(urls);
+    }
+
+    private String stripTrailingPunctuation(String url) {
+        if (url == null) {
+            return null;
+        }
+        String cleaned = url;
+        while (!cleaned.isEmpty()) {
+            char last = cleaned.charAt(cleaned.length() - 1);
+            if (last == ')' || last == ']' || last == '}' || last == ',' || last == '.' || last == ';') {
+                cleaned = cleaned.substring(0, cleaned.length() - 1);
+            } else {
+                break;
+            }
+        }
+        return cleaned;
+    }
+
+    private String deriveFileNameFromUrl(String url, int index) {
+        if (url == null || url.isBlank()) {
+            return "image_" + index + ".jpg";
+        }
+        try {
+            URI uri = new URI(url);
+            String path = uri.getPath();
+            if (path != null && !path.isBlank()) {
+                String name = Path.of(path).getFileName().toString();
+                if (!name.isBlank()) {
+                    return name;
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to derive file name from url: {}", url, e);
+        }
+        return "image_" + index + ".jpg";
     }
 
 }
