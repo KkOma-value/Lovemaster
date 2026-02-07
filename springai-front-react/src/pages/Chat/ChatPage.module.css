@@ -1,0 +1,108 @@
+.page {
+    --sidebar-width: 280px;
+    --sidebar-collapsed-width: 52px;
+    --chat-max-width: 760px;
+    height: 100vh;
+    display: flex;
+    position: relative;
+    overflow: hidden;
+    color: var(--text-primary);
+    isolation: isolate;
+    background:
+        radial-gradient(1200px 600px at -10% -10%, rgba(251, 113, 133, 0.18), transparent 60%),
+        radial-gradient(900px 500px at 110% 10%, rgba(244, 114, 182, 0.2), transparent 55%),
+        linear-gradient(180deg, #FFF1F2 0%, #FFE4E6 45%, #FDF2F8 100%);
+}
+
+.page::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(251, 113, 133, 0.08) 1px, transparent 1px);
+    background-size: 36px 36px;
+    opacity: 0.2;
+    mix-blend-mode: multiply;
+    z-index: 0;
+}
+
+.sidebarSlot {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    position: relative;
+    z-index: 40;
+    transition: width 0.3s ease;
+}
+
+.sidebarCollapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    position: relative;
+    z-index: 10;
+}
+
+.chatColumn {
+    flex: 1;
+    min-width: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(14px);
+    border-left: 1px solid rgba(251, 113, 133, 0.12);
+    border-right: 1px solid rgba(251, 113, 133, 0.12);
+}
+
+.chatColumn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 241, 242, 0.2) 100%);
+    z-index: 0;
+}
+
+.chatColumn > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 1200px) {
+    .page {
+        --chat-max-width: 700px;
+    }
+}
+
+@media (max-width: 900px) {
+    .page {
+        --chat-max-width: 100%;
+    }
+
+    .chatColumn {
+        border-right: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebarSlot,
+    .sidebarCollapsed {
+        width: 0;
+    }
+
+    .chatColumn {
+        border-left: none;
+        border-right: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sidebarSlot {
+        transition: none;
+    }
+}

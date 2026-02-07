@@ -1,20 +1,22 @@
 .sidebar {
     width: var(--sidebar-width);
     height: 100vh;
-    background: var(--bg-secondary);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 241, 242, 0.85) 100%);
     backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
     z-index: 50;
     transition: width 0.3s ease;
+    position: sticky;
+    top: 0;
 }
 
 /* Collapsed Sidebar */
 .collapsedSidebar {
     width: 52px;
     height: 100vh;
-    background: var(--bg-secondary);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 241, 242, 0.88) 100%);
     backdrop-filter: blur(20px);
     border-right: 1px solid var(--border-subtle);
     display: flex;
@@ -32,6 +34,8 @@
     align-items: center;
     gap: 12px;
     border-bottom: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(12px);
 }
 
 .title {
@@ -68,6 +72,7 @@
     background: var(--gradient-button) !important;
     border: none !important;
     box-shadow: var(--shadow-button);
+    border-radius: 14px;
 }
 
 .newChatBtn:hover {
@@ -172,7 +177,16 @@
     }
 
     .collapsedSidebar {
-        display: none;
+        position: fixed;
+        left: 12px;
+        top: 12px;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        padding-top: 0;
+        justify-content: center;
+        box-shadow: 0 10px 24px rgba(244, 114, 182, 0.25);
+        border-right: none;
     }
 }
 

@@ -6,6 +6,7 @@
 const API_BASE = '/api';
 
 const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone) => {
+    console.log(`[${label}] Creating SSE connection to:`, url);
     const eventSource = new EventSource(url);
     let isClosed = false;
 
@@ -13,13 +14,20 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
         if (!isClosed) {
             isClosed = true;
             eventSource.close();
+            console.log(`[${label}] Connection closed`);
         }
+    };
+
+    eventSource.onopen = () => {
+        console.log(`[${label}] Connection opened`);
     };
 
     eventSource.onmessage = (event) => {
         const data = event.data;
+        console.log(`[${label}] Received data:`, data);
 
         if (isDone(data)) {
+            console.log(`[${label}] Done signal received`);
             safeClose();
             onComplete?.();
             return;
