@@ -2,7 +2,7 @@
 
 ## 📖 项目简介
 
-Lovemaster 是一个全栈 AI 学习项目：后端基于 Spring Boot 3.4.5 + Spring AI，前端提供 React（Vite）与 Vue（Vite）两套界面，并包含独立的 MCP Servers 模块。项目展示了如何集成大语言模型聊天、RAG（检索增强生成）、AI 工具调用、向量存储等核心能力。
+Lovemaster 是一个全栈 AI 学习项目：后端基于 Spring Boot 3.4.5 + Spring AI，前端采用 React（Vite）构建，并包含独立的 MCP Servers 模块。项目展示了如何集成大语言模型聊天、RAG（检索增强生成）、AI 工具调用、向量存储等核心能力。
 
 ## 🚀 技术栈
 
@@ -15,8 +15,6 @@ Lovemaster 是一个全栈 AI 学习项目：后端基于 Spring Boot 3.4.5 + Sp
 - **React 19** + **Vite 7**（`springai-front-react/`）
   - Framer Motion、React Router、Three.js
   - TailwindCSS、Lucide React
-- **Vue 3.4** + **Vite 5**（`springAI-front/`）
-  - Element Plus、Vue Router
 
 ### AI 集成
 - **阿里云通义千问**: Spring AI Alibaba Starter 1.0.0-M6.1
@@ -92,7 +90,6 @@ Lovemaster/
 ├── src/                         # Spring Boot 后端
 ├── mcp-servers/                 # MCP Servers（独立 Spring Boot 应用）
 ├── springai-front-react/        # React 前端（Vite）
-├── springAI-front/              # Vue 前端（Vite）
 ├── openspec/                    # OpenAPI 规范文件
 ├── start.bat / start.sh         # 一键启动脚本
 └── .github/                     # GitHub Actions 配置
@@ -327,20 +324,10 @@ cd mcp-servers
 mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-### 6. 启动前端（任选其一或同时）
-
-React 前端：
+### 6. 启动前端
 
 ```bash
 cd springai-front-react
-npm install
-npm run dev
-```
-
-Vue 前端：
-
-```bash
-cd springAI-front
 npm install
 npm run dev
 ```
@@ -351,7 +338,6 @@ npm run dev
 - **API文档**: http://localhost:8088/api/swagger-ui.html
 - **健康检查**: http://localhost:8088/api/health
 - **React 前端**: http://localhost:5173
-- **Vue 前端**: http://localhost:3000
 - **MCP Servers**: http://localhost:8127 (如已启动)
 
 前端开发模式下已配置 `/api` 代理到后端 `http://localhost:8088`。
