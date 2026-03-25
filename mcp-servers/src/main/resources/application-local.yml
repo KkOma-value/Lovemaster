@@ -1,0 +1,7 @@
+# 本地私有配置（建议不要在仓库中保存真实密钥）
+# 推荐：在主程序的 application-local.yml 中配置 pexels.api-key，主程序启动 mcp-servers 子进程时会透传为环境变量 PEXELS_API_KEY。
+pexels:
+  api-key: ${PEXELS_API_KEY:}
+
+app:
+  file-save-dir: D:/JavaCode/Lovemaster/tmp-shared

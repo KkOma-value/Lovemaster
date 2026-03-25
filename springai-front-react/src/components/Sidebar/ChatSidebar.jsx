@@ -29,29 +29,23 @@ const ChatSidebar = ({
 
     return (
         <aside className={styles.sidebar}>
-            {/* Header */}
+            {/* Header / Top Actions */}
             <div className={styles.header}>
-                <div className={styles.title}>
-                    <Heart size={18} color="#F43F5E" fill="#FDA4AF" style={{ marginRight: '8px' }} />
-                    聊天记录
-                </div>
+                <button
+                    onClick={onNewChat}
+                    className={styles.newChatBtn}
+                >
+                    <Plus size={18} />
+                    <span className={styles.newChatText}>新对话</span>
+                </button>
                 <button
                     className={styles.toggleBtn}
                     onClick={onToggle}
                     title="收起侧边栏"
                 >
-                    <ChevronLeft size={18} color="#F43F5E" />
+                    <ChevronLeft size={20} color="#7A5C47" />
                 </button>
             </div>
-
-            {/* New Chat Button */}
-            <button
-                onClick={onNewChat}
-                className={styles.newChatBtn}
-            >
-                <Plus size={18} />
-                新对话
-            </button>
 
             {/* Chat List */}
             <div className={styles.list}>

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
-import { Send, Home } from 'lucide-react';
+import { Send } from 'lucide-react';
 import styles from './ChatArea.module.css';
 
-const ChatInput = ({ inputValue, setInputValue, onSend, isLoading, hasMessages, onHomeClick }) => {
+const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     const textareaRef = useRef(null);
 
     useEffect(() => {
@@ -43,12 +43,6 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading, hasMessages, 
                 </button>
             </div>
 
-            {hasMessages && (
-                <button onClick={onHomeClick} className={styles.homeBtn}>
-                    <Home size={16} />
-                    <span>新对话</span>
-                </button>
-            )}
         </div>
     );
 };

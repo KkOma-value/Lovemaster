@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FileText, Image as ImageIcon, Code, File } from 'lucide-react';
+import { FileText, Image as ImageIcon, Code, File, AlertCircle } from 'lucide-react';
 import styles from './ManusPanel.module.css';
 
+// Image states: undefined = loading, 'loaded' = success, 'error' = failed
 const ManusPreview = ({ files }) => {
-    const [loadingStates, setLoadingStates] = useState({});
+    const [imageStates, setImageStates] = useState({});
 
     if (files.length === 0) {
         return (
@@ -43,18 +44,33 @@ const ManusPreview = ({ files }) => {
 
     const renderContent = (file) => {
         if (file.type === 'image' && file.url) {
+            const state = imageStates[file.name]; // undefined = loading, 'loaded', 'error'
             return (
                 <div className={styles.previewContent}>
-                    {loadingStates[file.name] !== false && (
+                    {state === undefined && (
                         <div style={{ color: '#9CA3AF', fontSize: '0.85rem' }}>加载中...</div>
+                    )}
+                    {state === 'error' && (
+                        <div className={styles.previewError}>
+                            <AlertCircle size={32} className={styles.previewErrorIcon} />
+                            <span>图片加载失败</span>
+                            <a
+                                href={file.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#BE123C', fontSize: '0.8rem', marginTop: '8px' }}
+                            >
+                                点击查看原图
+                            </a>
+                        </div>
                     )}
                     <img
                         src={file.url}
                         alt={file.name}
                         className={styles.previewImage}
-                        onLoad={() => setLoadingStates(prev => ({ ...prev, [file.name]: false }))}
-                        onError={() => setLoadingStates(prev => ({ ...prev, [file.name]: false }))}
-                        style={{ display: loadingStates[file.name] === false ? 'block' : 'none' }}
+                        onLoad={() => setImageStates(prev => ({ ...prev, [file.name]: 'loaded' }))}
+                        onError={() => setImageStates(prev => ({ ...prev, [file.name]: 'error' }))}
+                        style={{ display: state === 'loaded' ? 'block' : 'none' }}
                     />
                 </div>
             );

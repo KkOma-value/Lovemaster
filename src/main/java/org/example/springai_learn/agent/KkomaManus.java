@@ -41,6 +41,12 @@ public class KkomaManus extends ToolCallAgent {
                                 4. Execute tasks directly using tools - do not just describe what you would do.
                                 5. Only output the final results to the user, not intermediate questions.
                                 6. Always call at least one tool per step until the task is complete.
+
+                                RESPONSE FORMAT RULES:
+                                - NEVER use template syntax like {{}} or {variable} in your responses.
+                                - Always respond in clean, natural language without any code syntax or markup artifacts.
+                                - When using doTerminate, provide a clear, well-formatted summary for the user.
+                                - Do NOT include raw JSON, tool names, or technical details in user-facing text.
                                 """;
                 this.setSystemPrompt(SYSTEM_PROMPT);
                 String NEXT_STEP_PROMPT = """

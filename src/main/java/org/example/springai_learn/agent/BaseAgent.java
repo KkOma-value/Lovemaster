@@ -223,7 +223,7 @@ public abstract class BaseAgent {
                 sendTaskStart(emitter, defaultTasks);
 
                 try {
-                    StringBuilder finalContent = new StringBuilder();
+                    String lastExtractedContent = null;
 
                     for (int i = 0; i < maxSteps && state != AgentState.FINISHED; i++) {
                         int stepNumber = i + 1;
@@ -241,9 +241,11 @@ public abstract class BaseAgent {
                         // 解析并提取有用内容
                         String extractedContent = extractAIContent(stepResult);
                         if (extractedContent != null && !extractedContent.isEmpty()) {
-                            finalContent.append(extractedContent);
-                            // 发送实际内容
-                            sendStreamMessage(emitter, "content", extractedContent);
+                            // 中间步骤发送为 status 类型，最终内容在循环结束后发送
+                            if (state != AgentState.FINISHED) {
+                                sendStreamMessage(emitter, "status", extractedContent);
+                            }
+                            lastExtractedContent = extractedContent;
                         }
                     }
 
@@ -252,11 +254,11 @@ public abstract class BaseAgent {
                         state = AgentState.FINISHED;
                     }
 
-                    // 将最终内容作为 AssistantMessage 添加到 messageList，用于持久化
-                    // 这确保了发送给前端的内容也能被正确保存
-                    if (finalContent.length() > 0) {
-                        messageList.add(new AssistantMessage(finalContent.toString()));
-                        log.info("已将 AI 最终回复添加到 messageList 用于持久化: {} 字符", finalContent.length());
+                    // 只将最终内容（agent 终止时的最后一条提取内容）作为 content 发送
+                    if (lastExtractedContent != null && !lastExtractedContent.isEmpty()) {
+                        sendStreamMessage(emitter, "content", lastExtractedContent);
+                        messageList.add(new AssistantMessage(lastExtractedContent));
+                        log.info("已将 AI 最终回复添加到 messageList 用于持久化: {} 字符", lastExtractedContent.length());
                     }
 
                     // 发送完成标记
@@ -421,25 +423,19 @@ public abstract class BaseAgent {
 
         // 过滤掉工具调用的技术信息
         if (stepResult.startsWith("Step ")) {
-            // 尝试提取Step后面的内容
             int colonIndex = stepResult.indexOf(": ");
             if (colonIndex != -1) {
                 stepResult = stepResult.substring(colonIndex + 2);
             }
         }
 
-        // 过滤掉工具执行的技术信息
+        // 过滤掉工具执行的技术信息（整个 "工具 xxx 完成了它的任务" 字符串都是技术输出）
         if (stepResult.contains("工具 ") && stepResult.contains("完成了它的任务")) {
-            // 尝试提取结果部分
-            int resultIndex = stepResult.indexOf("结果: ");
-            if (resultIndex != -1) {
-                String result = stepResult.substring(resultIndex + 4);
-                // 如果结果是JSON或技术数据，跳过
-                if (result.trim().startsWith("{") || result.trim().startsWith("[")) {
-                    return null;
-                }
-                return result;
-            }
+            return null;
+        }
+
+        // 过滤掉工具执行失败信息
+        if (stepResult.startsWith("工具执行失败") || stepResult.startsWith("工具执行完成，但未找到")) {
             return null;
         }
 
@@ -447,6 +443,25 @@ public abstract class BaseAgent {
         if (stepResult.equals("思考完成 - 无需行动") ||
                 stepResult.equals("没有工具调用") ||
                 stepResult.startsWith("未检测到工具调用")) {
+            return null;
+        }
+
+        // 过滤掉包含 {{}} 模板语法的内容
+        if (stepResult.contains("{{") || stepResult.contains("}}")) {
+            // Try to strip the template patterns; if nothing meaningful remains, skip entirely
+            String cleaned = stepResult.replaceAll("\\{\\{[^}]*\\}\\}", "").trim();
+            if (cleaned.isEmpty()) {
+                return null;
+            }
+            stepResult = cleaned;
+        }
+
+        // 过滤掉纯 JSON 内容
+        String trimmed = stepResult.trim();
+        if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+            return null;
+        }
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
             return null;
         }
 

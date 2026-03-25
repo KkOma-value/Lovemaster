@@ -2,6 +2,18 @@ import { useRef, useCallback, useEffect } from 'react';
 import { createLoveAppSSE, createCoachSSE } from '../services/chatApi';
 
 /**
+ * Strip template syntax (e.g. {{variable}}) and stray braces from user-facing content.
+ */
+const cleanContent = (text) => {
+    if (!text) return text;
+    // Remove {{...}} patterns
+    let cleaned = text.replace(/\{\{[^}]*\}\}/g, '');
+    // Remove leftover double-braces
+    cleaned = cleaned.replace(/\{\{/g, '').replace(/\}\}/g, '');
+    return cleaned.trim();
+};
+
+/**
  * Parse SSE message from backend
  * Format: {"type":"thinking|status|content|done|error|task_start|task_progress|terminal|file_created","content":"...","data":{...}}
  */
@@ -13,15 +25,15 @@ const parseSSEMessage = (rawData) => {
     try {
         const parsed = JSON.parse(rawData);
         if (parsed === null || typeof parsed !== 'object') {
-            return { type: 'content', content: String(parsed), data: null };
+            return { type: 'content', content: cleanContent(String(parsed)), data: null };
         }
         return {
             type: parsed.type || 'content',
-            content: parsed.content || '',
+            content: cleanContent(parsed.content || ''),
             data: parsed.data || null
         };
     } catch {
-        return { type: 'content', content: rawData, data: null };
+        return { type: 'content', content: cleanContent(rawData), data: null };
     }
 };
 

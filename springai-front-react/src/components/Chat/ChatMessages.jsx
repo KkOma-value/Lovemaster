@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react';
-import { User, Sparkles } from 'lucide-react';
+import { User } from 'lucide-react';
+import aiAvatarUrl from '../../assets/illustrations/ai-avatar.svg';
 import MarkdownRenderer from './MarkdownRenderer';
 import StreamingStatus from './StreamingStatus';
 import styles from './ChatArea.module.css';
@@ -28,7 +29,7 @@ const ChatMessages = ({ messages, streamingStatus }) => {
                 >
                     {message.role === 'assistant' && (
                         <div className={styles.aiIcon}>
-                            <Sparkles size={16} />
+                            <img src={aiAvatarUrl} alt="AI助手" width="30" height="30" style={{ borderRadius: '50%' }} />
                         </div>
                     )}
                     <div className={`${styles.bubble} ${message.role === 'user' ? styles.userBubble : styles.aiBubble}`}>
@@ -44,7 +45,7 @@ const ChatMessages = ({ messages, streamingStatus }) => {
                         )}
                     </div>
                     {message.role === 'user' && (
-                        <div className={styles.aiIcon} style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                        <div className={styles.aiIcon}>
                             <User size={16} />
                         </div>
                     )}
@@ -54,7 +55,7 @@ const ChatMessages = ({ messages, streamingStatus }) => {
             {streamingStatus && (
                 <div className={styles.messageRow}>
                     <div className={styles.aiIcon}>
-                        <Sparkles size={16} />
+                        <img src={aiAvatarUrl} alt="AI助手" width="30" height="30" style={{ borderRadius: '50%' }} />
                     </div>
                     <div className={`${styles.bubble} ${styles.aiBubble}`}>
                         <StreamingStatus

@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
 import ManusPanel from '../../components/ManusPanel/ManusPanel';
@@ -51,6 +52,12 @@ const ChatPage = () => {
         deleteChat,
         updateChatTitle
     } = useChatSessions(chatType, cleanupSSE, panelDataHook.resetPanel);
+
+    // Sync currentChatId to panelData hook (breaks circular dependency)
+    const { setChatId: setPanelChatId } = panelDataHook;
+    useEffect(() => {
+        setPanelChatId(currentChatId);
+    }, [currentChatId, setPanelChatId]);
 
     // Load messages when currentChatId changes
     useEffect(() => {
@@ -209,7 +216,13 @@ const ChatPage = () => {
     }, []);
 
     return (
-        <div className={styles.page}>
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.3 }}
+            className={styles.page}
+        >
             <div className={`${styles.sidebarSlot} ${!isSidebarOpen ? styles.sidebarCollapsed : ''}`}>
                 <ChatSidebar
                     isOpen={isSidebarOpen}
@@ -243,7 +256,7 @@ const ChatPage = () => {
                     />
                 )}
             </main>
-        </div>
+        </motion.div>
     );
 };
 

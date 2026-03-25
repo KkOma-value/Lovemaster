@@ -91,8 +91,6 @@ const ChatArea = ({
                             setInputValue={setInputValue}
                             onSend={onSendMessage}
                             isLoading={isLoading}
-                            hasMessages={true}
-                            onHomeClick={handleHomeClick}
                         />
                     </div>
                 </>

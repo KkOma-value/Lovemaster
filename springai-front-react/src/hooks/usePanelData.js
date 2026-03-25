@@ -1,17 +1,24 @@
-import { useState, useCallback, useEffect } from 'react';
-/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useCallback, useEffect, useRef } from 'react';
 
 /**
  * Custom hook for managing Manus panel data
  * Handles tasks, terminal lines, file previews, and panel open state
  *
- * @param {string} currentChatId - Current chat ID
+ * @param {string} initialChatId - Initial chat ID (can be null, updated later via setChatId)
  * @param {boolean} showManusPanel - Whether the panel should be shown
  * @param {Object} storageHooks - Storage hooks from useChatStorage
  * @returns {Object} Panel state and handlers
  */
-export const usePanelData = (currentChatId, showManusPanel, storageHooks) => {
+export const usePanelData = (initialChatId, showManusPanel, storageHooks) => {
     const { loadPanelDataFromStorage, savePanelDataToStorage } = storageHooks;
+
+    // Track currentChatId internally via state so it can be updated after initialization
+    const [chatId, setChatId] = useState(initialChatId);
+    // Use a ref to always have the latest chatId available for save effects
+    const chatIdRef = useRef(chatId);
+    useEffect(() => {
+        chatIdRef.current = chatId;
+    }, [chatId]);
 
     // Combine state to reduce renders
     const [state, setState] = useState({
@@ -36,8 +43,8 @@ export const usePanelData = (currentChatId, showManusPanel, storageHooks) => {
 
     // Load panel data when chat changes
     useEffect(() => {
-        if (currentChatId && showManusPanel) {
-            const stored = loadPanelDataFromStorage(currentChatId);
+        if (chatId && showManusPanel) {
+            const stored = loadPanelDataFromStorage(chatId);
             const defaultPanelData = {
                 tasks: [],
                 terminalLines: [],
@@ -47,6 +54,7 @@ export const usePanelData = (currentChatId, showManusPanel, storageHooks) => {
             const newData = stored || defaultPanelData;
             const shouldOpen = stored && (stored.files.length > 0 || stored.terminalLines.length > 0);
 
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- loading from storage on chat switch
             setState({
                 isPanelOpen: shouldOpen,
                 panelData: newData
@@ -54,14 +62,15 @@ export const usePanelData = (currentChatId, showManusPanel, storageHooks) => {
         } else {
             setState(prev => ({ ...prev, isPanelOpen: false }));
         }
-    }, [currentChatId, showManusPanel, loadPanelDataFromStorage]);
+    }, [chatId, showManusPanel, loadPanelDataFromStorage]);
 
     // Save panel data to storage when it changes
     useEffect(() => {
-        if (currentChatId && showManusPanel) {
-            savePanelDataToStorage(currentChatId, state.panelData);
+        const currentId = chatIdRef.current;
+        if (currentId && showManusPanel) {
+            savePanelDataToStorage(currentId, state.panelData);
         }
-    }, [state.panelData, currentChatId, showManusPanel, savePanelDataToStorage]);
+    }, [state.panelData, showManusPanel, savePanelDataToStorage]);
 
     // Handle panel-related SSE messages
     const handlePanelMessage = useCallback((parsed) => {
@@ -167,6 +176,7 @@ export const usePanelData = (currentChatId, showManusPanel, storageHooks) => {
         // Setters
         setIsPanelOpen,
         setPanelData,
+        setChatId,
 
         // Actions
         resetPanel,
