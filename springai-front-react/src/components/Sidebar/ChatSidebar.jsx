@@ -1,7 +1,23 @@
 import React from 'react';
 import { Plus, ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { motion } from 'framer-motion';
 import ChatSidebarItem from './ChatSidebarItem';
 import styles from './ChatSidebar.module.css';
+
+const listVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.06
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+};
 
 const ChatSidebar = ({
     isOpen,
@@ -48,17 +64,23 @@ const ChatSidebar = ({
             </div>
 
             {/* Chat List */}
-            <div className={styles.list}>
+            <motion.div 
+                className={styles.list}
+                variants={listVariants}
+                initial="hidden"
+                animate="visible"
+            >
                 {chatList.map(chat => (
-                    <ChatSidebarItem
-                        key={chat.id}
-                        chat={chat}
-                        isActive={currentChatId === chat.id}
-                        onSelect={onSelectChat}
-                        onDelete={onDeleteChat}
-                    />
+                    <motion.div key={chat.id} variants={itemVariants}>
+                        <ChatSidebarItem
+                            chat={chat}
+                            isActive={currentChatId === chat.id}
+                            onSelect={onSelectChat}
+                            onDelete={onDeleteChat}
+                        />
+                    </motion.div>
                 ))}
-            </div>
+            </motion.div>
 
             {/* Footer */}
             <div className={styles.footer}>

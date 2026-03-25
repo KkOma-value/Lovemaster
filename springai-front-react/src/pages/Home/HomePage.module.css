@@ -7,15 +7,23 @@
 .page {
     width: 100vw;
     min-height: 100vh;
-    background-image: url('../../assets/illustrations/bg-home.png');
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
-    background-repeat: no-repeat;
-    background-color: var(--bg-base);
     padding: 48px 24px;
     font-family: var(--font-body, 'Inter', 'Noto Sans SC', sans-serif);
     overflow-x: hidden;
+    position: relative;
+    z-index: 1;
+}
+
+.page::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: -1;
+    background-image: url('../../assets/illustrations/bg-home.png');
+    background-size: cover;
+    background-position: center;
+    background-color: var(--bg-base);
+    pointer-events: none;
 }
 
 .inner {
