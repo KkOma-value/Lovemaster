@@ -47,8 +47,8 @@ export const useChatMessages = () => {
         setIsLoading(false);
     }, []);
 
-    const addUserMessage = useCallback((content) => {
-        setMessages(prev => [...prev, { role: 'user', content }]);
+    const addUserMessage = useCallback((content, imageUrl = null) => {
+        setMessages(prev => [...prev, { role: 'user', content, ...(imageUrl && { imageUrl }) }]);
     }, []);
 
     const addErrorMessage = useCallback((message) => {

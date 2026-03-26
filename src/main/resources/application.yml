@@ -7,6 +7,17 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/springai}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
   mail:
     host: ${SPRING_MAIL_HOST:smtp.qq.com}
     port: ${SPRING_MAIL_PORT:465}
@@ -49,11 +60,19 @@ server:
 # Shared file save directory for tools (recommended to use an absolute path when running main app + mcp-servers separately)
 app:
   file-save-dir: ${APP_FILE_SAVE_DIR:${user.dir}/tmp}
+  jwt:
+    secret: ${JWT_SECRET:lovemaster-256-bit-secret-key-for-jwt-signing-2024-default}
+    access-token-expiration: 1800000
+    refresh-token-expiration: 604800000
+  image:
+    upload-dir: ${APP_FILE_SAVE_DIR:${user.dir}/tmp}/images
+    max-size: 5242880
+    allowed-types: image/jpeg,image/png,image/webp
   mcp:
     autostart: ${APP_MCP_AUTOSTART:true}
   rag:
     vectorstore:
-      load-mode: ${APP_RAG_LOAD_MODE:async}  # async (default) or off
+      load-mode: ${APP_RAG_LOAD_MODE:async}
       load:
         max-attempts: ${APP_RAG_LOAD_MAX_ATTEMPTS:3}
         backoff-seconds: ${APP_RAG_LOAD_BACKOFF_SECONDS:5}

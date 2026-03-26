@@ -1,0 +1,24 @@
+﻿
+D:\JavaCode\Lovemaster\springai-front-react\src\components\Chat\ChatInput.jsx
+  1:36  error  'useState' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\JavaCode\Lovemaster\springai-front-react\src\components\Sidebar\ChatSidebar.jsx
+  31:5  error  Parsing error: Argument name clash
+
+D:\JavaCode\Lovemaster\springai-front-react\src\contexts\AuthContext.jsx
+  6:17  error  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+D:\JavaCode\Lovemaster\springai-front-react\src\pages\Auth\LoginPage.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\JavaCode\Lovemaster\springai-front-react\src\pages\Auth\RegisterPage.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\JavaCode\Lovemaster\springai-front-react\src\pages\Chat\ChatPage.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+D:\JavaCode\Lovemaster\springai-front-react\src\pages\Home\HomePage.jsx
+  3:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+✖ 7 problems (7 errors, 0 warnings)
+

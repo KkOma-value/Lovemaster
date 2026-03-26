@@ -223,3 +223,67 @@
         transform: none;
     }
 }
+
+/* User Info */
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(196, 123, 90, 0.15);
+  margin-top: auto;
+}
+
+.userAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(196, 123, 90, 0.2);
+  cursor: pointer;
+}
+
+.userAvatar:hover {
+  border-color: #C47B5A;
+}
+
+.userDetails {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  text-align: left;
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 14px;
+  color: #2D1B0E;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.userEmail {
+  font-size: 12px;
+  color: #7A5C47;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutBtn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #7A5C47;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.logoutBtn:hover {
+  background: rgba(196, 123, 90, 0.1);
+  color: #2D1B0E;
+}

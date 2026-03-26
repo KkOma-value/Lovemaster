@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
@@ -91,21 +92,22 @@ const ChatPage = () => {
     }, [currentChatId, chatType, setMessagesDirect]);
 
     // Send message handler
-    const handleSendMessage = useCallback(() => {
-        if (!inputValue.trim() || isLoading) return;
+    const handleSendMessage = useCallback((msgText = inputValue, imageUrl = null) => {
+        const textToUse = msgText || inputValue;
+        if ((!textToUse.trim() && !imageUrl) || isLoading) return;
 
         if (!currentChatId) {
             window.alert('请先新建或选择对话再发送。');
             return;
         }
 
-        const userMessage = inputValue.trim();
+        const userMessage = textToUse.trim();
 
         // Cleanup any existing connection
         cleanupSSE({ resetResponse: true });
 
         // Add user message
-        addUserMessage(userMessage);
+        addUserMessage(userMessage, imageUrl);
         setInputValue('');
         setIsLoading(true);
         setStreamingStatus({ type: 'thinking', content: '正在思考中...' });
@@ -185,7 +187,7 @@ const ChatPage = () => {
         };
 
         // Create SSE connection
-        connectSSE(userMessage, currentChatId, {
+        connectSSE(userMessage, currentChatId, imageUrl, {
             onData: handleMessage,
             onError: handleError,
             onComplete: handleComplete

@@ -41,7 +41,18 @@ const ChatMessages = ({ messages, streamingStatus }) => {
                                 )}
                             </>
                         ) : (
-                            message.content
+                            <>
+                                {message.imageUrl && (
+                                    <div style={{ marginBottom: '8px' }}>
+                                        <img 
+                                            src={message.imageUrl} 
+                                            alt="Uploaded" 
+                                            style={{ maxWidth: '280px', maxHeight: '280px', borderRadius: '16px', objectFit: 'cover' }} 
+                                        />
+                                    </div>
+                                )}
+                                {message.content}
+                            </>
                         )}
                     </div>
                     {message.role === 'user' && (

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Sparkles, Shield, Zap } from 'lucide-react';
 import heroLoversUrl from '../../assets/illustrations/hero-lovers.svg';

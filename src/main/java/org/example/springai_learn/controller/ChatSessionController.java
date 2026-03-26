@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.FileBasedChatMemory;
 import org.example.springai_learn.dto.ChatSession;
 import org.springframework.ai.chat.messages.Message;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,24 +23,35 @@ import java.util.concurrent.ConcurrentHashMap;
 @Slf4j
 public class ChatSessionController {
 
-    private static final String BASE_DIR = System.getProperty("user.dir") + "/tmp";
+    @Value("${app.file-save-dir:${user.dir}/tmp}")
+    private String baseDir;
 
     // 缓存不同类型的 ChatMemory 实例
     private final Map<String, FileBasedChatMemory> memoryCache = new ConcurrentHashMap<>();
 
+    private String getCurrentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof String userId) {
+            return userId;
+        }
+        return "anonymous";
+    }
+
     /**
-     * 根据聊天类型获取对应的 ChatMemory
-     * 
+     * 根据聊天类型和用户ID获取对应的 ChatMemory
+     *
      * @param chatType loveapp 或 coach
+     * @param userId   用户ID
      */
-    private FileBasedChatMemory getMemoryForType(String chatType) {
+    private FileBasedChatMemory getMemoryForType(String chatType, String userId) {
         String type = chatType != null ? chatType.toLowerCase() : "loveapp";
-        return memoryCache.computeIfAbsent(type, t -> {
-            String dir = switch (t) {
-                case "coach" -> BASE_DIR + "/chat-coach";
-                default -> BASE_DIR + "/chat-memory"; // loveapp 或默认
+        String key = userId + ":" + type;
+        return memoryCache.computeIfAbsent(key, k -> {
+            String dir = switch (type) {
+                case "coach" -> baseDir + "/chat-coach/" + userId;
+                default -> baseDir + "/chat-memory/" + userId;
             };
-            log.info("创建 ChatMemory 实例: type={}, dir={}", t, dir);
+            log.info("创建 ChatMemory 实例: type={}, userId={}, dir={}", type, userId, dir);
             return new FileBasedChatMemory(dir);
         });
     }
@@ -51,8 +64,9 @@ public class ChatSessionController {
     @GetMapping
     public List<ChatSession> listSessions(
             @RequestParam(defaultValue = "loveapp") String chatType) {
-        log.info("获取会话列表: chatType={}", chatType);
-        FileBasedChatMemory chatMemory = getMemoryForType(chatType);
+        String userId = getCurrentUserId();
+        log.info("获取会话列表: chatType={}, userId={}", chatType, userId);
+        FileBasedChatMemory chatMemory = getMemoryForType(chatType, userId);
         List<String> conversationIds = chatMemory.listConversationIds();
 
         return conversationIds.stream()
@@ -83,9 +97,10 @@ public class ChatSessionController {
     public ResponseEntity<Map<String, Object>> deleteSession(
             @PathVariable String chatId,
             @RequestParam(defaultValue = "loveapp") String chatType) {
-        log.info("删除会话: chatId={}, chatType={}", chatId, chatType);
+        String userId = getCurrentUserId();
+        log.info("删除会话: chatId={}, chatType={}, userId={}", chatId, chatType, userId);
         try {
-            FileBasedChatMemory chatMemory = getMemoryForType(chatType);
+            FileBasedChatMemory chatMemory = getMemoryForType(chatType, userId);
             chatMemory.clear(chatId);
             return ResponseEntity.ok(Map.of("success", true, "message", "会话已删除"));
         } catch (Exception e) {
@@ -105,8 +120,9 @@ public class ChatSessionController {
             @PathVariable String chatId,
             @RequestParam(defaultValue = "100") int limit,
             @RequestParam(defaultValue = "loveapp") String chatType) {
-        log.info("获取会话消息: chatId={}, limit={}, chatType={}", chatId, limit, chatType);
-        FileBasedChatMemory chatMemory = getMemoryForType(chatType);
+        String userId = getCurrentUserId();
+        log.info("获取会话消息: chatId={}, limit={}, chatType={}, userId={}", chatId, limit, chatType, userId);
+        FileBasedChatMemory chatMemory = getMemoryForType(chatType, userId);
         List<Message> messages = chatMemory.get(chatId, limit);
 
         return messages.stream()

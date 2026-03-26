@@ -5,6 +5,25 @@
 
 const API_BASE = '/api';
 
+const authFetch = async (url, options = {}) => {
+    const token = localStorage.getItem('accessToken');
+    const headers = {
+        ...options.headers,
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+        if (response.status === 401) {
+            console.error('Unauthorized request. Token might be invalid or expired.');
+            // Add automatic login redirect or token refresh strategy here if preferred
+        }
+        throw new Error(`Failed request: ${response.statusText}`);
+    }
+    return response.json();
+};
+
 const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone) => {
     console.log(`[${label}] Creating SSE connection to:`, url);
     const eventSource = new EventSource(url);
@@ -59,11 +78,18 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
  * @param {Object} callbacks - { onData, onError, onComplete }
  * @returns {EventSource}
  */
-export function createLoveAppSSE(message, chatId, { onData, onError, onComplete }) {
+export function createLoveAppSSE(message, chatId, imageUrl, { onData, onError, onComplete }) {
     const params = new URLSearchParams();
     params.append('message', message);
     if (chatId) {
         params.append('chatId', chatId);
+    }
+    if (imageUrl) {
+        params.append('imageUrl', imageUrl);
+    }
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+        params.append('token', token);
     }
 
     const url = `${API_BASE}/ai/love_app/chat/sse?${params.toString()}`;
@@ -82,11 +108,18 @@ export function createLoveAppSSE(message, chatId, { onData, onError, onComplete 
  * @param {Object} callbacks - { onData, onError, onComplete }
  * @returns {EventSource}
  */
-export function createCoachSSE(message, chatId, { onData, onError, onComplete }) {
+export function createCoachSSE(message, chatId, imageUrl, { onData, onError, onComplete }) {
     const params = new URLSearchParams();
     params.append('message', message);
     if (chatId) {
         params.append('chatId', chatId);
+    }
+    if (imageUrl) {
+        params.append('imageUrl', imageUrl);
+    }
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+        params.append('token', token);
     }
 
     const url = `${API_BASE}/ai/manus/chat?${params.toString()}`;
@@ -104,11 +137,7 @@ export function createCoachSSE(message, chatId, { onData, onError, onComplete })
  * @returns {Promise<Array<{id: string, title: string}>>}
  */
 export async function getChatSessions(chatType = 'loveapp') {
-    const response = await fetch(`${API_BASE}/ai/sessions?chatType=${chatType}`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch sessions');
-    }
-    return response.json();
+    return authFetch(`${API_BASE}/ai/sessions?chatType=${chatType}`);
 }
 
 /**
@@ -118,13 +147,9 @@ export async function getChatSessions(chatType = 'loveapp') {
  * @returns {Promise<{success: boolean, message: string}>}
  */
 export async function deleteChatSession(chatId, chatType = 'loveapp') {
-    const response = await fetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}?chatType=${chatType}`, {
+    return authFetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}?chatType=${chatType}`, {
         method: 'DELETE'
     });
-    if (!response.ok) {
-        throw new Error('Failed to delete session');
-    }
-    return response.json();
 }
 
 /**
@@ -135,9 +160,5 @@ export async function deleteChatSession(chatId, chatType = 'loveapp') {
  * @returns {Promise<Array<{role: string, content: string}>>}
  */
 export async function getChatMessages(chatId, chatType = 'loveapp', limit = 100) {
-    const response = await fetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}/messages?chatType=${chatType}&limit=${limit}`);
-    if (!response.ok) {
-        throw new Error('Failed to fetch messages');
-    }
-    return response.json();
+    return authFetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}/messages?chatType=${chatType}&limit=${limit}`);
 }

@@ -1,9 +1,22 @@
 import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
+import ImageUpload from './ImageUpload';
+import { useImageUpload } from '../../hooks/useImageUpload';
 import styles from './ChatArea.module.css';
 
 const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     const textareaRef = useRef(null);
+    const { 
+        compressImage, 
+        uploadImage, 
+        reset, 
+        isCompressing, 
+        isUploading, 
+        progress,
+        preview,
+        compressedFile,
+        originalFile
+    } = useImageUpload();
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -14,16 +27,49 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
         }
     }, [inputValue]);
 
+    const handleSend = async () => {
+        if (!inputValue.trim() && !compressedFile) return;
+
+        let uploadedImageUrl = null;
+        if (compressedFile) {
+            try {
+                const result = await uploadImage();
+                uploadedImageUrl = result.url || result.fileName; // Assuming API returns URL or filename
+            } catch (err) {
+                console.error('Failed to upload', err);
+                return; // halt send if upload fails
+            }
+        }
+
+        onSend(inputValue, uploadedImageUrl);
+        reset();
+    };
+
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            onSend();
+            handleSend();
         }
     };
 
     return (
-        <div className={styles.inputArea}>
+        <div className={styles.inputArea} style={{ position: 'relative' }}>
+            {preview && (
+                <ImageUpload 
+                    previewUrl={preview}
+                    isCompressing={isCompressing}
+                    isUploading={isUploading}
+                    progress={progress}
+                    fileName={originalFile?.name}
+                    originalSize={originalFile?.size}
+                    compressedSize={compressedFile?.size}
+                    onClear={reset}
+                />
+            )}
             <div className={styles.inputWrapper}>
+                <ImageUpload 
+                    onImageSelect={compressImage}
+                />
                 <textarea
                     ref={textareaRef}
                     value={inputValue}
@@ -32,11 +78,11 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
                     placeholder="输入消息..."
                     className={styles.textarea}
                     rows={1}
-                    disabled={isLoading}
+                    disabled={isLoading || isUploading}
                 />
                 <button
-                    onClick={onSend}
-                    disabled={!inputValue.trim() || isLoading}
+                    onClick={handleSend}
+                    disabled={(!inputValue.trim() && !compressedFile) || isLoading || isUploading}
                     className={styles.sendBtn}
                 >
                     <Send size={18} />
