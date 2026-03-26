@@ -12,7 +12,7 @@ import java.io.IOException;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/files")
+@RequestMapping("/files")
 @CrossOrigin(originPatterns = "*", allowCredentials = "false")
 public class FileController {
 
