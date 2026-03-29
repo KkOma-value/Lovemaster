@@ -6,21 +6,12 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.advisor.MyLoggerAdvisor;
-import org.example.springai_learn.advisor.ReReadingAdvisor;
-import org.example.springai_learn.advisor.TabooWordAdvisor;
-import org.example.springai_learn.rag.LoveAppRagCustomAdvisorFactory;
-import org.example.springai_learn.rag.QueryRewriter;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.client.advisor.QuestionAnswerAdvisor;
-import org.springframework.ai.chat.client.advisor.api.Advisor;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.InMemoryChatMemory;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,17 +23,7 @@ import static org.springframework.ai.chat.client.advisor.AbstractChatMemoryAdvis
 @Slf4j
 public class LoveApp {
 
-
-    @Resource
-    private Advisor loveAppRagCloudAdvisor;
-
-    @Resource
-    private VectorStore loveAppVectorStore;
-
     private final ChatClient chatClient;
-
-    @Resource
-    private QueryRewriter queryRewriter;
 
     @Resource
     private ToolCallback[] allTools;
@@ -126,36 +107,6 @@ public class LoveApp {
                 .entity(LoveReport.class);
         log.info("loveReport: {}", loveReport);
         return loveReport;
-    }
-
-
-    // RAG
-    public String doChatWithRag(String message, String chatId) {
-
-        String The_newMessage = queryRewriter.doQueryRewrite(message);
-
-        ChatResponse chatResponse = chatClient
-                .prompt()
-                .user(The_newMessage)
-                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
-                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
-                // 开启日志，便于观察效果
-                .advisors(new MyLoggerAdvisor())
-                // 应用知识库问答
-                //.advisors(new QuestionAnswerAdvisor(loveAppVectorStore))
-
-                //.advisors(loveAppRagCloudAdvisor)
-                //文本分割
-                .advisors(
-                        LoveAppRagCustomAdvisorFactory.createLoveAppRagCustomAdvisor(
-                                loveAppVectorStore, "已婚"
-                        )
-                )
-                .call()
-                .chatResponse();
-        String content = chatResponse.getResult().getOutput().getText();
-        log.info("content: {}", content);
-        return content;
     }
 
 
@@ -245,6 +196,26 @@ public class LoveApp {
         String content = response.getResult().getOutput().getText();
         log.info("doChatWithRAGContext content length={}", content.length());
         return content;
+    }
+
+    /**
+     * 流式版本： 带 RAG 知识和 Intake 分析上下文的对话，逐 token 发送。
+ *
+     * @param originalMessage 用户原始输入， 用于记忆存储
+     * @param systemContext   额外注入系统提示词的上下文
+     * @param chatId          会话 ID
+     */
+    public Flux<String> doChatWithRAGContextStream(String originalMessage, String systemContext, String chatId) {
+        String enrichedSystem = SYSTEM_PROMPT
+                + (systemContext == null || systemContext.isBlank() ? "" : "\n\n" + systemContext);
+        return chatClient
+                .prompt()
+                .system(enrichedSystem)
+                .user(originalMessage)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                .stream()
+                .content();
     }
 
 }

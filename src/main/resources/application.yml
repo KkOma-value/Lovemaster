@@ -41,6 +41,12 @@ spring:
     test-connection: false  # 禁用启动时测试连接
     default-encoding: UTF-8
   ai:
+    dashscope:
+      api-key: ${DASHSCOPE_API_KEY:${AI_DASHSCOPE_API_KEY:}}
+      chat:
+        api-key: ${spring.ai.dashscope.api-key}
+        options:
+          model: ${DASHSCOPE_CHAT_MODEL:qwen-plus}
     mcp:
       client:
         # MCP client 默认开启；若需禁用可设置 APP_MCP_CLIENT_ENABLED=false
@@ -70,12 +76,6 @@ app:
     allowed-types: image/jpeg,image/png,image/webp
   mcp:
     autostart: ${APP_MCP_AUTOSTART:true}
-  rag:
-    vectorstore:
-      load-mode: ${APP_RAG_LOAD_MODE:off}
-      load:
-        max-attempts: ${APP_RAG_LOAD_MAX_ATTEMPTS:3}
-        backoff-seconds: ${APP_RAG_LOAD_BACKOFF_SECONDS:5}
 
 dify:
   api:

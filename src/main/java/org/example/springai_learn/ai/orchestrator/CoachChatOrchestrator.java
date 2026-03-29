@@ -8,6 +8,7 @@ import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.CoachRoutingDecision;
 import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
+import org.example.springai_learn.ai.service.AiErrorMessageResolver;
 import org.example.springai_learn.ai.service.CoachRoutingService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
@@ -109,7 +110,7 @@ public class CoachChatOrchestrator {
                 kkomaManus.runStream(decision.toolTaskPrompt(), emitter);
             } catch (Exception e) {
                 log.error("CoachChatOrchestrator 处理失败: {}", e.getMessage(), e);
-                sseEventHelper.send(emitter, "error", "处理失败：" + e.getMessage());
+                sseEventHelper.send(emitter, "error", "处理失败：" + AiErrorMessageResolver.resolve(e));
                 emitter.complete();
             }
         });

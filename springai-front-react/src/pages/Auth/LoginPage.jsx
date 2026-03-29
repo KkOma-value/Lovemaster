@@ -49,7 +49,7 @@ export default function LoginPage() {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div className={styles.logoContainer}>
-          <h1 className={styles.logoTitle}>🌻 Lovemaster</h1>
+          <h1 className={styles.logoTitle}>Lovemaster</h1>
         </div>
 
         {error && <div className={styles.errorMessage}>{error}</div>}

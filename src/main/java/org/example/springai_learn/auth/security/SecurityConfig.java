@@ -1,5 +1,6 @@
 package org.example.springai_learn.auth.security;
 
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.repository.UserRepository;
@@ -38,7 +39,8 @@ public class SecurityConfig {
             http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         } else {
             http.authorizeHttpRequests(auth -> auth
-                            .requestMatchers("/auth/register", "/auth/login", "/auth/refresh").permitAll()
+                            .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
+                            .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/logout").permitAll()
                             .requestMatchers("/health", "/error").permitAll()
                             .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                             .requestMatchers(HttpMethod.GET, "/files/**").permitAll()

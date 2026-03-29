@@ -28,12 +28,22 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
     console.log(`[${label}] Creating SSE connection to:`, url);
     const eventSource = new EventSource(url);
     let isClosed = false;
+    let terminalMessageReceived = false;
 
     const safeClose = () => {
         if (!isClosed) {
             isClosed = true;
             eventSource.close();
             console.log(`[${label}] Connection closed`);
+        }
+    };
+
+    const isTerminalServerError = (rawData) => {
+        try {
+            const parsed = JSON.parse(rawData);
+            return parsed?.type === 'error';
+        } catch {
+            return false;
         }
     };
 
@@ -46,6 +56,7 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
         console.log(`[${label}] Received data:`, data);
 
         if (isDone(data)) {
+            terminalMessageReceived = true;
             console.log(`[${label}] Done signal received`);
             safeClose();
             onComplete?.();
@@ -53,19 +64,30 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
         }
 
         onData?.(data);
+
+        if (isTerminalServerError(data)) {
+            terminalMessageReceived = true;
+            safeClose();
+        }
     };
 
-    eventSource.onerror = (error) => {
-        console.error(`[${label}] Error:`, error);
-
-        if (eventSource.readyState === EventSource.CLOSED && !isClosed) {
+    eventSource.onerror = () => {
+        // Suppress all errors after terminal message or intentional close
+        if (terminalMessageReceived || isClosed) {
             safeClose();
-            onComplete?.();
+            return;
+        }
+
+        console.warn(`[${label}] Connection error (readyState: ${eventSource.readyState})`);
+
+        if (eventSource.readyState === EventSource.CLOSED) {
+            safeClose();
+            onError?.(new Error('SSE connection closed unexpectedly'));
             return;
         }
 
         safeClose();
-        onError?.(error);
+        onError?.(new Error('SSE connection error'));
     };
 
     return eventSource;

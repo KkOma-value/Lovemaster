@@ -36,9 +36,19 @@ dist/
 
 # Sensitive configuration files
 **/application-local.properties
+**/application-local.yml
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Super Dev generated files
+.super-dev/
+output/
+
+# Playwright MCP
+.playwright-mcp/
 
 # Temporary files
-
 .codeartsdoer
 nul
 2026-03-26-182413-local-command-caveatcaveat-the-messages-below-w.txt

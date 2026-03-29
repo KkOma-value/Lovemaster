@@ -1,7 +1,6 @@
 package org.example.springai_learn.mcp;
 
 import lombok.extern.slf4j.Slf4j;
-import org.example.springai_learn.rag.LoveAppVectorStoreLoader;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -30,19 +29,16 @@ public class McpServerAutoStarter {
     private final Environment environment;
     private final ApplicationContext applicationContext;
     private final McpBuildRunner buildRunner;
-    private final LoveAppVectorStoreLoader vectorStoreLoader;
 
     public McpServerAutoStarter(
             Environment environment,
             ApplicationContext applicationContext,
-            McpBuildRunner buildRunner,
-            LoveAppVectorStoreLoader vectorStoreLoader
+            McpBuildRunner buildRunner
     ) {
         this.autostartEnabled = Boolean.parseBoolean(environment.getProperty("app.mcp.autostart", "true"));
         this.environment = environment;
         this.applicationContext = applicationContext;
         this.buildRunner = buildRunner;
-        this.vectorStoreLoader = vectorStoreLoader;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -88,7 +84,6 @@ public class McpServerAutoStarter {
 
         log.info("MCP autostart: build succeeded. Enabling MCP client (stdio) in background...");
         initializeMcpClient();
-        triggerDocumentReloadIfNeeded("mcp-autostart");
     }
 
     private void initializeMcpClient() {
@@ -125,11 +120,4 @@ public class McpServerAutoStarter {
         }
     }
 
-    private void triggerDocumentReloadIfNeeded(String reason) {
-        if (vectorStoreLoader == null) {
-            return;
-        }
-
-        vectorStoreLoader.triggerRetryIfNotLoaded(reason);
-    }
 }

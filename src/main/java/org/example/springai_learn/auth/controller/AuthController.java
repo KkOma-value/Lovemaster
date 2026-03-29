@@ -59,8 +59,9 @@ public class AuthController {
     public ResponseEntity<?> logout(Authentication authentication) {
         ResponseEntity<?> check = checkAvailable();
         if (check != null) return check;
-        String userId = (String) authentication.getPrincipal();
-        authService.logout(userId);
+        if (authentication != null && authentication.getPrincipal() instanceof String userId && !userId.isBlank()) {
+            authService.logout(userId);
+        }
         return ResponseEntity.ok(Map.of("message", "已登出"));
     }
 
@@ -70,6 +71,9 @@ public class AuthController {
         if (check != null) return check;
         try {
             String refreshToken = request.get("refreshToken");
+            if (refreshToken == null || refreshToken.isBlank()) {
+                refreshToken = request.get("token");
+            }
             AuthResponse response = authService.refreshToken(refreshToken);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {

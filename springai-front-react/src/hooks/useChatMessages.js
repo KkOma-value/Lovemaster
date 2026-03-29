@@ -2,9 +2,6 @@ import { useState, useCallback, useRef } from 'react';
 
 /**
  * Custom hook for managing chat messages and streaming state
- * Handles message list, input value, loading state, and streaming status
- *
- * @returns {Object} Message state and handlers
  */
 export const useChatMessages = () => {
     const [messages, setMessages] = useState([]);
@@ -14,6 +11,7 @@ export const useChatMessages = () => {
     const currentResponseRef = useRef('');
 
     const addStreamingContent = useCallback((newChunk) => {
+        currentResponseRef.current += newChunk;
         setMessages(prev => {
             const lastMsg = prev[prev.length - 1];
             if (lastMsg?.role === 'assistant' && lastMsg.isStreaming) {
@@ -48,6 +46,7 @@ export const useChatMessages = () => {
     }, []);
 
     const addUserMessage = useCallback((content, imageUrl = null) => {
+        currentResponseRef.current = '';
         setMessages(prev => [...prev, { role: 'user', content, ...(imageUrl && { imageUrl }) }]);
     }, []);
 
@@ -70,19 +69,14 @@ export const useChatMessages = () => {
     }, []);
 
     return {
-        // State
         messages,
         inputValue,
         isLoading,
         streamingStatus,
         currentResponseRef,
-
-        // Setters
         setInputValue,
         setStreamingStatus,
         setIsLoading,
-
-        // Actions
         addStreamingContent,
         finalizeStreaming,
         addUserMessage,

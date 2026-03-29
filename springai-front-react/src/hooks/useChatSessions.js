@@ -22,6 +22,18 @@ export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
         return newChat;
     }, []);
 
+    // Auto-create a new chat when user sends first message
+    const autoCreateChat = useCallback((messageText) => {
+        const newId = `chat_${Date.now()}`;
+        const title = messageText.length > 20
+            ? messageText.substring(0, 20) + '...'
+            : messageText;
+        const newChat = { id: newId, title };
+        setChatList(prev => [newChat, ...prev]);
+        setCurrentChatId(newId);
+        return newChat;
+    }, []);
+
     // Load sessions from backend on mount
     useEffect(() => {
         const loadSessions = async () => {
@@ -30,17 +42,15 @@ export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
                 if (sessions.length > 0) {
                     setChatList(sessions);
                     setCurrentChatId(sessions[0].id);
-                } else {
-                    createNewChat();
                 }
+                // Note: No longer auto-create initial chats - they will be created on first message
             } catch (error) {
                 console.error('Failed to load sessions:', error);
-                createNewChat();
             }
         };
 
         loadSessions();
-    }, [chatType, createNewChat]);
+    }, [chatType]);
 
     const deleteChat = useCallback(async (chatId, removePanelDataFromStorage) => {
         try {
@@ -86,6 +96,7 @@ export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
 
         // Actions
         createNewChat,
+        autoCreateChat,
         deleteChat,
         updateChatTitle,
         setChatList

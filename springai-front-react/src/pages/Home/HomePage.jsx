@@ -135,9 +135,9 @@ const HomePage = () => {
         };
     }, [showVideo]);
 
-    // Track card index for staggered entrance delay
+    // Track card index for staggered entrance delay - 0.2s between each card
     let cardIndex = 0;
-    const nextDelay = () => `${(cardIndex++) * 0.035}s`;
+    const nextDelay = () => `${(cardIndex++) * 0.2}s`;
 
     return (
         <>
@@ -264,7 +264,7 @@ const HomePage = () => {
                                 <div
                                     key={feature.title}
                                     className={`${styles.featureItem} ${styles.staggerIn}`}
-                                    style={{ animationDelay: `${(cardIndex + i) * 0.035}s` }}
+                                    style={{ animationDelay: `${(cardIndex + i) * 0.2}s` }}
                                 >
                                     <div className={styles.featureItemIcon} aria-hidden="true">
                                         <FeatureIcon size={28} />

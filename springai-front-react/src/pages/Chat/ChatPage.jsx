@@ -20,7 +20,7 @@ const ChatPage = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     // SSE connection
-    const { connectSSE, cleanupSSE, currentResponseRef } = useSSEConnection(chatType);
+    const { connectSSE, cleanupSSE } = useSSEConnection(chatType);
 
     // Message state
     const {
@@ -50,6 +50,7 @@ const ChatPage = () => {
         currentChatId,
         setCurrentChatId,
         createNewChat,
+        autoCreateChat,
         deleteChat,
         updateChatTitle
     } = useChatSessions(chatType, cleanupSSE, panelDataHook.resetPanel);
@@ -96,9 +97,11 @@ const ChatPage = () => {
         const textToUse = msgText || inputValue;
         if ((!textToUse.trim() && !imageUrl) || isLoading) return;
 
-        if (!currentChatId) {
-            window.alert('请先新建或选择对话再发送。');
-            return;
+        // Auto-create chat if no current chat exists
+        let activeChatId = currentChatId;
+        if (!activeChatId) {
+            const newChat = autoCreateChat(textToUse.trim());
+            activeChatId = newChat.id;
         }
 
         const userMessage = textToUse.trim();
@@ -127,12 +130,12 @@ const ChatPage = () => {
         }
 
         // Update chat title if this is the first user message
-        const currentChat = chatList.find(c => c.id === currentChatId);
+        const currentChat = chatList.find(c => c.id === activeChatId);
         if (currentChat?.title === '新的对话') {
             const title = userMessage.length > 20
                 ? userMessage.substring(0, 20) + '...'
                 : userMessage;
-            updateChatTitle(currentChatId, title);
+            updateChatTitle(activeChatId, title);
         }
 
         // SSE message handlers
@@ -170,6 +173,7 @@ const ChatPage = () => {
                     break;
 
                 case 'done':
+                    // finalizeStreaming now handles skipping typewriter and showing all content
                     finalizeStreaming();
                     if (showManusPanel) {
                         panelDataHook.completeAllTasks();
@@ -179,6 +183,8 @@ const ChatPage = () => {
 
                 case 'error':
                     setStreamingStatus({ type: 'error', content: parsed.content });
+                    addErrorMessage(parsed.content || '抱歉，AI 服务暂时不可用。');
+                    finalizeStreaming();
                     if (showManusPanel) {
                         panelDataHook.addTerminalOutput(`错误: ${parsed.content}`, 'error');
                     }
@@ -193,30 +199,32 @@ const ChatPage = () => {
 
         const handleError = (error) => {
             console.error('SSE Error:', error);
-            if (!currentResponseRef.current) {
-                addErrorMessage('抱歉，连接出现问题，请稍后重试。');
-            }
+            // Always add error message and reset loading state
+            addErrorMessage('抱歉，连接出现问题，请稍后重试。');
             finalizeStreaming();
+            setIsLoading(false);
+            setStreamingStatus(null);
         };
 
         const handleComplete = () => {
             setStreamingStatus(null);
             finalizeStreaming();
+            setIsLoading(false);
             refreshMessages();
         };
 
         // Create SSE connection
-        connectSSE(userMessage, currentChatId, imageUrl, {
+        connectSSE(userMessage, activeChatId, imageUrl, {
             onData: handleMessage,
             onError: handleError,
             onComplete: handleComplete
         });
     }, [
         inputValue, isLoading, currentChatId, chatList,
-        cleanupSSE, connectSSE, currentResponseRef, showManusPanel,
+        cleanupSSE, connectSSE, showManusPanel,
         addUserMessage, setInputValue, setIsLoading, setStreamingStatus,
         addStreamingContent, finalizeStreaming, addErrorMessage,
-        updateChatTitle, refreshMessages, panelDataHook
+        updateChatTitle, refreshMessages, panelDataHook, autoCreateChat
     ]);
 
     // New chat handler

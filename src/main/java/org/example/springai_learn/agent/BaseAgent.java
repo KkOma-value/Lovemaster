@@ -3,6 +3,7 @@ package org.example.springai_learn.agent;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.agent.model.AgentState;
+import org.example.springai_learn.ai.service.AiErrorMessageResolver;
 import org.jsoup.internal.StringUtil;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -159,7 +160,7 @@ public abstract class BaseAgent {
         } catch (Exception e) {
             state = AgentState.ERROR;
             log.error("Error executing agent", e);
-            return "执行错误" + e.getMessage();
+            return "执行错误: " + AiErrorMessageResolver.resolve(e);
         } finally {
             // 清理资源
             this.cleanup();
@@ -273,7 +274,7 @@ public abstract class BaseAgent {
                     state = AgentState.ERROR;
                     log.error("执行智能体失败", e);
                     try {
-                        sendStreamMessage(emitter, "error", "执行错误: " + e.getMessage());
+                        sendStreamMessage(emitter, "error", "执行错误: " + AiErrorMessageResolver.resolve(e));
                         emitter.complete();
                     } catch (Exception ex) {
                         emitter.completeWithError(ex);
