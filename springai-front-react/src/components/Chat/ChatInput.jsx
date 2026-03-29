@@ -1,17 +1,18 @@
 import React, { useEffect, useRef } from 'react';
-import { Send } from 'lucide-react';
+import { Send, Paperclip } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import styles from './ChatArea.module.css';
 
 const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     const textareaRef = useRef(null);
-    const { 
-        compressImage, 
-        uploadImage, 
-        reset, 
-        isCompressing, 
-        isUploading, 
+    const fileInputRef = useRef(null);
+    const {
+        compressImage,
+        uploadImage,
+        reset,
+        isCompressing,
+        isUploading,
         progress,
         preview,
         compressedFile,
@@ -22,8 +23,7 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             const scrollHeight = textareaRef.current.scrollHeight;
-            const newHeight = Math.min(scrollHeight, 200);
-            textareaRef.current.style.height = `${newHeight}px`;
+            textareaRef.current.style.height = `${Math.min(scrollHeight, 200)}px`;
         }
     }, [inputValue]);
 
@@ -34,10 +34,10 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
         if (compressedFile) {
             try {
                 const result = await uploadImage();
-                uploadedImageUrl = result.url || result.fileName; // Assuming API returns URL or filename
+                uploadedImageUrl = result.url || result.fileName;
             } catch (err) {
                 console.error('Failed to upload', err);
-                return; // halt send if upload fails
+                return;
             }
         }
 
@@ -55,7 +55,7 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     return (
         <div className={styles.inputArea} style={{ position: 'relative' }}>
             {preview && (
-                <ImageUpload 
+                <ImageUpload
                     previewUrl={preview}
                     isCompressing={isCompressing}
                     isUploading={isUploading}
@@ -67,9 +67,6 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
                 />
             )}
             <div className={styles.inputWrapper}>
-                <ImageUpload 
-                    onImageSelect={compressImage}
-                />
                 <textarea
                     ref={textareaRef}
                     value={inputValue}
@@ -80,15 +77,36 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
                     rows={1}
                     disabled={isLoading || isUploading}
                 />
-                <button
-                    onClick={handleSend}
-                    disabled={(!inputValue.trim() && !compressedFile) || isLoading || isUploading}
-                    className={styles.sendBtn}
-                >
-                    <Send size={18} />
-                </button>
+                <div className={styles.inputToolbar}>
+                    <button
+                        type="button"
+                        className={styles.attachBtn}
+                        onClick={() => fileInputRef.current?.click()}
+                        title="上传截图"
+                        disabled={isCompressing || isUploading}
+                    >
+                        <Paperclip size={18} />
+                    </button>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                            const file = e.target.files[0];
+                            if (file) compressImage(file);
+                            if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                    />
+                    <button
+                        onClick={handleSend}
+                        disabled={(!inputValue.trim() && !compressedFile) || isLoading || isUploading}
+                        className={styles.sendBtn}
+                    >
+                        <Send size={18} />
+                    </button>
+                </div>
             </div>
-
         </div>
     );
 };

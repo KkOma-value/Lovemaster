@@ -1,0 +1,236 @@
+/* ============================================================
+   Navbar — Auto-hiding top navigation
+   Collapses upward when mouse leaves; reveals on hover
+   ============================================================ */
+
+.navWrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    transform: translateY(-100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When hovered or focused-within, slide into view */
+.navWrapper:hover,
+.navWrapper:focus-within,
+.navWrapper.visible {
+    transform: translateY(0);
+}
+
+/* Invisible trigger zone so users can reach the navbar */
+.hoverTrigger {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 18px;
+    z-index: 99;
+}
+
+/* The actual navbar bar */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 48px;
+    background: rgba(255, 250, 245, 0.72);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(196, 123, 90, 0.12);
+    box-shadow: 0 2px 16px rgba(100, 60, 30, 0.06);
+}
+
+/* Brand / left side */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: #2D1B0E;
+}
+
+.brandIcon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #C47B5A 0%, #DCA080 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(196, 123, 90, 0.25);
+}
+
+.brandName {
+    font-family: var(--font-display, 'Playfair Display', 'Noto Serif SC', serif);
+    font-size: 15px;
+    font-weight: 600;
+    color: #2D1B0E;
+}
+
+/* Right side actions */
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Auth buttons */
+.loginBtn,
+.registerBtn {
+    font-family: var(--font-body, 'Inter', 'Noto Sans SC', sans-serif);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    padding: 6px 14px;
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.loginBtn {
+    background: transparent;
+    color: #7A5C47;
+}
+
+.loginBtn:hover {
+    background: rgba(196, 123, 90, 0.08);
+    color: #C47B5A;
+}
+
+.loginBtn:focus-visible {
+    outline: 2px solid #C47B5A;
+    outline-offset: 2px;
+}
+
+.registerBtn {
+    background: linear-gradient(135deg, #C47B5A 0%, #B06A4A 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(196, 123, 90, 0.25);
+}
+
+.registerBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(196, 123, 90, 0.35);
+}
+
+.registerBtn:focus-visible {
+    outline: 2px solid #C47B5A;
+    outline-offset: 2px;
+}
+
+/* Logged-in user section */
+.userSection {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(196, 123, 90, 0.2);
+}
+
+.avatarPlaceholder {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #C47B5A, #DCA080);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.userName {
+    font-family: var(--font-body, 'Inter', sans-serif);
+    font-size: 13.5px;
+    font-weight: 500;
+    color: #2D1B0E;
+}
+
+.logoutBtn {
+    font-family: var(--font-body, 'Inter', sans-serif);
+    font-size: 12.5px;
+    font-weight: 500;
+    background: transparent;
+    border: 1px solid rgba(196, 123, 90, 0.2);
+    color: #7A5C47;
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.logoutBtn:hover {
+    background: rgba(196, 123, 90, 0.06);
+    border-color: rgba(196, 123, 90, 0.35);
+}
+
+.logoutBtn:focus-visible {
+    outline: 2px solid #C47B5A;
+    outline-offset: 2px;
+}
+
+.chatBtn {
+    font-family: var(--font-body, 'Inter', 'Noto Sans SC', sans-serif);
+    font-size: 12.5px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #C47B5A 0%, #B06A4A 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(196, 123, 90, 0.25);
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.chatBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(196, 123, 90, 0.35);
+}
+
+.chatBtn:focus-visible {
+    outline: 2px solid #C47B5A;
+    outline-offset: 2px;
+}
+
+/* ── Responsive ─────────────────────────────────────── */
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0 16px;
+        height: 50px;
+    }
+
+    .brandName {
+        font-size: 15px;
+    }
+
+    .userName {
+        display: none;
+    }
+}
+
+/* ── Reduced motion ─────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .navWrapper {
+        transition: none;
+    }
+
+    .loginBtn,
+    .registerBtn,
+    .logoutBtn,
+    .chatBtn {
+        transition: none;
+    }
+}

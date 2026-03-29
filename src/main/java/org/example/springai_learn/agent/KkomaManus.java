@@ -1,6 +1,5 @@
 package org.example.springai_learn.agent;
 
-import org.example.springai_learn.ChatMemory.FileBasedChatMemory;
 import org.example.springai_learn.advisor.MyLoggerAdvisor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.memory.ChatMemory;
@@ -18,16 +17,15 @@ import java.util.List;
 @Slf4j
 public class KkomaManus extends ToolCallAgent {
 
-        private static final String COACH_MEMORY_DIR = System.getProperty("user.dir") + "/tmp/chat-coach";
-
         private final String chatId;
         private final ChatMemory chatMemory;
 
         public KkomaManus(ToolCallback[] allTools, ChatModel dashscopeChatModel,
-                        ToolCallbackProvider mcpToolCallbackProvider, String chatId) {
+                        ToolCallbackProvider mcpToolCallbackProvider, String chatId,
+                        ChatMemory chatMemory) {
                 super(allTools, mcpToolCallbackProvider);
                 this.chatId = chatId;
-                this.chatMemory = new FileBasedChatMemory(COACH_MEMORY_DIR);
+                this.chatMemory = chatMemory;
 
                 this.setName("KkomaManus");
                 String SYSTEM_PROMPT = """

@@ -1,33 +1,30 @@
 package org.example.springai_learn.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.springai_learn.ChatMemory.FileBasedChatMemory;
+import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
+import org.example.springai_learn.auth.entity.ChatMessage;
+import org.example.springai_learn.auth.entity.Conversation;
 import org.example.springai_learn.dto.ChatSession;
-import org.springframework.ai.chat.messages.Message;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 会话管理控制器
- * 支持不同聊天类型使用不同的存储目录
+ * 基于数据库存储（Supabase PostgreSQL）
  */
 @RestController
 @RequestMapping("/ai/sessions")
 @CrossOrigin(originPatterns = "*", allowCredentials = "false")
+@RequiredArgsConstructor
 @Slf4j
 public class ChatSessionController {
 
-    @Value("${app.file-save-dir:${user.dir}/tmp}")
-    private String baseDir;
-
-    // 缓存不同类型的 ChatMemory 实例
-    private final Map<String, FileBasedChatMemory> memoryCache = new ConcurrentHashMap<>();
+    private final DatabaseChatMemory databaseChatMemory;
 
     private String getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -38,60 +35,22 @@ public class ChatSessionController {
     }
 
     /**
-     * 根据聊天类型和用户ID获取对应的 ChatMemory
-     *
-     * @param chatType loveapp 或 coach
-     * @param userId   用户ID
-     */
-    private FileBasedChatMemory getMemoryForType(String chatType, String userId) {
-        String type = chatType != null ? chatType.toLowerCase() : "loveapp";
-        String key = userId + ":" + type;
-        return memoryCache.computeIfAbsent(key, k -> {
-            String dir = switch (type) {
-                case "coach" -> baseDir + "/chat-coach/" + userId;
-                default -> baseDir + "/chat-memory/" + userId;
-            };
-            log.info("创建 ChatMemory 实例: type={}, userId={}, dir={}", type, userId, dir);
-            return new FileBasedChatMemory(dir);
-        });
-    }
-
-    /**
      * 获取所有会话列表
-     * 
-     * @param chatType 聊天类型: loveapp 或 coach
      */
     @GetMapping
     public List<ChatSession> listSessions(
             @RequestParam(defaultValue = "loveapp") String chatType) {
         String userId = getCurrentUserId();
         log.info("获取会话列表: chatType={}, userId={}", chatType, userId);
-        FileBasedChatMemory chatMemory = getMemoryForType(chatType, userId);
-        List<String> conversationIds = chatMemory.listConversationIds();
 
-        return conversationIds.stream()
-                .map(id -> {
-                    // 尝试获取会话的第一条用户消息作为标题
-                    List<Message> messages = chatMemory.get(id, 2);
-                    String title = "新的对话";
-                    for (Message msg : messages) {
-                        if ("USER".equals(msg.getMessageType().name())) {
-                            String content = msg.getText();
-                            title = content.length() > 20
-                                    ? content.substring(0, 20) + "..."
-                                    : content;
-                            break;
-                        }
-                    }
-                    return new ChatSession(id, title);
-                })
+        List<Conversation> conversations = databaseChatMemory.listConversations(userId, chatType);
+        return conversations.stream()
+                .map(conv -> new ChatSession(conv.getId(), conv.getTitle()))
                 .toList();
     }
 
     /**
      * 删除指定会话
-     * 
-     * @param chatType 聊天类型: loveapp 或 coach
      */
     @DeleteMapping("/{chatId}")
     public ResponseEntity<Map<String, Object>> deleteSession(
@@ -100,8 +59,7 @@ public class ChatSessionController {
         String userId = getCurrentUserId();
         log.info("删除会话: chatId={}, chatType={}, userId={}", chatId, chatType, userId);
         try {
-            FileBasedChatMemory chatMemory = getMemoryForType(chatType, userId);
-            chatMemory.clear(chatId);
+            databaseChatMemory.clear(chatId);
             return ResponseEntity.ok(Map.of("success", true, "message", "会话已删除"));
         } catch (Exception e) {
             log.error("删除会话失败: {}", chatId, e);
@@ -112,8 +70,6 @@ public class ChatSessionController {
 
     /**
      * 获取指定会话的消息历史
-     * 
-     * @param chatType 聊天类型: loveapp 或 coach
      */
     @GetMapping("/{chatId}/messages")
     public List<Map<String, String>> getMessages(
@@ -122,13 +78,12 @@ public class ChatSessionController {
             @RequestParam(defaultValue = "loveapp") String chatType) {
         String userId = getCurrentUserId();
         log.info("获取会话消息: chatId={}, limit={}, chatType={}, userId={}", chatId, limit, chatType, userId);
-        FileBasedChatMemory chatMemory = getMemoryForType(chatType, userId);
-        List<Message> messages = chatMemory.get(chatId, limit);
 
+        List<ChatMessage> messages = databaseChatMemory.getAllMessages(chatId);
         return messages.stream()
                 .map(msg -> Map.of(
-                        "role", msg.getMessageType().name().toLowerCase(),
-                        "content", msg.getText()))
+                        "role", msg.getRole(),
+                        "content", msg.getContent()))
                 .toList();
     }
 }

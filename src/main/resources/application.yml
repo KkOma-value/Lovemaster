@@ -72,10 +72,29 @@ app:
     autostart: ${APP_MCP_AUTOSTART:true}
   rag:
     vectorstore:
-      load-mode: ${APP_RAG_LOAD_MODE:async}
+      load-mode: ${APP_RAG_LOAD_MODE:off}
       load:
         max-attempts: ${APP_RAG_LOAD_MAX_ATTEMPTS:3}
         backoff-seconds: ${APP_RAG_LOAD_BACKOFF_SECONDS:5}
+
+dify:
+  api:
+    base-url: ${DIFY_API_BASE_URL:https://api.dify.ai/v1}
+    dataset-key: ${DIFY_DATASET_KEY:}
+    dataset-id: ${DIFY_DATASET_ID:}
+    retrieve:
+      search-method: ${DIFY_RETRIEVE_SEARCH_METHOD:hybrid_search}
+      reranking-enable: ${DIFY_RETRIEVE_RERANKING_ENABLE:false}
+      weights: ${DIFY_RETRIEVE_WEIGHTS:0.7}
+      top-k: ${DIFY_RETRIEVE_TOP_K:4}
+      score-threshold-enabled: ${DIFY_RETRIEVE_SCORE_THRESHOLD_ENABLED:false}
+      score-threshold: ${DIFY_RETRIEVE_SCORE_THRESHOLD:}
+    timeout:
+      connect-ms: ${DIFY_TIMEOUT_CONNECT_MS:5000}
+      read-ms: ${DIFY_TIMEOUT_READ_MS:10000}
+    retry:
+      max-attempts: ${DIFY_RETRY_MAX_ATTEMPTS:2}
+      backoff-ms: ${DIFY_RETRY_BACKOFF_MS:1000}
 
 # springdoc-openapi配置
 springdoc:

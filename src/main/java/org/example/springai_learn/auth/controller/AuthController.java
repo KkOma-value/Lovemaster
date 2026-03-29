@@ -1,11 +1,11 @@
 package org.example.springai_learn.auth.controller;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.dto.AuthResponse;
 import org.example.springai_learn.auth.dto.LoginRequest;
 import org.example.springai_learn.auth.dto.RegisterRequest;
 import org.example.springai_learn.auth.service.AuthService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,13 +16,23 @@ import java.util.Map;
 @RestController
 @RequestMapping("/auth")
 @Slf4j
-@RequiredArgsConstructor
 public class AuthController {
 
-    private final AuthService authService;
+    @Autowired
+    private AuthService authService;
+
+    private ResponseEntity<?> checkAvailable() {
+        if (!authService.isAvailable()) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(Map.of("error", "认证服务不可用（数据库未连接）"));
+        }
+        return null;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
         try {
             AuthResponse response = authService.register(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -35,6 +45,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
         try {
             AuthResponse response = authService.login(request);
             return ResponseEntity.ok(response);
@@ -45,6 +57,8 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(Authentication authentication) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
         String userId = (String) authentication.getPrincipal();
         authService.logout(userId);
         return ResponseEntity.ok(Map.of("message", "已登出"));
@@ -52,6 +66,8 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody Map<String, String> request) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
         try {
             String refreshToken = request.get("refreshToken");
             AuthResponse response = authService.refreshToken(refreshToken);
@@ -63,6 +79,8 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(Authentication authentication) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
         String userId = (String) authentication.getPrincipal();
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(userId);
         return ResponseEntity.ok(userInfo);

@@ -2,7 +2,6 @@ package org.example.springai_learn.advisor;
 
 import lombok.extern.slf4j.Slf4j;
 
-import org.example.springai_learn.ChatMemory.FileBasedChatMemory;
 import org.springframework.ai.chat.client.advisor.api.*;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -186,21 +185,16 @@ public class TabooWordAdvisor implements CallAroundAdvisor, StreamAroundAdvisor 
         return "default";
     }
     
-    // 记录拒绝事件到文件
+    // 记录拒绝事件到日志
     private void logRefusalEvent(AdvisedRequest advisedRequest, String userText) {
-        if (chatMemory instanceof FileBasedChatMemory fileMemory) {
-            try {
-                String conversationId = getConversationId(advisedRequest);
-                String timestamp = LocalDateTime.now().format(LOG_TIMESTAMP_FORMATTER);
-                // 限制记录的用户文本长度，避免日志过长
-                String userTextSnippet = userText.length() > 100 ? userText.substring(0, 100) + "..." : userText;
-                String logMessage = String.format("%s - ConversationID:[%s] - Taboo detected in message: [%s] - Returned refusal.", timestamp, conversationId, userTextSnippet);
-                fileMemory.logEventToFile(TABOO_LOG_FILE, logMessage);
-            } catch (Exception e) {
-                log.error("记录敏感词拒绝事件到文件失败", e);
-            }
-        } else if (chatMemory != null) {
-             log.warn("ChatMemory is not an instance of FileBasedChatMemory, cannot log refusal event to file.");
+        try {
+            String conversationId = getConversationId(advisedRequest);
+            String timestamp = LocalDateTime.now().format(LOG_TIMESTAMP_FORMATTER);
+            String userTextSnippet = userText.length() > 100 ? userText.substring(0, 100) + "..." : userText;
+            log.warn("TABOO_EVENT: {} - ConversationID:[{}] - Taboo detected in message: [{}] - Returned refusal.",
+                    timestamp, conversationId, userTextSnippet);
+        } catch (Exception e) {
+            log.error("记录敏感词拒绝事件失败", e);
         }
     }
     

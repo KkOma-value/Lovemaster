@@ -7,9 +7,9 @@
 .panelContainer {
     width: 420px;
     height: 100vh;
-    background: rgba(250, 247, 242, 0.85);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
+    background: var(--glass-panel);
+    backdrop-filter: blur(var(--glass-panel-blur));
+    -webkit-backdrop-filter: blur(var(--glass-panel-blur));
     border-left: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
@@ -30,9 +30,9 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    background: rgba(245, 239, 230, 0.80);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-header);
+    backdrop-filter: blur(var(--glass-header-blur));
+    -webkit-backdrop-filter: blur(var(--glass-header-blur));
     border-bottom: 1px solid var(--glass-border);
     flex-shrink: 0;
 }
@@ -89,9 +89,9 @@
     display: flex;
     gap: 0;
     padding: 0;
-    background: rgba(245, 239, 230, 0.75);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-header);
+    backdrop-filter: blur(var(--glass-header-blur));
+    -webkit-backdrop-filter: blur(var(--glass-header-blur));
     border-bottom: 1px solid var(--glass-border);
     flex-shrink: 0;
 }
@@ -138,9 +138,9 @@
 /* ---------- Terminal / Log Area ---------- */
 .terminal {
     flex: 1;
-    background: rgba(255, 253, 249, 0.88);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-panel);
+    backdrop-filter: blur(var(--glass-panel-blur));
+    -webkit-backdrop-filter: blur(var(--glass-panel-blur));
     font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
     font-size: 13px;
     line-height: 1.6;
@@ -237,9 +237,9 @@
 .taskProgress {
     padding: 14px 16px;
     border-top: 1px solid var(--glass-border);
-    background: rgba(245, 239, 230, 0.80);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-header);
+    backdrop-filter: blur(var(--glass-header-blur));
+    -webkit-backdrop-filter: blur(var(--glass-header-blur));
     flex-shrink: 0;
 }
 
@@ -339,9 +339,9 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
-    background: rgba(255, 253, 249, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-panel);
+    backdrop-filter: blur(var(--glass-panel-blur));
+    -webkit-backdrop-filter: blur(var(--glass-panel-blur));
     min-height: 0;
 }
 
@@ -498,9 +498,9 @@
     padding: 40px 32px;
     text-align: center;
     color: #B09080;
-    background: rgba(255, 253, 249, 0.80);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-panel);
+    backdrop-filter: blur(var(--glass-panel-blur));
+    -webkit-backdrop-filter: blur(var(--glass-panel-blur));
 }
 
 .emptyIcon {
@@ -540,9 +540,9 @@
     width: 36px;
     height: 48px;
     border-radius: 10px 0 0 10px;
-    background: rgba(245, 239, 230, 0.85);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    background: var(--glass-header);
+    backdrop-filter: blur(var(--glass-header-blur));
+    -webkit-backdrop-filter: blur(var(--glass-header-blur));
     border: 1px solid var(--glass-border);
     border-right: none;
     color: #7A5C47;

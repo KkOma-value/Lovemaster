@@ -110,7 +110,16 @@ const ChatPage = () => {
         addUserMessage(userMessage, imageUrl);
         setInputValue('');
         setIsLoading(true);
-        setStreamingStatus({ type: 'thinking', content: '正在思考中...' });
+        setStreamingStatus({
+            type: imageUrl ? 'intake_status' : 'thinking',
+            content: imageUrl
+                ? (showManusPanel
+                    ? '正在读取聊天截图，并判断这件事要不要进入任务执行...'
+                    : '正在识别聊天截图，准备给你回复建议...')
+                : (showManusPanel
+                    ? '正在整理问题，并判断是否需要继续执行任务...'
+                    : '正在分析对话语气，准备回复建议...')
+        });
 
         // Reset panel data for new message
         if (showManusPanel) {
@@ -136,6 +145,15 @@ const ChatPage = () => {
             switch (parsed.type) {
                 case 'thinking':
                 case 'status':
+                case 'intake_status':
+                case 'ocr_result':
+                case 'rewrite_result':
+                    setStreamingStatus({ type: parsed.type, content: parsed.content });
+                    if (showManusPanel && panelDataHook.isPanelOpen && parsed.content) {
+                        panelDataHook.addTerminalOutput(`[${parsed.type}] ${parsed.content}`);
+                    }
+                    break;
+
                 case 'tool_call':
                     setStreamingStatus({ type: parsed.type, content: parsed.content });
                     if (showManusPanel && parsed.content) {
@@ -178,6 +196,7 @@ const ChatPage = () => {
             if (!currentResponseRef.current) {
                 addErrorMessage('抱歉，连接出现问题，请稍后重试。');
             }
+            finalizeStreaming();
         };
 
         const handleComplete = () => {

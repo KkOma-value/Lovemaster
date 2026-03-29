@@ -189,6 +189,10 @@ public abstract class BaseAgent {
     public SseEmitter runStream(String userPrompt) {
         // 创建SseEmitter，设置较长的超时时间
         SseEmitter emitter = new SseEmitter(300000L); // 5分钟超时
+        return runStream(userPrompt, emitter);
+    }
+
+    public SseEmitter runStream(String userPrompt, SseEmitter emitter) {
         this.currentEmitter = emitter;
 
         // 使用线程异步处理，避免阻塞主线程

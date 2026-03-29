@@ -4,7 +4,7 @@ import java.util.*;
 
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.example.springai_learn.ChatMemory.FileBasedChatMemory;
+import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.advisor.MyLoggerAdvisor;
 import org.example.springai_learn.advisor.ReReadingAdvisor;
 import org.example.springai_learn.advisor.TabooWordAdvisor;
@@ -74,21 +74,11 @@ public class LoveApp {
             "例如：\n" +
             "\"听起来你在这段关系中感到不安...[分析原因]...或许可以尝试...[具体建议]...记住你的感受很重要...\"";
 
-    public LoveApp(ChatModel dashscopeCHatModel) {
-        //初始化基于文件的对话记忆
-        String fileDir = System.getProperty("user.dir") + "/tmp/chat-memory";
-        ChatMemory chatMemory = new FileBasedChatMemory(fileDir);
+    public LoveApp(ChatModel dashscopeCHatModel, DatabaseChatMemory databaseChatMemory) {
         chatClient = ChatClient.builder(dashscopeCHatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
-                        new MessageChatMemoryAdvisor(chatMemory)
-                        // 暂时注释掉TabooWordAdvisor，测试是否导致重复输出
-                        // new TabooWordAdvisor(chatMemory)
-                        //自定义拦截器 日志
-                        //new MyLoggerAdvisor()
-
-                        //Re-Reading拦截器
-                        //new ReReadingAdvisor()
+                        new MessageChatMemoryAdvisor(databaseChatMemory)
                 )
                 .build();
     }
@@ -230,6 +220,31 @@ public class LoveApp {
                         .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
                 .stream()
                 .content();
+    }
+
+    /**
+     * 带 RAG 知识和 Intake 分析上下文的对话。
+     * 将 RAG 知识和 intake 分析注入系统提示词，用户原始消息作为 user 消息保存至记忆，
+     * 避免把内部富化 prompt 写入对话历史。
+     *
+     * @param originalMessage 用户原始输入，用于记忆存储
+     * @param systemContext   额外注入系统提示词的上下文（如 RAG 知识 + intake 分析）
+     * @param chatId          会话 ID
+     */
+    public String doChatWithRAGContext(String originalMessage, String systemContext, String chatId) {
+        String enrichedSystem = SYSTEM_PROMPT
+                + (systemContext == null || systemContext.isBlank() ? "" : "\n\n" + systemContext);
+        ChatResponse response = chatClient
+                .prompt()
+                .system(enrichedSystem)
+                .user(originalMessage)
+                .advisors(spec -> spec.param(CHAT_MEMORY_CONVERSATION_ID_KEY, chatId)
+                        .param(CHAT_MEMORY_RETRIEVE_SIZE_KEY, 10))
+                .call()
+                .chatResponse();
+        String content = response.getResult().getOutput().getText();
+        log.info("doChatWithRAGContext content length={}", content.length());
+        return content;
     }
 
 }

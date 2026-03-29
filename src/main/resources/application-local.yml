@@ -3,12 +3,16 @@
 # 请将真实密钥填入本文件或使用环境变量注入（推荐）。
 
 spring:
+  datasource:
+    url: jdbc:postgresql://db.lzmuiapfrehnnjeppqfe.supabase.co:5432/postgres?sslmode=require
+    username: postgres
+    password: 302li123jin...
   ai:
     dashscope:
       api-key: sk-2a6ad1884b924b00b3fd008a203f5657
       chat:
         options:
-          model: qwen-turbo
+          model: qwen3.5-plus
   mail:
     host: smtp.qq.com
     port: 465
@@ -33,3 +37,24 @@ pexels:
 
 app:
   file-save-dir: D:/JavaCode/Lovemaster/tmp-shared
+  rag:
+    vectorstore:
+      load-mode: off
+
+dify:
+  api:
+    base-url: https://api.dify.ai/v1
+    dataset-key: dataset-SpQIKc3RKWwtZrC4GWixaU6u
+    dataset-id: SpQIKc3RKWwtZrC4GWixaU6u
+    retrieve:
+      search-method: hybrid_search
+      reranking-enable: false
+      weights: 0.7
+      top-k: 4
+      score-threshold-enabled: false
+    timeout:
+      connect-ms: 5000
+      read-ms: 10000
+    retry:
+      max-attempts: 2
+      backoff-ms: 1000

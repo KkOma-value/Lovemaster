@@ -38,7 +38,29 @@
       "mcp__chrome-devtools__fill",
       "WebFetch(domain:dribbble.com)",
       "WebSearch",
-      "WebFetch(domain:cdn.dribbble.com)"
+      "WebFetch(domain:cdn.dribbble.com)",
+      "WebFetch(domain:help.aliyun.com)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "WebFetch(domain:bailian.console.aliyun.com)",
+      "WebFetch(domain:www.alibabacloud.com)",
+      "WebFetch(domain:supabase.com)",
+      "WebFetch(domain:github.com)",
+      "mcp__supabase__list_projects",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__execute_sql",
+      "WebFetch(domain:docs.dify.ai)",
+      "WebFetch(domain:legacy-docs.dify.ai)",
+      "WebFetch(domain:arxiv.org)",
+      "WebFetch(domain:dextralabs.com)",
+      "WebFetch(domain:microsoft.github.io)",
+      "WebFetch(domain:letsdatascience.com)",
+      "WebFetch(domain:www.unite.ai)",
+      "WebFetch(domain:fast.io)",
+      "WebFetch(domain:www.comet.com)",
+      "WebFetch(domain:ideausher.com)",
+      "WebFetch(domain:spectrum.ieee.org)"
     ]
   }
 }

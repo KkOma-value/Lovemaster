@@ -23,8 +23,26 @@ const StreamingStatus = ({ type, content, isVisible = true }) => {
             case 'thinking':
                 return {
                     icon: <Brain size={16} color="#8B5CF6" style={{ animation: 'pulse 1s infinite' }} />,
-                    label: content || 'Thinking...',
+                    label: content || '正在思考',
                     style: { ...baseStyle, backgroundColor: '#F3E8FF', color: '#7C3AED' }
+                };
+            case 'intake_status':
+                return {
+                    icon: <Sparkles size={16} color="#0F766E" style={{ animation: 'pulse 1s infinite' }} />,
+                    label: content || '正在读取截图和整理问题',
+                    style: { ...baseStyle, backgroundColor: '#DFF7F3', color: '#115E59' }
+                };
+            case 'ocr_result':
+                return {
+                    icon: <Search size={16} color="#0F766E" />,
+                    label: content || '截图识别完成',
+                    style: { ...baseStyle, backgroundColor: '#ECFDF5', color: '#047857' }
+                };
+            case 'rewrite_result':
+                return {
+                    icon: <Sparkles size={16} color="#BE185D" />,
+                    label: content || '问题已重写',
+                    style: { ...baseStyle, backgroundColor: '#FCE7F3', color: '#BE185D' }
                 };
             case 'status':
                 if (content?.includes('搜索') || content?.includes('查找')) {
@@ -56,25 +74,25 @@ const StreamingStatus = ({ type, content, isVisible = true }) => {
             case 'tool_call':
                 return {
                     icon: <Wrench size={16} color="#F59E0B" style={{ animation: 'pulse 1s infinite' }} />,
-                    label: content || 'Calling Tool...',
+                    label: content || '正在进入任务执行',
                     style: { ...baseStyle, backgroundColor: '#FEF3C7', color: '#D97706' }
                 };
             case 'done':
                 return {
                     icon: <CheckCircle size={16} color="#10B981" />,
-                    label: 'Done',
+                    label: '已完成',
                     style: { ...baseStyle, backgroundColor: '#D1FAE5', color: '#059669' }
                 };
             case 'error':
                 return {
                     icon: <AlertCircle size={16} color="#EF4444" />,
-                    label: content || 'Error',
+                    label: content || '处理失败',
                     style: { ...baseStyle, backgroundColor: '#FEE2E2', color: '#DC2626' }
                 };
             default:
                 return {
                     icon: <Sparkles size={16} color="#FDA4AF" style={{ animation: 'pulse 1s infinite' }} />,
-                    label: content || 'Processing...',
+                    label: content || '正在处理',
                     style: { ...baseStyle, backgroundColor: '#FFF1F2', color: '#BE123C' }
                 };
         }

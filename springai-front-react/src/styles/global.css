@@ -89,18 +89,34 @@
   --shadow-soft:   0 10px 30px rgba(196, 123, 90, 0.18);
 
   /* ── Radius ──────────────────────────────────── */
-  --radius-sm:   12px;
-  --radius-md:   20px;
-  --radius-lg:   28px;
-  --radius-xl:   32px;
-  --radius-full: 999px;
+  --radius-sm:   16px;
+  --radius-md:   24px;
+  --radius-lg:   32px;
+  --radius-xl:   40px;
+  --radius-full: 9999px;
 
   /* ── Glassmorphism ──────────────────────────── */
-  --glass-bg:          rgba(255, 253, 249, 0.72);
-  --glass-bg-strong:   rgba(255, 253, 249, 0.85);
-  --glass-bg-light:    rgba(255, 253, 249, 0.55);
-  --glass-border:      rgba(255, 255, 255, 0.3);
-  --glass-blur:        20px;
+  --glass-bg:          rgba(255, 255, 255, 0.45);
+  --glass-bg-strong:   rgba(255, 255, 255, 0.75);
+  --glass-bg-light:    rgba(255, 255, 255, 0.35);
+  --glass-border:      rgba(255, 255, 255, 0.4);
+  --glass-blur:        40px;
+
+  /* ── Semantic Glass Tokens (PRD Standards) ───── */
+  --glass-sidebar:     rgba(245, 239, 230, 0.80);
+  --glass-sidebar-blur: 20px;
+  
+  --glass-header:      rgba(255, 253, 249, 0.88);
+  --glass-header-blur: 16px;
+  
+  --glass-panel:       rgba(255, 253, 249, 0.85);
+  --glass-panel-blur:  20px;
+  
+  --glass-ai-bubble:   rgba(255, 253, 249, 0.90);
+  --glass-ai-blur:     12px;
+  
+  --glass-input:       rgba(255, 250, 245, 0.90);
+  --glass-input-blur:  12px;
 
   /* ── Typography ──────────────────────────────── */
   --font-display: 'Playfair Display', 'Noto Serif SC', 'Source Han Serif CN', 'FZShuSong-Z01', serif;
@@ -129,8 +145,11 @@ html, body, #root {
 }
 
 body {
-  /* Background moved to page-level CSS (each page has its own bg image) */
-  background-color: var(--bg-base);
+  background-color: var(--bg-surface);
+  background-image: radial-gradient(circle at 50% 0%, #FAEDDF 0%, transparent 60%),
+                    radial-gradient(circle at 100% 100%, #EAE0D5 0%, transparent 50%),
+                    radial-gradient(circle at 0% 100%, #F5C9A8 0%, transparent 50%);
+  background-attachment: fixed;
   color: var(--text-primary);
   font-family: var(--font-body);
   line-height: 1.6;

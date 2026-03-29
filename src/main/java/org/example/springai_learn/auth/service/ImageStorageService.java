@@ -1,10 +1,10 @@
 package org.example.springai_learn.auth.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.dto.ImageUploadResponse;
 import org.example.springai_learn.auth.entity.UserImage;
 import org.example.springai_learn.auth.repository.UserImageRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ImageStorageService {
 
-    private final UserImageRepository userImageRepository;
+    @Autowired(required = false)
+    private UserImageRepository userImageRepository;
 
     @Value("${app.file-save-dir:${user.dir}/tmp}")
     private String baseSaveDir;
@@ -31,6 +31,10 @@ public class ImageStorageService {
 
     @Value("${app.image.allowed-types:image/jpeg,image/png,image/webp}")
     private String allowedTypes;
+
+    public boolean isAvailable() {
+        return userImageRepository != null;
+    }
 
     public ImageUploadResponse store(MultipartFile file, String userId, String imageType) throws IOException {
         // Validate
@@ -62,22 +66,26 @@ public class ImageStorageService {
         file.transferTo(filePath.toFile());
         log.info("图片已保存: path={}, size={}", filePath, file.getSize());
 
-        // Save to database
-        UserImage userImage = UserImage.builder()
-                .userId(userId)
-                .fileName(fileName)
-                .originalName(originalName)
-                .fileSize(file.getSize())
-                .contentType(contentType)
-                .imageType(imageType)
-                .build();
-        userImageRepository.save(userImage);
+        // Save to database if available
+        String imageId = null;
+        if (userImageRepository != null) {
+            UserImage userImage = UserImage.builder()
+                    .userId(userId)
+                    .fileName(fileName)
+                    .originalName(originalName)
+                    .fileSize(file.getSize())
+                    .contentType(contentType)
+                    .imageType(imageType)
+                    .build();
+            userImageRepository.save(userImage);
+            imageId = userImage.getId();
+        }
 
         // Build access URL
         String url = "/api/images/" + userId + "/" + imageType + "/" + fileName;
 
         return ImageUploadResponse.builder()
-                .id(userImage.getId())
+                .id(imageId)
                 .url(url)
                 .fileName(fileName)
                 .fileSize(file.getSize())

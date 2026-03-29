@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import AppLayout from './components/Layout/AppLayout';
+import Navbar from './components/Navbar/Navbar';
 import HomePage from './pages/Home/HomePage';
 import ChatPage from './pages/Chat/ChatPage';
 import LoginPage from './pages/Auth/LoginPage';
@@ -31,6 +32,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
+        <Navbar />
         <AppLayout>
           <AnimatedRoutes />
         </AppLayout>

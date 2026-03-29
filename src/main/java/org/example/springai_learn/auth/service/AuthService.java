@@ -1,6 +1,5 @@
 package org.example.springai_learn.auth.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.dto.AuthResponse;
 import org.example.springai_learn.auth.dto.LoginRequest;
@@ -9,6 +8,7 @@ import org.example.springai_learn.auth.entity.RefreshToken;
 import org.example.springai_learn.auth.entity.User;
 import org.example.springai_learn.auth.repository.RefreshTokenRepository;
 import org.example.springai_learn.auth.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,14 +16,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
-    private final JwtService jwtService;
-    private final PasswordEncoder passwordEncoder;
+    @Autowired(required = false)
+    private UserRepository userRepository;
+
+    @Autowired(required = false)
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    public boolean isAvailable() {
+        return userRepository != null;
+    }
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
