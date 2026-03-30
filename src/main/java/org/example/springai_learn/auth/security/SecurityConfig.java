@@ -40,7 +40,7 @@ public class SecurityConfig {
         } else {
             http.authorizeHttpRequests(auth -> auth
                             .dispatcherTypeMatchers(DispatcherType.ASYNC, DispatcherType.ERROR).permitAll()
-                            .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/logout").permitAll()
+                            .requestMatchers("/auth/register", "/auth/login", "/auth/refresh", "/auth/logout", "/auth/google").permitAll()
                             .requestMatchers("/health", "/error").permitAll()
                             .requestMatchers(HttpMethod.GET, "/images/**").permitAll()
                             .requestMatchers(HttpMethod.GET, "/files/**").permitAll()

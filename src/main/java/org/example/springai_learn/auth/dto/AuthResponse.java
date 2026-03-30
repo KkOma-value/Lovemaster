@@ -13,6 +13,8 @@ public class AuthResponse {
     private UserInfo user;
     private String accessToken;
     private String refreshToken;
+    private boolean needsPassword;
+    private boolean newUser;
 
     @Data
     @Builder

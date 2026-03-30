@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../../contexts/AuthContext';
 import styles from './AuthPage.module.css';
 
@@ -12,7 +13,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   
   const navigate = useNavigate();
-  const { login, isAuthenticated } = useAuth();
+  const { login, googleLogin, isAuthenticated } = useAuth();
 
   // If already logged in, redirect to chat
   if (isAuthenticated) {
@@ -93,8 +94,42 @@ export default function LoginPage() {
           </button>
         </form>
 
+        <div className={styles.divider} role="separator" aria-hidden="true">
+          <span className={styles.dividerText}>or</span>
+        </div>
+
+        <div className={styles.googleButtonContainer}>
+          <GoogleLogin
+            onSuccess={async (credentialResponse) => {
+              setIsLoading(true);
+              setError('');
+              try {
+                const data = await googleLogin(credentialResponse.credential);
+                if (data.needsPassword) {
+                  navigate('/set-password');
+                } else {
+                  navigate('/chat');
+                }
+              } catch (err) {
+                console.error(err);
+                setError(err.response?.data?.error || 'Google login failed. Please try again.');
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            onError={() => {
+              setError('Google login failed. Please try again.');
+            }}
+            theme="outline"
+            size="large"
+            shape="pill"
+            width="320"
+            text="signin_with"
+          />
+        </div>
+
         <div className={styles.linkContainer}>
-          Don't have an account? 
+          Don't have an account?
           <Link to="/register" className={styles.authLink}>
             Register
           </Link>

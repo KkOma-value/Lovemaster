@@ -24,8 +24,19 @@ public class User {
     @Column(nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    @Column(name = "google_id", unique = true)
+    private String googleId;
+
+    @Column(name = "auth_provider", nullable = false, length = 20)
+    @Builder.Default
+    private String authProvider = "local";
+
+    @Column(name = "needs_password", nullable = false)
+    @Builder.Default
+    private boolean needsPassword = false;
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;

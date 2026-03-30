@@ -154,6 +154,42 @@
   text-decoration: underline;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(196, 123, 90, 0.2);
+}
+
+.dividerText {
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  color: #B09080;
+}
+
+.googleButtonContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.subtitle {
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: #B09080;
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
 .strengthBar {
   height: 4px;
   border-radius: 2px;

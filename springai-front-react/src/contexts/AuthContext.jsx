@@ -13,6 +13,7 @@ export function AuthProvider({ children }) {
   const [accessToken, setAccessToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [needsPassword, setNeedsPassword] = useState(false);
 
   useEffect(() => {
     // Attempt to restore session
@@ -54,6 +55,22 @@ export function AuthProvider({ children }) {
     localStorage.setItem('accessToken', token);
   };
 
+  const googleLogin = async (credential) => {
+    const data = await authApi.googleAuth(credential);
+    const token = data.accessToken || data.token;
+    setAccessToken(token);
+    setUser(data.user);
+    setIsAuthenticated(true);
+    setNeedsPassword(!!data.needsPassword);
+    localStorage.setItem('accessToken', token);
+    return data;
+  };
+
+  const setPasswordFn = async (password) => {
+    await authApi.setPassword(password, accessToken);
+    setNeedsPassword(false);
+  };
+
   const logout = async () => {
     try {
       await authApi.logout();
@@ -76,8 +93,11 @@ export function AuthProvider({ children }) {
     accessToken,
     isAuthenticated,
     isLoading,
+    needsPassword,
     login,
     register,
+    googleLogin,
+    setPassword: setPasswordFn,
     logout,
     updateAvatarUrl,
   };

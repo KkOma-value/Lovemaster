@@ -24,5 +24,15 @@ export const authApi = {
       headers: { Authorization: `Bearer ${token}` }
     });
     return response.data;
+  },
+  googleAuth: async (credential) => {
+    const response = await axios.post(`${BASE_URL}/google`, { credential });
+    return response.data;
+  },
+  setPassword: async (password, token) => {
+    const response = await axios.post(`${BASE_URL}/set-password`, { password }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
   }
 };

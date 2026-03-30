@@ -1,5 +1,8 @@
 package org.example.springai_learn.auth.service;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.dto.AuthResponse;
 import org.example.springai_learn.auth.dto.LoginRequest;
@@ -9,11 +12,14 @@ import org.example.springai_learn.auth.entity.User;
 import org.example.springai_learn.auth.repository.RefreshTokenRepository;
 import org.example.springai_learn.auth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -30,6 +36,12 @@ public class AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
+
+    @org.springframework.beans.factory.annotation.Value("${spring.mail.username:}")
+    private String mailUsername;
 
     public boolean isAvailable() {
         return userRepository != null;
@@ -68,6 +80,10 @@ public class AuthService {
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("邮箱或密码错误"));
+
+        if (user.getPasswordHash() == null || user.getPasswordHash().isBlank()) {
+            throw new IllegalArgumentException("该账号通过 Google 注册，请使用 Google 登录或先设置密码");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("邮箱或密码错误");
@@ -131,6 +147,87 @@ public class AuthService {
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
                 .build();
+    }
+
+    @Transactional
+    public AuthResponse googleLogin(String email, String name, String googleId, String pictureUrl) {
+        Optional<User> existingUser = userRepository.findByEmail(email);
+        boolean isNewUser;
+        User user;
+
+        if (existingUser.isPresent()) {
+            // Existing user — merge Google account
+            user = existingUser.get();
+            if (user.getGoogleId() == null) {
+                user.setGoogleId(googleId);
+                if (user.getAvatarUrl() == null && pictureUrl != null) {
+                    user.setAvatarUrl(pictureUrl);
+                }
+                userRepository.save(user);
+            }
+            isNewUser = false;
+            log.info("Google 登录（已有用户）: id={}, email={}", user.getId(), email);
+        } else {
+            // New user — create without password
+            user = User.builder()
+                    .name(name != null ? name : email.split("@")[0])
+                    .email(email)
+                    .googleId(googleId)
+                    .authProvider("google")
+                    .needsPassword(true)
+                    .avatarUrl(pictureUrl)
+                    .build();
+            userRepository.save(user);
+            isNewUser = true;
+            log.info("Google 注册新用户: id={}, email={}", user.getId(), email);
+
+            // Send welcome email asynchronously
+            sendWelcomeEmail(email, user.getName());
+        }
+
+        AuthResponse response = generateAuthResponse(user);
+        response.setNeedsPassword(user.isNeedsPassword());
+        response.setNewUser(isNewUser);
+        return response;
+    }
+
+    @Transactional
+    public void setPassword(String userId, String password) {
+        if (password == null || password.length() < 8) {
+            throw new IllegalArgumentException("密码至少8位");
+        }
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("用户不存在"));
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setNeedsPassword(false);
+        userRepository.save(user);
+        log.info("用户设置密码: id={}", userId);
+    }
+
+    private void sendWelcomeEmail(String toEmail, String userName) {
+        if (mailSender == null) {
+            log.warn("邮件服务不可用，跳过发送欢迎邮件到 {}", toEmail);
+            return;
+        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                message.setFrom(new InternetAddress(mailUsername, "LoveMaster"));
+                message.setRecipients(MimeMessage.RecipientType.TO, toEmail);
+                message.setSubject("Welcome to LoveMaster!");
+                message.setText(
+                        "Hi " + userName + ",\n\n" +
+                        "Welcome to LoveMaster! Your account has been created successfully via Google.\n\n" +
+                        "Please set a local password to secure your account.\n\n" +
+                        "Best regards,\nThe LoveMaster Team",
+                        "UTF-8"
+                );
+                mailSender.send(message);
+                log.info("欢迎邮件已发送至 {}", toEmail);
+            } catch (MessagingException | java.io.UnsupportedEncodingException e) {
+                log.error("发送欢迎邮件失败: {}", e.getMessage());
+            }
+        });
     }
 
     private AuthResponse generateAuthResponse(User user) {

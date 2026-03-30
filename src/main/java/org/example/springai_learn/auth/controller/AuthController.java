@@ -5,6 +5,7 @@ import org.example.springai_learn.auth.dto.AuthResponse;
 import org.example.springai_learn.auth.dto.LoginRequest;
 import org.example.springai_learn.auth.dto.RegisterRequest;
 import org.example.springai_learn.auth.service.AuthService;
+import org.example.springai_learn.auth.service.GoogleTokenService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,9 @@ public class AuthController {
 
     @Autowired
     private AuthService authService;
+
+    @Autowired
+    private GoogleTokenService googleTokenService;
 
     private ResponseEntity<?> checkAvailable() {
         if (!authService.isAvailable()) {
@@ -88,5 +92,43 @@ public class AuthController {
         String userId = (String) authentication.getPrincipal();
         AuthResponse.UserInfo userInfo = authService.getCurrentUser(userId);
         return ResponseEntity.ok(userInfo);
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> request) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
+        try {
+            String credential = request.get("credential");
+            if (credential == null || credential.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "缺少 Google credential"));
+            }
+            GoogleTokenService.GoogleUserInfo googleUser = googleTokenService.verify(credential);
+            AuthResponse response = authService.googleLogin(
+                    googleUser.getEmail(),
+                    googleUser.getName(),
+                    googleUser.getGoogleId(),
+                    googleUser.getPictureUrl()
+            );
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/set-password")
+    public ResponseEntity<?> setPassword(@RequestBody Map<String, String> request, Authentication authentication) {
+        ResponseEntity<?> check = checkAvailable();
+        if (check != null) return check;
+        try {
+            String userId = (String) authentication.getPrincipal();
+            String password = request.get("password");
+            authService.setPassword(userId, password);
+            return ResponseEntity.ok(Map.of("message", "密码设置成功"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }
