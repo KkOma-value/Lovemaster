@@ -1,9 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Sparkles, Shield, Zap } from 'lucide-react';
 import heroLoversUrl from '../../assets/illustrations/hero-lovers.svg';
 import leafDecoUrl from '../../assets/illustrations/leaf-deco.svg';
+import VideoCanvasBackground from '../../components/VideoCanvasBackground';
 import styles from './HomePage.module.css';
 
 const features = [
@@ -29,111 +30,8 @@ const features = [
     },
 ];
 
-const HOME_VIDEO_BREAKPOINT = 768;
-const HOME_VIDEO_SRC = '/bg-video-pingpong.mp4';
-const HOME_VIDEO_POSTER = '/bg-home-poster.webp';
-
-const shouldEnableHomeVideo = () => {
-    if (typeof window === 'undefined') {
-        return false;
-    }
-
-    const isDesktopViewport = window.innerWidth > HOME_VIDEO_BREAKPOINT;
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const saveDataEnabled = navigator.connection?.saveData === true;
-
-    return isDesktopViewport && !prefersReducedMotion && !saveDataEnabled;
-};
-
 const HomePage = () => {
     const navigate = useNavigate();
-    const videoRef = useRef(null);
-    const [showVideo, setShowVideo] = useState(false);
-    const [videoReady, setVideoReady] = useState(false);
-
-    useEffect(() => {
-        if (typeof window === 'undefined') {
-            return undefined;
-        }
-
-        const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        const connection = navigator.connection;
-        const updateMediaMode = () => {
-            const shouldShowVideo = shouldEnableHomeVideo();
-            setShowVideo(shouldShowVideo);
-
-            if (!shouldShowVideo) {
-                setVideoReady(false);
-            }
-        };
-
-        updateMediaMode();
-
-        window.addEventListener('resize', updateMediaMode);
-
-        if (typeof reducedMotionQuery.addEventListener === 'function') {
-            reducedMotionQuery.addEventListener('change', updateMediaMode);
-        } else if (typeof reducedMotionQuery.addListener === 'function') {
-            reducedMotionQuery.addListener(updateMediaMode);
-        }
-
-        if (typeof connection?.addEventListener === 'function') {
-            connection.addEventListener('change', updateMediaMode);
-        }
-
-        return () => {
-            window.removeEventListener('resize', updateMediaMode);
-
-            if (typeof reducedMotionQuery.removeEventListener === 'function') {
-                reducedMotionQuery.removeEventListener('change', updateMediaMode);
-            } else if (typeof reducedMotionQuery.removeListener === 'function') {
-                reducedMotionQuery.removeListener(updateMediaMode);
-            }
-
-            if (typeof connection?.removeEventListener === 'function') {
-                connection.removeEventListener('change', updateMediaMode);
-            }
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!showVideo) {
-            return undefined;
-        }
-
-        const video = videoRef.current;
-        if (!video) {
-            return undefined;
-        }
-
-        const resumePlayback = () => {
-            if (document.visibilityState !== 'visible') {
-                return;
-            }
-
-            const playPromise = video.play();
-            if (playPromise && typeof playPromise.catch === 'function') {
-                playPromise.catch(() => {});
-            }
-        };
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'hidden') {
-                video.pause();
-                return;
-            }
-
-            resumePlayback();
-        };
-
-        resumePlayback();
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            video.pause();
-        };
-    }, [showVideo]);
 
     // Track card index for staggered entrance delay - 0.2s between each card
     let cardIndex = 0;
@@ -145,24 +43,7 @@ const HomePage = () => {
                 className={styles.posterBg}
                 aria-hidden="true"
             />
-            {showVideo && (
-                <video
-                    ref={videoRef}
-                    className={`${styles.videoBg} ${videoReady ? styles.videoVisible : ''}`}
-                    src={HOME_VIDEO_SRC}
-                    poster={HOME_VIDEO_POSTER}
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="metadata"
-                    disablePictureInPicture
-                    aria-hidden="true"
-                    onLoadedData={() => setVideoReady(true)}
-                    onError={() => setVideoReady(false)}
-                />
-            )}
-            <div className={styles.videoOverlay} />
+            <VideoCanvasBackground />
 
             <motion.div
                 initial={{ opacity: 0, y: 6 }}
