@@ -35,7 +35,8 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 - **Hutool**: 5.8.37 (Java工具库)
 - **Knife4j**: 4.4.0 (API文档增强)
 - **Lombok**: 1.18.30 (代码简化)
-- **Kryo**: 5.6.2 (序列化)
+- **Kryo**: 5.6.2 (高性能序列化，用于聊天记忆持久化)
+- **Google OAuth**: 2.7.2（Google账号登录）
 
 ### 其他功能
 - **用户认证**: JWT + Refresh Token，图片上传
@@ -54,6 +55,7 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 ### 2. 用户认证系统
 - **JWT 认证**: Access Token + Refresh Token 双令牌机制
 - **注册/登录**: 邮箱注册、密码登录
+- **Google OAuth**: Google账号一键登录
 - **图片上传**: 用户头像上传与管理
 
 ### 3. AI 代理系统
@@ -172,6 +174,7 @@ src/
 │   ├── ManusPanel/             # Manus面板组件
 │   ├── Sidebar/                # 侧边栏组件
 │   ├── ParticleBackground/     # 粒子背景效果
+│   ├── WebGLBackground/        # Three.js WebGL动态背景
 │   └── ui/                     # UI基础组件
 ├── pages/                      # 页面组件
 │   ├── Auth/                   # 登录/注册页面
@@ -248,7 +251,17 @@ pexels:
   api-key: ${PEXELS_API_KEY:}
 ```
 
-### 6. MCP 本地自动构建（stdio）
+### 6. Google OAuth 配置
+
+```yaml
+oauth:
+  google:
+    client-id: your-google-client-id
+```
+
+获取方式：在 [Google Cloud Console](https://console.cloud.google.com/) 创建 OAuth 2.0 客户端，获取 Client ID。
+
+### 7. MCP 本地自动构建（stdio）
 
 ```yaml
 spring:
@@ -303,6 +316,9 @@ npm run dev
 ### 5. 访问应用
 
 - **前端页面**: http://localhost:5173
+  - 首页: 精美的Three.js WebGL动态背景
+  - 登录/注册: 支持邮箱和Google OAuth登录
+  - 聊天页面: 实时AI对话界面
 - **API 文档**: http://localhost:8088/api/swagger-ui.html
 - **健康检查**: http://localhost:8088/api/health
 
@@ -331,10 +347,25 @@ Agent 模式聊天，支持工具调用。
 #### 3. 用户认证
 
 ```http
-POST /api/auth/register    # 注册
-POST /api/auth/login       # 登录
-POST /api/auth/refresh     # 刷新 Token
-POST /api/auth/upload-image # 上传头像
+POST /api/auth/register        # 邮箱注册
+POST /api/auth/login           # 邮箱登录
+POST /api/auth/google          # Google OAuth登录（传递idToken）
+POST /api/auth/refresh         # 刷新 Token
+POST /api/auth/upload-image    # 上传头像
+```
+
+**Google OAuth 登录示例：**
+
+```http
+POST /api/auth/google
+Content-Type: application/json
+
+{
+  "idToken": "google-oauth-id-token",
+  "email": "user@example.com",
+  "name": "User Name",
+  "picture": "https://..."
+}
 ```
 
 #### 4. 会话管理
