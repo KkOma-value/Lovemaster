@@ -10,6 +10,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.ai.tool.ToolCallback;
 import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.stereotype.Component;
@@ -55,8 +56,9 @@ public class LoveApp {
             "例如：\n" +
             "\"听起来你在这段关系中感到不安...[分析原因]...或许可以尝试...[具体建议]...记住你的感受很重要...\"";
 
-    public LoveApp(ChatModel dashscopeCHatModel, DatabaseChatMemory databaseChatMemory) {
-        chatClient = ChatClient.builder(dashscopeCHatModel)
+    public LoveApp(@Qualifier("dashscopeChatModel") ChatModel dashscopeChatModel,
+                   DatabaseChatMemory databaseChatMemory) {
+        chatClient = ChatClient.builder(dashscopeChatModel)
                 .defaultSystem(SYSTEM_PROMPT)
                 .defaultAdvisors(
                         new MessageChatMemoryAdvisor(databaseChatMemory)

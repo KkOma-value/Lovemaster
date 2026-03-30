@@ -10,6 +10,10 @@ spring:
       chat:
         options:
           model: qwen3.5-plus
+    openai:
+      # NVIDIA API-compatible endpoint for per-agent model routing
+      api-key: ${NVIDIA_API_KEY:YOUR_NVIDIA_API_KEY_HERE}
+      base-url: ${NVIDIA_BASE_URL:https://integrate.api.nvidia.com}
   mail:
     host: smtp.qq.com
     port: 465
@@ -29,6 +33,13 @@ spring:
 # Get your API key from: https://www.searchapi.io/
 search-api:
   api-key: YOUR_SEARCH_API_KEY_HERE
+
+# NVIDIA model routing used by rewriteAgent/toolsAgent/brainAgent
+nvidia:
+  model:
+    rewrite: ${NVIDIA_MODEL_REWRITE:minimaxai/minimax-m2.5}
+    tools: ${NVIDIA_MODEL_TOOLS:deepseek-ai/deepseek-r1}
+    brain: ${NVIDIA_MODEL_BRAIN:moonshotai/kimi-k2-thinking}
 
 # Amap (高德地图) API key for map services
 # Get your API key from: https://console.amap.com/

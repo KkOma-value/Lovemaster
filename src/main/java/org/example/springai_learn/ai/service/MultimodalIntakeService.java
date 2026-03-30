@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
 import org.example.springai_learn.auth.service.ImageStorageService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -13,6 +12,8 @@ import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.model.Media;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.io.PathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
@@ -25,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class MultimodalIntakeService {
 
@@ -64,10 +64,14 @@ public class MultimodalIntakeService {
             TOOL_HINT: <yes 或 no>
             """;
 
-    private final ChatModel dashscopeChatModel;
+    private final ChatModel rewriteModel;
 
     @Autowired(required = false)
     private ImageStorageService imageStorageService;
+
+    public MultimodalIntakeService(@Qualifier("rewriteModel") ChatModel rewriteModel) {
+        this.rewriteModel = rewriteModel;
+    }
 
     public IntakeAnalysisResult analyze(ChatInputContext context) {
         if (context.hasImage()) {
@@ -109,7 +113,7 @@ public class MultimodalIntakeService {
     }
 
     private String invokeModel(List<Message> messages) {
-        ChatResponse response = dashscopeChatModel.call(new Prompt(messages));
+        ChatResponse response = rewriteModel.call(new Prompt(messages));
         return response.getResult().getOutput().getText();
     }
 

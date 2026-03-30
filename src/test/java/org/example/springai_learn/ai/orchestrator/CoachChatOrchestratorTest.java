@@ -34,7 +34,8 @@ class CoachChatOrchestratorTest {
     private RagKnowledgeService ragKnowledgeService;
     private CoachRoutingService routingService;
     private SseEventHelper sseEventHelper;
-    private ChatModel chatModel;
+    private ChatModel brainModel;
+    private ChatModel toolsModel;
     private DatabaseChatMemory databaseChatMemory;
     private CoachChatOrchestrator orchestrator;
 
@@ -44,12 +45,13 @@ class CoachChatOrchestratorTest {
         ragKnowledgeService = mock(RagKnowledgeService.class);
         routingService = mock(CoachRoutingService.class);
         sseEventHelper = mock(SseEventHelper.class);
-        chatModel = mock(ChatModel.class);
+        brainModel = mock(ChatModel.class);
+        toolsModel = mock(ChatModel.class);
         databaseChatMemory = mock(DatabaseChatMemory.class);
 
         orchestrator = new CoachChatOrchestrator(
                 intakeService, ragKnowledgeService, routingService,
-                sseEventHelper, new ToolCallback[]{}, chatModel, databaseChatMemory);
+                sseEventHelper, new ToolCallback[]{}, brainModel, toolsModel, databaseChatMemory);
 
         setField(orchestrator, "baseDir", "/tmp");
     }
@@ -183,7 +185,7 @@ class CoachChatOrchestratorTest {
         Generation generation = mock(Generation.class);
         when(generation.getOutput()).thenReturn(new AssistantMessage(text));
         when(chatResponse.getResult()).thenReturn(generation);
-        doReturn(chatResponse).when(chatModel).call(any(Prompt.class));
+        doReturn(chatResponse).when(brainModel).call(any(Prompt.class));
     }
 
     private static void setField(Object target, String fieldName, Object value) throws Exception {

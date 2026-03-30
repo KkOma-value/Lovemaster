@@ -47,10 +47,17 @@ spring:
         api-key: ${spring.ai.dashscope.api-key}
         options:
           model: ${DASHSCOPE_CHAT_MODEL:qwen-plus}
+    openai:
+      api-key: ${NVIDIA_API_KEY:placeholder}
+      base-url: ${NVIDIA_BASE_URL:https://integrate.api.nvidia.com}
+      chat:
+        enabled: false
+        options:
+          model: placeholder
     mcp:
       client:
-        # MCP client 默认开启；若需禁用可设置 APP_MCP_CLIENT_ENABLED=false
-        enabled: ${APP_MCP_CLIENT_ENABLED:true}
+        # MCP client 默认关闭，避免启动期同步 listTools 阻塞；按需设置 APP_MCP_CLIENT_ENABLED=true
+        enabled: ${APP_MCP_CLIENT_ENABLED:false}
         # 避免启动期阻塞：初始化默认为 false，待 mcp-servers 可用后再启用
         initialized: ${APP_MCP_CLIENT_INITIALIZED:false}
         type: SYNC
@@ -120,3 +127,10 @@ knife4j:
 # searchApi
 search-api:
   api-key: ${SEARCH_API_KEY:}
+
+# NVIDIA NIM model names (used by NvidiaModelConfig)
+nvidia:
+  model:
+    rewrite: ${NVIDIA_MODEL_REWRITE:minimaxai/minimax-m2.5}
+    tools: ${NVIDIA_MODEL_TOOLS:deepseek-ai/deepseek-r1}
+    brain: ${NVIDIA_MODEL_BRAIN:moonshotai/kimi-k2-thinking}

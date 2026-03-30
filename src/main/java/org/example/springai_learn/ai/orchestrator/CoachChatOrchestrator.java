@@ -1,6 +1,5 @@
 package org.example.springai_learn.ai.orchestrator;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.agent.KkomaManus;
@@ -14,6 +13,7 @@ import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.SystemMessage;
@@ -29,7 +29,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class CoachChatOrchestrator {
 
@@ -38,11 +37,31 @@ public class CoachChatOrchestrator {
     private final CoachRoutingService coachRoutingService;
     private final SseEventHelper sseEventHelper;
     private final ToolCallback[] allTools;
-    private final ChatModel dashscopeChatModel;
+    private final ChatModel brainModel;
+    private final ChatModel toolsModel;
     private final DatabaseChatMemory databaseChatMemory;
 
     @Autowired(required = false)
     private ToolCallbackProvider mcpToolCallbackProvider;
+
+    public CoachChatOrchestrator(
+            MultimodalIntakeService multimodalIntakeService,
+            RagKnowledgeService ragKnowledgeService,
+            CoachRoutingService coachRoutingService,
+            SseEventHelper sseEventHelper,
+            ToolCallback[] allTools,
+            @Qualifier("brainModel") ChatModel brainModel,
+            @Qualifier("toolsModel") ChatModel toolsModel,
+            DatabaseChatMemory databaseChatMemory) {
+        this.multimodalIntakeService = multimodalIntakeService;
+        this.ragKnowledgeService = ragKnowledgeService;
+        this.coachRoutingService = coachRoutingService;
+        this.sseEventHelper = sseEventHelper;
+        this.allTools = allTools;
+        this.brainModel = brainModel;
+        this.toolsModel = toolsModel;
+        this.databaseChatMemory = databaseChatMemory;
+    }
 
     @Value("${app.file-save-dir:${user.dir}/tmp}")
     private String baseDir;
@@ -93,7 +112,7 @@ public class CoachChatOrchestrator {
                 // Step 4: Tools — delegate to KkomaManus
                 sseEventHelper.send(emitter, "tool_call", "我开始进入任务执行，继续帮你搜索、整理并产出结果。");
                 String conversationId = ConversationIds.forMode(context.userId(), context.mode(), context.chatId());
-                KkomaManus kkomaManus = new KkomaManus(allTools, dashscopeChatModel, mcpToolCallbackProvider,
+                KkomaManus kkomaManus = new KkomaManus(allTools, toolsModel, mcpToolCallbackProvider,
                         conversationId, databaseChatMemory);
                 emitter.onCompletion(() -> {
                     kkomaManus.saveToChatMemory();
@@ -131,7 +150,7 @@ public class CoachChatOrchestrator {
                 你的工作是先讲清楚局势，再给出可执行建议。
                 如果当前不需要工具执行，就直接把结论说透，但不要假装已经进行了搜索或外部调查。
                 """;
-        ChatResponse response = dashscopeChatModel.call(new Prompt(List.of(
+        ChatResponse response = brainModel.call(new Prompt(List.of(
                 new SystemMessage(systemPrompt),
                 new UserMessage(promptText)
         )));
