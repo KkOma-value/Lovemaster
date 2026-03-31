@@ -38,7 +38,7 @@ search-api:
 nvidia:
   model:
     rewrite: ${NVIDIA_MODEL_REWRITE:minimaxai/minimax-m2.5}
-    tools: ${NVIDIA_MODEL_TOOLS:deepseek-ai/deepseek-r1}
+    tools: ${NVIDIA_MODEL_TOOLS:nvidia/llama-3.3-nemotron-super-49b-v1.5}
     brain: ${NVIDIA_MODEL_BRAIN:moonshotai/kimi-k2-thinking}
 
 # Amap (高德地图) API key for map services
@@ -51,6 +51,14 @@ amap:
 # Get your API key from: https://www.pexels.com/api/
 pexels:
   api-key: YOUR_PEXELS_API_KEY_HERE
+
+# Supabase Storage configuration for cloud image storage
+# Get your service_role key from Supabase Dashboard -> Project Settings -> API
+supabase:
+  url: https://your-project-ref.supabase.co
+  service-role-key: YOUR_SUPABASE_SERVICE_ROLE_KEY
+  storage:
+    bucket: conversation-images
 
 # File save directory for tools (use absolute path recommended)
 app:

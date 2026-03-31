@@ -32,7 +32,7 @@ spring:
 nvidia:
   model:
     rewrite: ${NVIDIA_MODEL_REWRITE:minimaxai/minimax-m2.5}
-    tools: ${NVIDIA_MODEL_TOOLS:deepseek-ai/deepseek-r1}
+    tools: ${NVIDIA_MODEL_TOOLS:nvidia/llama-3.3-nemotron-super-49b-v1.5}
     brain: ${NVIDIA_MODEL_BRAIN:moonshotai/kimi-k2-thinking}
 
 # 搜索 API 配置（如需使用网络搜索功能）
@@ -48,6 +48,14 @@ amap:
 # Pexels API（供 mcp-servers 使用；主程序会在启动 mcp-servers 子进程时透传为环境变量 PEXELS_API_KEY）
 pexels:
   api-key: ${PEXELS_API_KEY:}
+
+# Supabase Storage 配置（用于图片云存储）
+# 从 Supabase Dashboard -> Project Settings -> API 获取 service_role_key
+supabase:
+  url: ${SUPABASE_URL:https://your-project.supabase.co}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:your_service_role_key}
+  storage:
+    bucket: ${SUPABASE_STORAGE_BUCKET:conversation-images}
 
 # MCP 与工具共享文件目录（建议用绝对路径，便于主程序与 mcp-servers 一致读写）
 app:

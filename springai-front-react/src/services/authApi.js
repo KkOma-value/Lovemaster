@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getStoredAccessToken, getValidAccessToken } from './authSession';
 
 const BASE_URL = '/api/auth';
 
@@ -12,7 +13,12 @@ export const authApi = {
     return response.data;
   },
   logout: async () => {
-    const response = await axios.post(`${BASE_URL}/logout`);
+    const token = await getValidAccessToken().catch(() => getStoredAccessToken());
+    const response = await axios.post(
+      `${BASE_URL}/logout`,
+      {},
+      token ? { headers: { Authorization: `Bearer ${token}` } } : undefined
+    );
     return response.data;
   },
   refreshToken: async (token) => {
@@ -20,8 +26,9 @@ export const authApi = {
     return response.data;
   },
   getMe: async (token) => {
+    const effectiveToken = token || await getValidAccessToken();
     const response = await axios.get(`${BASE_URL}/me`, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${effectiveToken}` }
     });
     return response.data;
   },
@@ -30,8 +37,9 @@ export const authApi = {
     return response.data;
   },
   setPassword: async (password, token) => {
+    const effectiveToken = token || await getValidAccessToken();
     const response = await axios.post(`${BASE_URL}/set-password`, { password }, {
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `Bearer ${effectiveToken}` }
     });
     return response.data;
   }

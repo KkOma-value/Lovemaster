@@ -44,7 +44,8 @@ const ManusPreview = ({ files }) => {
 
     const renderContent = (file) => {
         if (file.type === 'image' && file.url) {
-            const state = imageStates[file.name]; // undefined = loading, 'loaded', 'error'
+            const imageKey = file.url || file.name;
+            const state = imageStates[imageKey]; // undefined = loading, 'loaded', 'error'
             return (
                 <div className={styles.previewContent}>
                     {state === undefined && (
@@ -68,8 +69,8 @@ const ManusPreview = ({ files }) => {
                         src={file.url}
                         alt={file.name}
                         className={styles.previewImage}
-                        onLoad={() => setImageStates(prev => ({ ...prev, [file.name]: 'loaded' }))}
-                        onError={() => setImageStates(prev => ({ ...prev, [file.name]: 'error' }))}
+                        onLoad={() => setImageStates(prev => ({ ...prev, [imageKey]: 'loaded' }))}
+                        onError={() => setImageStates(prev => ({ ...prev, [imageKey]: 'error' }))}
                         style={{ display: state === 'loaded' ? 'block' : 'none' }}
                     />
                 </div>

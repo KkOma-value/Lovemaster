@@ -4,8 +4,11 @@ import cn.hutool.core.io.FileUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.dto.ImageUploadResponse;
+import org.example.springai_learn.auth.entity.ConversationImage;
+import org.example.springai_learn.auth.repository.ConversationImageRepository;
 import org.example.springai_learn.auth.service.AuthService;
 import org.example.springai_learn.auth.service.ImageStorageService;
+import org.example.springai_learn.auth.service.SupabaseStorageClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +21,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/images")
@@ -28,14 +32,17 @@ public class ImageController {
 
     private final ImageStorageService imageStorageService;
     private final AuthService authService;
+    private final Optional<SupabaseStorageClient> supabaseStorageClient;
+    private final Optional<ConversationImageRepository> conversationImageRepository;
 
     @PostMapping("/upload")
     public ResponseEntity<?> upload(@RequestParam("file") MultipartFile file,
                                     @RequestParam(defaultValue = "chat") String type,
+                                    @RequestParam(required = false) String conversationId,
                                     Authentication authentication) {
         String userId = (String) authentication.getPrincipal();
         try {
-            ImageUploadResponse response = imageStorageService.store(file, userId, type);
+            ImageUploadResponse response = imageStorageService.store(file, userId, type, conversationId);
 
             // If avatar upload, update user avatar
             if ("avatar".equals(type)) {
@@ -58,6 +65,20 @@ public class ImageController {
                          @PathVariable String fileName,
                          HttpServletResponse response) throws IOException {
         try {
+            // Check if we have a Supabase public URL for this file
+            if (supabaseStorageClient.isPresent() && conversationImageRepository.isPresent()) {
+                String storagePath = "images/" + userId + "/" + type + "/" + fileName;
+                ConversationImage image = conversationImageRepository.get()
+                        .findFirstByStoragePath(storagePath)
+                        .orElse(null);
+
+                if (image != null && image.getPublicUrl() != null && !image.getPublicUrl().isBlank()) {
+                    response.sendRedirect(image.getPublicUrl());
+                    return;
+                }
+            }
+
+            // Fallback: local file system
             Path imagePath = imageStorageService.getImagePath(userId, type, fileName);
             File file = imagePath.toFile();
 

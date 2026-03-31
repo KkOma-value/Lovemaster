@@ -70,7 +70,7 @@ export const useSSEConnection = (chatType) => {
     /**
      * Connect to SSE endpoint with callbacks
      */
-    const connectSSE = useCallback((message, chatId, imageUrl, callbacks = {}) => {
+    const connectSSE = useCallback(async (message, chatId, imageUrl, callbacks = {}) => {
         // Cleanup existing connection first
         cleanupSSE({ resetResponse: true });
         currentResponseRef.current = '';
@@ -94,7 +94,7 @@ export const useSSEConnection = (chatType) => {
         };
 
         try {
-            eventSourceRef.current = createSSE(message, chatId, imageUrl, sseCallbacks);
+            eventSourceRef.current = await createSSE(message, chatId, imageUrl, sseCallbacks);
         } catch (error) {
             console.error('Failed to create SSE:', error);
             callbacks.onError?.(error);

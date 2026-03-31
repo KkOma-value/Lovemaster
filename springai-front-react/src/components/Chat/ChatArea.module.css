@@ -391,6 +391,80 @@
     100% { background-position: -200% 0; }
 }
 
+/* ── Status Steps ───────────────────────── */
+.statusStepsContainer {
+    margin-bottom: 4px;
+}
+
+.statusStep {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+}
+
+.statusStepActive .statusStepText {
+    color: var(--text-secondary);
+    font-size: 0.83rem;
+}
+
+.statusStepDone .statusStepText {
+    color: var(--text-muted, #9CA3AF);
+    font-size: 0.8rem;
+}
+
+.statusCheckIcon {
+    color: var(--color-primary, #C47B5A);
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.statusStepText {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.statusSummary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: var(--text-muted, #9CA3AF);
+    font-family: inherit;
+    transition: color 0.2s;
+    width: 100%;
+    text-align: left;
+}
+
+.statusSummary:hover {
+    color: var(--text-secondary);
+}
+
+.statusChevron {
+    margin-left: auto;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.statusChevronOpen {
+    transform: rotate(180deg);
+}
+
+.statusStepsExpanded {
+    padding: 2px 0 4px 18px;
+}
+
+.statusDivider {
+    height: 1px;
+    background: var(--glass-border, rgba(196, 123, 90, 0.1));
+    margin: 6px 0 8px;
+}
+
 /* ── Streaming Cursor ────────────────────── */
 .cursor {
     display: inline-block;

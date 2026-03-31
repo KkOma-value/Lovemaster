@@ -1,6 +1,14 @@
 /* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authApi } from '../services/authApi';
+import {
+  AUTH_EXPIRED_EVENT,
+  clearAuthSession,
+  getStoredAccessToken,
+  getStoredRefreshToken,
+  getValidAccessToken,
+  storeAuthSession,
+} from '../services/authSession';
 
 const AuthContext = createContext();
 
@@ -18,17 +26,17 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Attempt to restore session
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('accessToken');
-      if (storedToken) {
+      const hasStoredSession = getStoredAccessToken() || getStoredRefreshToken();
+      if (hasStoredSession) {
         try {
-          // Verify with server using getMe or just assume valid until API call fails
-          const me = await authApi.getMe(storedToken);
-          setAccessToken(storedToken);
+          const validToken = await getValidAccessToken();
+          const me = await authApi.getMe(validToken);
+          setAccessToken(validToken);
           setUser(me);
           setIsAuthenticated(true);
         } catch (error) {
           console.error('Session restoration failed:', error);
-          localStorage.removeItem('accessToken');
+          clearAuthSession({ notify: false });
         }
       }
       setIsLoading(false);
@@ -37,32 +45,45 @@ export function AuthProvider({ children }) {
     initAuth();
   }, []);
 
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setAccessToken(null);
+      setUser(null);
+      setNeedsPassword(false);
+      setIsAuthenticated(false);
+      setIsLoading(false);
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+  }, []);
+
   const login = async (credentials) => {
     const data = await authApi.login(credentials);
     const token = data.accessToken || data.token; // Adapt to backend spec
+    storeAuthSession(data);
     setAccessToken(token);
     setUser(data.user);
     setIsAuthenticated(true);
-    localStorage.setItem('accessToken', token);
   };
 
   const register = async (userData) => {
     const data = await authApi.register(userData);
     const token = data.accessToken || data.token;
+    storeAuthSession(data);
     setAccessToken(token);
     setUser(data.user);
     setIsAuthenticated(true);
-    localStorage.setItem('accessToken', token);
   };
 
   const googleLogin = async (credential) => {
     const data = await authApi.googleAuth(credential);
     const token = data.accessToken || data.token;
+    storeAuthSession(data);
     setAccessToken(token);
     setUser(data.user);
     setIsAuthenticated(true);
     setNeedsPassword(!!data.needsPassword);
-    localStorage.setItem('accessToken', token);
     return data;
   };
 
@@ -79,8 +100,9 @@ export function AuthProvider({ children }) {
     } finally {
       setAccessToken(null);
       setUser(null);
+      setNeedsPassword(false);
       setIsAuthenticated(false);
-      localStorage.removeItem('accessToken');
+      clearAuthSession({ notify: false });
     }
   };
 

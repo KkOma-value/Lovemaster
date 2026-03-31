@@ -28,17 +28,25 @@ public class ToolRegistration {
     @Value("${pexels.api-key:}")
     private String pexelsApiKey;
 
+    @Value("${supabase.url:}")
+    private String supabaseUrl;
+
+    @Value("${supabase.service-role-key:}")
+    private String supabaseServiceRoleKey;
+
     @Resource
     private EmailSendTool emailSendTool;
 
     @Bean
     public ToolCallback[] allTools() {
         List<Object> tools = new ArrayList<>();
+        boolean useCloudImageArtifacts = supabaseUrl != null && !supabaseUrl.isBlank()
+                && supabaseServiceRoleKey != null && !supabaseServiceRoleKey.isBlank();
 
         // 基础工具（始终注册）
         tools.add(new FileOperationTool());
         tools.add(new WebScrapingTool());
-        tools.add(new ResourceDownloadTool(fileSaveDir));
+        tools.add(new ResourceDownloadTool(fileSaveDir, !useCloudImageArtifacts));
         tools.add(new TerminalOperationTool());
         tools.add(new PDFGenerationTool(fileSaveDir));
         tools.add(new TerminateTool());

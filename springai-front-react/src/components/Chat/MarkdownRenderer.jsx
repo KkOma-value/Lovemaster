@@ -1,8 +1,11 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { preprocessStreamingMarkdown } from '../../utils/streamingMarkdownProcessor';
 
-const MarkdownRenderer = ({ content }) => {
+const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
+    const processedContent = preprocessStreamingMarkdown(content, isStreaming);
+
     return (
         <div style={{
             fontFamily: "'Inter', -apple-system, sans-serif",
@@ -152,10 +155,11 @@ const MarkdownRenderer = ({ content }) => {
                     )
                 }}
             >
-                {content}
+                {processedContent}
             </ReactMarkdown>
         </div>
     );
-};
+});
 
 export default MarkdownRenderer;
+

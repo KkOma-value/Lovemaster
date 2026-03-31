@@ -73,9 +73,14 @@ public class ImageSearchTool {
             byte[] body = response.bodyBytes();
             Files.write(target, body);
             long savedSize = Files.size(target);
-            return "Image downloaded successfully to: " + target +
-                    " (status=" + status + ", contentType=" + contentType +
-                    ", bytes=" + savedSize + ", downloadDir=" + downloadDir + ")";
+            return "Image downloaded successfully\n"
+                    + "sourceUrl: " + url + "\n"
+                    + "fileName: " + safeName + "\n"
+                    + "contentType: " + contentType + "\n"
+                    + "bytes: " + savedSize + "\n"
+                    + "localPath: " + target + "\n"
+                    + "downloadDir: " + downloadDir + "\n"
+                    + "status: " + status;
         } catch (Exception e) {
             return "Error download image: " + e.getMessage();
         }

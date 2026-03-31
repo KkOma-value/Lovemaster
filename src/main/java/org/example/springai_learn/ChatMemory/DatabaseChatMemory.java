@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.auth.entity.ChatMessage;
 import org.example.springai_learn.auth.entity.Conversation;
 import org.example.springai_learn.auth.repository.ChatMessageRepository;
+import org.example.springai_learn.auth.repository.ConversationImageRepository;
 import org.example.springai_learn.auth.repository.ConversationRepository;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.*;
@@ -28,6 +29,7 @@ public class DatabaseChatMemory implements ChatMemory {
 
     private final ConversationRepository conversationRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ConversationImageRepository conversationImageRepository;
 
     @Override
     @Transactional
@@ -81,8 +83,21 @@ public class DatabaseChatMemory implements ChatMemory {
     public void clear(String conversationId) {
         String chatId = extractChatId(conversationId);
         chatMessageRepository.deleteByConversationId(chatId);
+        conversationImageRepository.deleteByConversationId(chatId);
         conversationRepository.deleteById(chatId);
         log.info("已清除会话: {}", chatId);
+    }
+
+    /**
+     * 替换会话的消息历史，但保留会话本身及其关联资源（如已下载图片）。
+     */
+    @Transactional
+    public void replaceMessages(String conversationId, List<Message> messages) {
+        String chatId = extractChatId(conversationId);
+        ensureConversation(conversationId);
+        chatMessageRepository.deleteByConversationId(chatId);
+        add(conversationId, messages);
+        log.info("已替换会话消息: {}", chatId);
     }
 
     /**
@@ -141,6 +156,11 @@ public class DatabaseChatMemory implements ChatMemory {
      * 确保 conversation 记录存在。
      * 如果 conversationId 包含用户信息（userId:chatType:chatId），自动创建。
      */
+    @Transactional
+    public void ensureConversationExists(String conversationId) {
+        ensureConversation(conversationId);
+    }
+
     private void ensureConversation(String conversationId) {
         String chatId = extractChatId(conversationId);
         if (!conversationRepository.existsById(chatId)) {

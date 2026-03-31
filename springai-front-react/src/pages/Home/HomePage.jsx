@@ -32,6 +32,7 @@ const features = [
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const PageMotion = motion.div;
 
     // Track card index for staggered entrance delay - 0.2s between each card
     let cardIndex = 0;
@@ -45,7 +46,7 @@ const HomePage = () => {
             />
             <VideoCanvasBackground />
 
-            <motion.div
+            <PageMotion
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.98 }}
@@ -164,7 +165,7 @@ const HomePage = () => {
                 </footer>
 
             </div>
-        </motion.div>
+        </PageMotion>
         </>
     );
 };

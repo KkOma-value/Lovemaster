@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.advisor.MyLoggerAdvisor;
 import org.example.springai_learn.ai.context.BrainDecision;
+import org.example.springai_learn.auth.service.ConversationImageStorageService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
@@ -53,7 +54,7 @@ public class ToolsAgentService {
     private static final int REQUEST_CHAR_BUDGET = 900_000;
     private static final int TOOL_RESPONSE_CHAR_BUDGET = 20_000;
     private static final String TRUNCATION_SUFFIX = "... [truncated]";
-    private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s,]+");
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://[^\\s,\\\\]+");
 
     private static final String SYSTEM_PROMPT = """
             You are ToolsAgent, an autonomous tool-execution agent that completes tasks delegated by BrainAgent.
@@ -66,6 +67,9 @@ public class ToolsAgentService {
             4. Execute tasks directly using tools - do not just describe what you would do.
             5. Only output the final results to the user, not intermediate questions.
             6. Always call at least one tool per step until the task is complete.
+            7. When the task requests photos, images, or visual references, do not stop after finding image URLs.
+               You must continue with searchImage + downloadResource for the strongest 2-3 images per subject so cloud image artifacts are created.
+            8. Prefer persisted cloud image artifacts over raw external URLs whenever the request explicitly asks for images, attachments, or downloadable materials.
 
             RESPONSE FORMAT RULES:
             - NEVER use template syntax like {{}} or {variable} in your responses.
@@ -79,12 +83,14 @@ public class ToolsAgentService {
             Do NOT ask the user any questions - make autonomous decisions.
             Do NOT explain what you plan to do - just do it by calling tools.
             If you have completed the task, call the `doTerminate` tool with a summary of results.
+            If the task includes images, verify that you have already created the needed downloaded image artifacts before terminating.
             If there are more steps needed, call the next required tool now.
             """;
 
     private final ToolCallback[] allTools;
     private final ChatModel toolsModel;
     private final DatabaseChatMemory databaseChatMemory;
+    private final ConversationImageStorageService conversationImageStorageService;
 
     @Autowired(required = false)
     private ToolCallbackProvider mcpToolCallbackProvider;
@@ -92,10 +98,12 @@ public class ToolsAgentService {
     public ToolsAgentService(
             ToolCallback[] allTools,
             @Qualifier("toolsModel") ChatModel toolsModel,
-            DatabaseChatMemory databaseChatMemory) {
+            DatabaseChatMemory databaseChatMemory,
+            ConversationImageStorageService conversationImageStorageService) {
         this.allTools = allTools;
         this.toolsModel = toolsModel;
         this.databaseChatMemory = databaseChatMemory;
+        this.conversationImageStorageService = conversationImageStorageService;
 
         // 合并所有工具回调（注册工具 + MCP 工具在 activate 时延迟合并）
         List<FunctionCallback> toolList = new ArrayList<>(List.of(allTools));
@@ -116,6 +124,8 @@ public class ToolsAgentService {
     public String activate(BrainDecision decision, String conversationId, SseEmitter emitter) {
         log.info("ToolsAgent 被激活: conversationId={}, taskPrompt={}",
                 conversationId, shorten(decision.toolTaskPrompt(), 120));
+
+        databaseChatMemory.ensureConversationExists(conversationId);
 
         // 构建合并工具列表（包含 MCP 工具）
         List<FunctionCallback> mergedTools = buildMergedToolList();
@@ -223,7 +233,7 @@ public class ToolsAgentService {
             if (toolResponseMessage != null) {
                 boolean hasTerminate = false;
                 for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
-                    checkAndSendFileEvent(response.name(), response.responseData(), emitter);
+                    checkAndSendFileEvent(response.name(), response.responseData(), emitter, conversationId);
                     log.info("工具 {} 执行完成", response.name());
                     if ("doTerminate".equals(response.name())) {
                         hasTerminate = true;
@@ -289,8 +299,7 @@ public class ToolsAgentService {
                 }
             }
             if (!messagesToSave.isEmpty()) {
-                databaseChatMemory.clear(conversationId);
-                databaseChatMemory.add(conversationId, messagesToSave);
+                databaseChatMemory.replaceMessages(conversationId, messagesToSave);
                 log.info("已保存 {} 条消息到 ChatMemory: conversationId={}", messagesToSave.size(), conversationId);
             }
         } catch (Exception e) {
@@ -374,6 +383,10 @@ public class ToolsAgentService {
             try {
                 FunctionCallback[] mcpCallbacks = mcpToolCallbackProvider.getToolCallbacks();
                 for (FunctionCallback cb : mcpCallbacks) {
+                    if ("searchImage".equals(cb.getName())) {
+                        log.info("跳过 MCP 工具 {}，优先使用主应用中的图片工具", cb.getName());
+                        continue;
+                    }
                     merged.add(cb);
                 }
                 log.info("MCP 工具已合并，新增 {} 个", mcpCallbacks.length);
@@ -386,17 +399,20 @@ public class ToolsAgentService {
 
     // ---- 文件事件 SSE 推送 ----
 
-    private void checkAndSendFileEvent(String toolName, String result, SseEmitter emitter) {
+    private void checkAndSendFileEvent(String toolName, String result, SseEmitter emitter, String conversationId) {
         if (emitter == null || result == null) {
             return;
         }
+
+        String chatId = extractChatId(conversationId);
 
         String cleanResult = result.trim();
         if (cleanResult.startsWith("\"") && cleanResult.endsWith("\"") && cleanResult.length() > 1) {
             cleanResult = cleanResult.substring(1, cleanResult.length() - 1);
         }
+        cleanResult = cleanResult.replace("\\n", "\n");
 
-        // searchImage 返回图片 URL，直接发送预览
+        // searchImage 返回图片 URL，直接发送预览，但不持久化
         if ("searchImage".equals(toolName)) {
             List<String> imageUrls = extractImageUrls(cleanResult);
             for (int i = 0; i < imageUrls.size(); i++) {
@@ -410,6 +426,8 @@ public class ToolsAgentService {
         try {
             String type = null;
             String filePath = null;
+            String sourceUrl = extractMetadataValue(cleanResult, "sourceUrl");
+            String fileName = extractMetadataValue(cleanResult, "fileName");
 
             if ("generatePDF".equals(toolName) && cleanResult.startsWith("PDF generated successfully")) {
                 int startIndex = cleanResult.indexOf("to: ");
@@ -420,40 +438,41 @@ public class ToolsAgentService {
                     filePath = cleanResult.substring(startIndex, endIndex).trim();
                     type = "pdf";
                 }
-            } else if (("downloadResource".equals(toolName) || "downloadImage".equals(toolName))
-                    && cleanResult.startsWith("Resource downloaded successfully")) {
-                int startIndex = cleanResult.indexOf("to: ");
-                if (startIndex != -1) {
-                    startIndex += 4;
-                    int endIndex = cleanResult.indexOf(" (", startIndex);
-                    if (endIndex == -1) endIndex = cleanResult.length();
-                    filePath = cleanResult.substring(startIndex, endIndex).trim();
-                    type = "image";
-                }
+            } else if ("downloadResource".equals(toolName) && cleanResult.startsWith("Resource downloaded successfully")) {
+                type = "image";
             } else if ("downloadImage".equals(toolName) && cleanResult.startsWith("Image downloaded successfully")) {
-                int startIndex = cleanResult.indexOf("to: ");
-                if (startIndex != -1) {
-                    startIndex += 4;
-                    int endIndex = cleanResult.indexOf(" (", startIndex);
-                    if (endIndex == -1) endIndex = cleanResult.length();
-                    filePath = cleanResult.substring(startIndex, endIndex).trim();
-                    type = "image";
-                }
+                type = "image";
+                filePath = extractMetadataValue(cleanResult, "localPath");
+            }
+
+            if ("image".equals(type) && sourceUrl != null && fileName != null) {
+                ConversationImageStorageService.StoredConversationImage storedImage =
+                        conversationImageStorageService.storeRemoteImage(chatId, sourceUrl, fileName);
+                log.info("发送 file_created 事件: type=image, name={}, url={}",
+                        storedImage.getFileName(), storedImage.getPublicUrl());
+                sendFileCreated(emitter, "image", storedImage.getFileName(),
+                        storedImage.getStoragePath(), storedImage.getPublicUrl());
+                return;
             }
 
             if (type != null && filePath != null) {
                 File file = new File(filePath);
                 if (file.exists()) {
-                    String fileName = file.getName();
+                    String resolvedFileName = file.getName();
                     String urlType = type.equals("pdf") ? "pdf" : "download";
-                    String url = "/api/files/" + urlType + "/" + fileName;
-                    log.info("发送 file_created 事件: type={}, name={}, url={}", type, fileName, url);
-                    sendFileCreated(emitter, type, fileName, filePath, url);
+                    String publicUrl = "/api/files/" + urlType + "/" + resolvedFileName;
+                    log.info("发送 file_created 事件: type={}, name={}, url={}", type, resolvedFileName, publicUrl);
+                    sendFileCreated(emitter, type, resolvedFileName, filePath, publicUrl);
                 }
             }
         } catch (Exception e) {
-            log.warn("解析文件路径失败: {}", e.getMessage());
+            log.warn("解析或持久化文件事件失败: {}", e.getMessage());
         }
+    }
+
+    private String extractChatId(String conversationId) {
+        String[] parts = conversationId.split(":");
+        return parts.length >= 3 ? parts[2] : conversationId;
     }
 
     private void sendFileCreated(SseEmitter emitter, String fileType, String fileName,
@@ -507,6 +526,21 @@ public class ToolsAgentService {
             }
         }
         return cleaned;
+    }
+
+    private String extractMetadataValue(String text, String key) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+        String prefix = key + ":";
+        for (String line : text.split("\n")) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith(prefix)) {
+                String value = trimmed.substring(prefix.length()).trim();
+                return value.isEmpty() ? null : value;
+            }
+        }
+        return null;
     }
 
     private String deriveFileNameFromUrl(String url, int index) {

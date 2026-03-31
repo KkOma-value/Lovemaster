@@ -3,21 +3,34 @@
  * Ported from Vue implementation
  */
 
+import { AuthExpiredError, getStoredRefreshToken, getValidAccessToken } from './authSession';
+
 const API_BASE = '/api';
 
 const authFetch = async (url, options = {}) => {
-    const token = localStorage.getItem('accessToken');
-    const headers = {
-        ...options.headers,
+    const request = async (token) => {
+        const headers = {
+            ...options.headers,
+        };
+
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+        return fetch(url, { ...options, headers });
     };
-    if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+
+    let token = await getValidAccessToken();
+    let response = await request(token);
+
+    if ((response.status === 401 || response.status === 403) && getStoredRefreshToken()) {
+        token = await getValidAccessToken({ forceRefresh: true });
+        response = await request(token);
     }
-    const response = await fetch(url, { ...options, headers });
+
     if (!response.ok) {
-        if (response.status === 401) {
-            console.error('Unauthorized request. Token might be invalid or expired.');
-            // Add automatic login redirect or token refresh strategy here if preferred
+        if (response.status === 401 || response.status === 403) {
+            throw new AuthExpiredError();
         }
         throw new Error(`Failed request: ${response.statusText}`);
     }
@@ -38,10 +51,10 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
         }
     };
 
-    const isTerminalServerError = (rawData) => {
+    const isTerminalServerMessage = (rawData) => {
         try {
             const parsed = JSON.parse(rawData);
-            return parsed?.type === 'error';
+            return parsed?.type === 'error' || parsed?.type === 'done';
         } catch {
             return false;
         }
@@ -65,7 +78,7 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
 
         onData?.(data);
 
-        if (isTerminalServerError(data)) {
+        if (isTerminalServerMessage(data)) {
             terminalMessageReceived = true;
             safeClose();
         }
@@ -93,6 +106,12 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
     return eventSource;
 };
 
+const buildSSEUrl = async (path, params) => {
+    const token = await getValidAccessToken();
+    params.set('token', token);
+    return `${API_BASE}${path}?${params.toString()}`;
+};
+
 /**
  * Create LoveApp SSE connection
  * @param {string} message - User message
@@ -100,7 +119,7 @@ const createSSEConnection = (url, label, { onData, onError, onComplete }, isDone
  * @param {Object} callbacks - { onData, onError, onComplete }
  * @returns {EventSource}
  */
-export function createLoveAppSSE(message, chatId, imageUrl, { onData, onError, onComplete }) {
+export async function createLoveAppSSE(message, chatId, imageUrl, { onData, onError, onComplete }) {
     const params = new URLSearchParams();
     params.append('message', message);
     if (chatId) {
@@ -109,12 +128,7 @@ export function createLoveAppSSE(message, chatId, imageUrl, { onData, onError, o
     if (imageUrl) {
         params.append('imageUrl', imageUrl);
     }
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-        params.append('token', token);
-    }
-
-    const url = `${API_BASE}/ai/love_app/chat/sse?${params.toString()}`;
+    const url = await buildSSEUrl('/ai/love_app/chat/sse', params);
     return createSSEConnection(
         url,
         'LoveApp SSE',
@@ -130,7 +144,7 @@ export function createLoveAppSSE(message, chatId, imageUrl, { onData, onError, o
  * @param {Object} callbacks - { onData, onError, onComplete }
  * @returns {EventSource}
  */
-export function createCoachSSE(message, chatId, imageUrl, { onData, onError, onComplete }) {
+export async function createCoachSSE(message, chatId, imageUrl, { onData, onError, onComplete }) {
     const params = new URLSearchParams();
     params.append('message', message);
     if (chatId) {
@@ -139,12 +153,7 @@ export function createCoachSSE(message, chatId, imageUrl, { onData, onError, onC
     if (imageUrl) {
         params.append('imageUrl', imageUrl);
     }
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-        params.append('token', token);
-    }
-
-    const url = `${API_BASE}/ai/manus/chat?${params.toString()}`;
+    const url = await buildSSEUrl('/ai/manus/chat', params);
     return createSSEConnection(
         url,
         'Coach SSE',
@@ -183,4 +192,14 @@ export async function deleteChatSession(chatId, chatType = 'loveapp') {
  */
 export async function getChatMessages(chatId, chatType = 'loveapp', limit = 100) {
     return authFetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}/messages?chatType=${chatType}&limit=${limit}`);
+}
+
+/**
+ * Get images for a specific chat session
+ * @param {string} chatId
+ * @param {string} chatType - 'loveapp' or 'coach'
+ * @returns {Promise<Array<{type: string, name: string, url: string}>>}
+ */
+export async function getChatImages(chatId, chatType = 'coach') {
+    return authFetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}/images?chatType=${chatType}`);
 }

@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
 import ManusPanel from '../../components/ManusPanel/ManusPanel';
-import { getChatMessages } from '../../services/chatApi';
+import { getChatMessages, getChatImages } from '../../services/chatApi';
 import { useSSEConnection } from '../../hooks/useSSEConnection';
 import { useChatMessages } from '../../hooks/useChatMessages';
 import { useChatStorage } from '../../hooks/useChatStorage';
@@ -31,6 +31,7 @@ const ChatPage = () => {
         setInputValue,
         setStreamingStatus,
         setIsLoading,
+        addStatusStep,
         addStreamingContent,
         finalizeStreaming,
         addUserMessage,
@@ -43,6 +44,11 @@ const ChatPage = () => {
 
     // Panel data (initial instance, will be re-created with currentChatId)
     const panelDataHook = usePanelData(null, showManusPanel, storageHooks);
+    const {
+        setChatId: setPanelChatId,
+        setPanelData,
+        setIsPanelOpen
+    } = panelDataHook;
 
     // Chat sessions
     const {
@@ -56,7 +62,6 @@ const ChatPage = () => {
     } = useChatSessions(chatType, cleanupSSE, panelDataHook.resetPanel);
 
     // Sync currentChatId to panelData hook (breaks circular dependency)
-    const { setChatId: setPanelChatId } = panelDataHook;
     useEffect(() => {
         setPanelChatId(currentChatId);
     }, [currentChatId, setPanelChatId]);
@@ -65,19 +70,56 @@ const ChatPage = () => {
     useEffect(() => {
         if (!currentChatId) return;
 
+        let cancelled = false;
+        const activeChatId = currentChatId;
+
         const loadMessages = async () => {
             try {
-                const msgs = await getChatMessages(currentChatId, chatType);
-                setMessagesDirect(msgs.length > 0 ? msgs : []);
+                const msgs = await getChatMessages(activeChatId, chatType);
+                if (!cancelled) {
+                    setMessagesDirect(msgs.length > 0 ? msgs : []);
+                }
             } catch (error) {
                 console.error('Failed to load messages:', error);
-                setMessagesDirect([]);
+                if (!cancelled) {
+                    setMessagesDirect([]);
+                }
+            }
+        };
+
+        const loadImages = async () => {
+            if (!showManusPanel) return;
+            try {
+                const images = await getChatImages(activeChatId, chatType);
+                if (!cancelled) {
+                    setPanelData(prev => ({
+                        ...prev,
+                        files: Array.isArray(images) ? images : []
+                    }));
+                    if (images?.length > 0) {
+                        setIsPanelOpen(true);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load images:', error);
             }
         };
 
         loadMessages();
+        loadImages();
         setStreamingStatus(null);
-    }, [currentChatId, chatType, setMessagesDirect, setStreamingStatus]);
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        currentChatId,
+        chatType,
+        showManusPanel,
+        setMessagesDirect,
+        setStreamingStatus,
+        setPanelData,
+        setIsPanelOpen
+    ]);
 
     // Refresh messages from backend
     const refreshMessages = useCallback(async (chatId = currentChatId) => {
@@ -93,7 +135,7 @@ const ChatPage = () => {
     }, [currentChatId, chatType, setMessagesDirect]);
 
     // Send message handler
-    const handleSendMessage = useCallback((msgText = inputValue, imageUrl = null) => {
+    const handleSendMessage = useCallback(async (msgText = inputValue, imageUrl = null) => {
         const textToUse = msgText || inputValue;
         if ((!textToUse.trim() && !imageUrl) || isLoading) return;
 
@@ -113,16 +155,16 @@ const ChatPage = () => {
         addUserMessage(userMessage, imageUrl);
         setInputValue('');
         setIsLoading(true);
-        setStreamingStatus({
-            type: imageUrl ? 'intake_status' : 'thinking',
-            content: imageUrl
-                ? (showManusPanel
-                    ? '正在读取聊天截图，并判断这件事要不要进入任务执行...'
-                    : '正在识别聊天截图，准备给你回复建议...')
-                : (showManusPanel
-                    ? '正在整理问题，并判断是否需要继续执行任务...'
-                    : '正在分析对话语气，准备回复建议...')
-        });
+        const initialType = imageUrl ? 'intake_status' : 'thinking';
+        const initialContent = imageUrl
+            ? (showManusPanel
+                ? '正在读取聊天截图，并判断这件事要不要进入任务执行...'
+                : '正在识别聊天截图，准备给你回复建议...')
+            : (showManusPanel
+                ? '正在整理问题，并判断是否需要继续执行任务...'
+                : '正在分析对话语气，准备回复建议...');
+        addStatusStep(initialType, initialContent);
+        setStreamingStatus({ type: initialType, content: initialContent });
 
         // Reset panel data for new message
         if (showManusPanel) {
@@ -151,13 +193,20 @@ const ChatPage = () => {
                 case 'intake_status':
                 case 'ocr_result':
                 case 'rewrite_result':
+                    addStatusStep(parsed.type, parsed.content);
                     setStreamingStatus({ type: parsed.type, content: parsed.content });
                     if (showManusPanel && panelDataHook.isPanelOpen && parsed.content) {
                         panelDataHook.addTerminalOutput(`[${parsed.type}] ${parsed.content}`);
                     }
                     break;
 
+                case 'rag_status':
+                    addStatusStep(parsed.type, parsed.content);
+                    setStreamingStatus({ type: parsed.type, content: parsed.content });
+                    break;
+
                 case 'tool_call':
+                    addStatusStep(parsed.type, parsed.content);
                     setStreamingStatus({ type: parsed.type, content: parsed.content });
                     if (showManusPanel && parsed.content) {
                         panelDataHook.setIsPanelOpen(true);
@@ -199,8 +248,11 @@ const ChatPage = () => {
 
         const handleError = (error) => {
             console.error('SSE Error:', error);
-            // Always add error message and reset loading state
-            addErrorMessage('抱歉，连接出现问题，请稍后重试。');
+            const errorMessage = error?.name === 'AuthExpiredError'
+                ? error.message
+                : '抱歉，连接出现问题，请稍后重试。';
+
+            addErrorMessage(errorMessage);
             finalizeStreaming();
             setIsLoading(false);
             setStreamingStatus(null);
@@ -214,7 +266,7 @@ const ChatPage = () => {
         };
 
         // Create SSE connection
-        connectSSE(userMessage, activeChatId, imageUrl, {
+        await connectSSE(userMessage, activeChatId, imageUrl, {
             onData: handleMessage,
             onError: handleError,
             onComplete: handleComplete
@@ -223,7 +275,7 @@ const ChatPage = () => {
         inputValue, isLoading, currentChatId, chatList,
         cleanupSSE, connectSSE, showManusPanel,
         addUserMessage, setInputValue, setIsLoading, setStreamingStatus,
-        addStreamingContent, finalizeStreaming, addErrorMessage,
+        addStatusStep, addStreamingContent, finalizeStreaming, addErrorMessage,
         updateChatTitle, refreshMessages, panelDataHook, autoCreateChat
     ]);
 

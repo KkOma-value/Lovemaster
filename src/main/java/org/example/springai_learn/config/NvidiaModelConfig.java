@@ -14,13 +14,16 @@ import org.springframework.context.annotation.Configuration;
  *
  * <ul>
  *   <li>rewriteModel → Qwen3.5 VLM 122B (用于 MultimodalIntakeService 的问题重写，支持图像识别)</li>
- *   <li>toolsModel   → DeepSeek-R1 (用于 ToolsAgentService 工具调用)</li>
+ *   <li>toolsModel   → Nemotron tool-calling model (用于 ToolsAgentService 工具调用)</li>
  *   <li>brainModel   → Kimi-K2-Thinking (用于 Coach 模式的直接回答)</li>
  * </ul>
  */
 @Configuration
 @Slf4j
 public class NvidiaModelConfig {
+
+    private static final String RETIRED_TOOLS_MODEL = "deepseek-ai/deepseek-r1";
+    private static final String DEFAULT_TOOLS_MODEL = "nvidia/llama-3.3-nemotron-super-49b-v1.5";
 
     @Value("${spring.ai.openai.base-url:https://integrate.api.nvidia.com}")
     private String baseUrl;
@@ -33,7 +36,7 @@ public class NvidiaModelConfig {
     @Value("${nvidia.model.rewrite:qwen/qwen3.5-122b-a10b}")
     private String rewriteModelName;
 
-    @Value("${nvidia.model.tools:deepseek-ai/deepseek-r1}")
+    @Value("${nvidia.model.tools:" + DEFAULT_TOOLS_MODEL + "}")
     private String toolsModelName;
 
     @Value("${nvidia.model.brain:moonshotai/kimi-k2-thinking}")
@@ -58,18 +61,19 @@ public class NvidiaModelConfig {
     }
 
     // =========================================================================
-    //  toolsModel — DeepSeek-R1 (用于 ToolsAgentService 工具调用)
+    //  toolsModel — tool-calling model (用于 ToolsAgentService 工具调用)
     // =========================================================================
 
     @Bean("toolsModel")
     public ChatModel toolsModel() {
-        log.info("Creating NVIDIA toolsModel: {} @ {}", toolsModelName, baseUrl);
+        String resolvedToolsModelName = resolveToolsModelName();
+        log.info("Creating NVIDIA toolsModel: {} @ {}", resolvedToolsModelName, baseUrl);
         OpenAiApi api = OpenAiApi.builder()
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
                 .build();
         OpenAiChatOptions options = OpenAiChatOptions.builder()
-                .model(toolsModelName)
+                .model(resolvedToolsModelName)
                 .temperature(0.6)
                 .build();
         return new OpenAiChatModel(api, options);
@@ -91,5 +95,14 @@ public class NvidiaModelConfig {
                 .temperature(0.7)
                 .build();
         return new OpenAiChatModel(api, options);
+    }
+
+    private String resolveToolsModelName() {
+        if (RETIRED_TOOLS_MODEL.equalsIgnoreCase(toolsModelName)) {
+            log.warn("Configured tools model {} has been retired. Falling back to {}.",
+                    toolsModelName, DEFAULT_TOOLS_MODEL);
+            return DEFAULT_TOOLS_MODEL;
+        }
+        return toolsModelName;
     }
 }

@@ -1,6 +1,5 @@
 package org.example.springai_learn.ai.service;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
@@ -18,6 +17,7 @@ import org.springframework.core.io.PathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
+import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.nio.file.Files;
@@ -89,6 +89,8 @@ public class MultimodalIntakeService {
     @Autowired(required = false)
     private ImageStorageService imageStorageService;
 
+    private final RestTemplate restTemplate = new RestTemplate();
+
     public MultimodalIntakeService(@Qualifier("rewriteModel") ChatModel rewriteModel) {
         this.rewriteModel = rewriteModel;
     }
@@ -98,10 +100,15 @@ public class MultimodalIntakeService {
             try {
                 return analyzeWithImage(context);
             } catch (Exception e) {
-                log.warn("图片 intake 失败，降级为文本整理: {}", e.getMessage());
+                log.warn("图片 intake 失败，降级为文本整理: chatId={}, error={}", context.chatId(), e.getMessage());
             }
         }
-        return analyzeTextOnly(context);
+        try {
+            return analyzeTextOnly(context);
+        } catch (Exception e) {
+            log.warn("文本 intake 失败，启用本地兜底: chatId={}, error={}", context.chatId(), e.getMessage());
+            return buildLocalFallback(context, e);
+        }
     }
 
     private IntakeAnalysisResult analyzeTextOnly(ChatInputContext context) {
@@ -135,6 +142,36 @@ public class MultimodalIntakeService {
     private String invokeModel(List<Message> messages) {
         ChatResponse response = rewriteModel.call(new Prompt(messages));
         return response.getResult().getOutput().getText();
+    }
+
+    private IntakeAnalysisResult buildLocalFallback(ChatInputContext context, Exception exception) {
+        boolean likelyNeedTools = heuristicToolNeed(context.userMessage());
+        String safeUserMessage = safeText(context.userMessage());
+        String summary = context.hasImage()
+                ? "用户提供了聊天截图，并希望结合补充描述继续分析当前关系动态或下一步行动。"
+                : buildFallbackSummary(safeUserMessage, likelyNeedTools);
+        String rewrittenQuestion = buildFallbackRewrite(safeUserMessage, context.hasImage(), likelyNeedTools);
+        String intent = inferIntent(safeUserMessage, likelyNeedTools);
+        String ocrText = context.hasImage()
+                ? "截图暂未识别成功，当前先根据你的文字描述继续分析。"
+                : "";
+
+        List<String> uncertainties = new ArrayList<>();
+        uncertainties.add("上游模型整理阶段暂时不可用，当前结果基于原始输入进行本地兜底分析。");
+        String errorMessage = safeText(exception.getMessage());
+        if (!errorMessage.isBlank()) {
+            uncertainties.add("模型异常：" + abbreviate(errorMessage, 120));
+        }
+
+        return new IntakeAnalysisResult(
+                context.hasImage(),
+                ocrText,
+                summary,
+                rewrittenQuestion,
+                uncertainties,
+                intent,
+                likelyNeedTools
+        );
     }
 
     private IntakeAnalysisResult parse(String raw, ChatInputContext context, Path imagePath) {
@@ -173,6 +210,25 @@ public class MultimodalIntakeService {
     }
 
     private Path resolveImagePath(String userId, String imageUrl) throws Exception {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new IllegalArgumentException("图片 URL 为空");
+        }
+
+        // If it's a public HTTP URL, download to temp file
+        if (imageUrl.startsWith("http://") || imageUrl.startsWith("https://")) {
+            log.info("检测到 public 图片 URL，开始下载到临时文件: {}", imageUrl);
+            byte[] imageBytes = restTemplate.getForEntity(imageUrl, byte[].class).getBody();
+            if (imageBytes == null) {
+                throw new IllegalStateException("无法从 URL 下载图片: " + imageUrl);
+            }
+            String ext = guessExtensionFromUrl(imageUrl);
+            Path tempFile = Files.createTempFile("lovemaster_img_", ext);
+            Files.write(tempFile, imageBytes);
+            log.info("图片已下载到临时文件: {}", tempFile);
+            return tempFile;
+        }
+
+        // Legacy local URL format: /api/images/{userId}/{imageType}/{fileName}
         String path = URI.create(imageUrl).getPath();
         String[] parts = path.split("/");
         if (parts.length < 5) {
@@ -185,6 +241,15 @@ public class MultimodalIntakeService {
             log.warn("图片 URL userId 与当前用户不一致，使用 URL 中的 userId 解析: current={}, url={}", userId, parsedUserId);
         }
         return imageStorageService.getImagePath(parsedUserId, imageType, fileName);
+    }
+
+    private String guessExtensionFromUrl(String imageUrl) {
+        String lower = imageUrl.toLowerCase();
+        if (lower.contains(".png")) return ".png";
+        if (lower.contains(".jpg") || lower.contains(".jpeg")) return ".jpg";
+        if (lower.contains(".webp")) return ".webp";
+        if (lower.contains(".gif")) return ".gif";
+        return ".tmp";
     }
 
     private MimeType detectMimeType(Path imagePath) {
@@ -251,6 +316,39 @@ public class MultimodalIntakeService {
         return "请根据我的描述，判断对方的真实意思，并给我可直接发送的回复建议：" + safeText(userMessage);
     }
 
+    private String buildFallbackRewrite(String userMessage, boolean hasImage, boolean likelyNeedTools) {
+        if (hasImage) {
+            return fallbackRewrite(userMessage, true);
+        }
+        if (likelyNeedTools) {
+            return "请根据用户原始需求，整理出需要查询或推荐的信息，并给出可直接使用的结果：" + userMessage;
+        }
+        return fallbackRewrite(userMessage, false);
+    }
+
+    private String buildFallbackSummary(String userMessage, boolean likelyNeedTools) {
+        if (userMessage.isBlank()) {
+            return "用户希望获得一段恋爱关系分析和回复建议。";
+        }
+        if (likelyNeedTools) {
+            return "用户希望围绕恋爱场景获取外部信息支持，例如地点推荐、活动建议、攻略或参考资料。";
+        }
+        return "用户正在描述一段情感互动，希望获得对对方态度的理解和下一步建议。";
+    }
+
+    private String inferIntent(String userMessage, boolean likelyNeedTools) {
+        if (likelyNeedTools) {
+            return "获取带有外部信息支持的推荐、攻略或执行建议";
+        }
+        if (userMessage.contains("怎么回") || userMessage.contains("回复")) {
+            return "获得合适的回复建议";
+        }
+        if (userMessage.contains("什么意思") || userMessage.contains("怎么想")) {
+            return "理解对方真实想法";
+        }
+        return "理解当前关系状态并获得下一步建议";
+    }
+
     private boolean heuristicToolNeed(String userMessage) {
         if (userMessage == null) {
             return false;
@@ -260,6 +358,16 @@ public class MultimodalIntakeService {
                 || text.contains("方案")
                 || text.contains("帮我查")
                 || text.contains("搜索")
+                || text.contains("推荐")
+                || text.contains("攻略")
+                || text.contains("景点")
+                || text.contains("地点")
+                || text.contains("餐厅")
+                || text.contains("旅游")
+                || text.contains("旅行")
+                || text.contains("照片")
+                || text.contains("图片")
+                || text.contains("看看")
                 || text.contains("整理")
                 || text.contains("生成")
                 || text.contains("pdf")
@@ -268,5 +376,12 @@ public class MultimodalIntakeService {
 
     private String safeText(String text) {
         return text == null ? "" : text.trim();
+    }
+
+    private String abbreviate(String text, int limit) {
+        if (text == null || text.length() <= limit) {
+            return safeText(text);
+        }
+        return text.substring(0, limit) + "...";
     }
 }

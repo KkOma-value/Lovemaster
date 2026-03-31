@@ -105,6 +105,13 @@ dify:
       max-attempts: ${DIFY_RETRY_MAX_ATTEMPTS:2}
       backoff-ms: ${DIFY_RETRY_BACKOFF_MS:1000}
 
+# Supabase Storage configuration
+supabase:
+  url: ${SUPABASE_URL:}
+  service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+  storage:
+    bucket: ${SUPABASE_STORAGE_BUCKET:conversation-images}
+
 # springdoc-openapi配置
 springdoc:
   swagger-ui:
@@ -132,5 +139,5 @@ search-api:
 nvidia:
   model:
     rewrite: ${NVIDIA_MODEL_REWRITE:qwen/qwen3.5-122b-a10b}
-    tools: ${NVIDIA_MODEL_TOOLS:deepseek-ai/deepseek-r1}
+    tools: ${NVIDIA_MODEL_TOOLS:nvidia/llama-3.3-nemotron-super-49b-v1.5}
     brain: ${NVIDIA_MODEL_BRAIN:moonshotai/kimi-k2-thinking}

@@ -51,8 +51,10 @@ export const usePanelData = (initialChatId, showManusPanel, storageHooks) => {
                 files: []
             };
 
-            const newData = stored || defaultPanelData;
-            const shouldOpen = stored && (stored.files.length > 0 || stored.terminalLines.length > 0);
+            const newData = stored
+                ? { ...stored, files: [] }  // files 由 API 加载，不从 localStorage 恢复
+                : defaultPanelData;
+            const shouldOpen = stored && (stored.terminalLines.length > 0);
 
             // eslint-disable-next-line react-hooks/set-state-in-effect -- loading from storage on chat switch
             setState({
@@ -113,12 +115,19 @@ export const usePanelData = (initialChatId, showManusPanel, storageHooks) => {
 
                 case 'file_created':
                     if (parsed.data) {
-                        newPanelData.files = [...prev.panelData.files, {
+                        const nextFile = {
                             type: parsed.data.type || 'pdf',
                             name: parsed.data.name || 'file',
                             path: parsed.data.path || '',
                             url: parsed.data.url || ''
-                        }];
+                        };
+                        const hasExisting = prev.panelData.files.some(file =>
+                            file.url === nextFile.url
+                            || (file.name === nextFile.name && file.path === nextFile.path)
+                        );
+                        newPanelData.files = hasExisting
+                            ? prev.panelData.files
+                            : [...prev.panelData.files, nextFile];
                         newPanelData.terminalLines = [
                             ...prev.panelData.terminalLines,
                             { type: 'output', content: `✓ 文件已创建: ${parsed.data.name}` }
@@ -164,8 +173,13 @@ export const usePanelData = (initialChatId, showManusPanel, storageHooks) => {
         setState(prev => ({ ...prev, isPanelOpen: value }));
     }, []);
 
-    const setPanelData = useCallback((data) => {
-        setState(prev => ({ ...prev, panelData: data }));
+    const setPanelData = useCallback((dataOrUpdater) => {
+        setState(prev => ({
+            ...prev,
+            panelData: typeof dataOrUpdater === 'function'
+                ? dataOrUpdater(prev.panelData)
+                : dataOrUpdater
+        }));
     }, []);
 
     return {

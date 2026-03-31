@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { User, ChevronDown } from 'lucide-react';
 import aiAvatarUrl from '../../assets/illustrations/ai-avatar.svg';
 import MarkdownRenderer from './MarkdownRenderer';
+import StatusSteps from './StatusSteps';
 import StreamingStatus from './StreamingStatus';
 import styles from './ChatArea.module.css';
 
@@ -72,11 +73,23 @@ const ChatMessages = ({ messages, streamingStatus, onRetry }) => {
                         <div className={`${styles.bubble} ${message.role === 'user' ? styles.userBubble : styles.aiBubble}`}>
                             {message.role === 'assistant' ? (
                                 <>
-                                    <MarkdownRenderer content={message.content} />
+                                    {/* Status steps — always above content */}
+                                    {message.statusSteps?.length > 0 && (
+                                        <StatusSteps
+                                            steps={message.statusSteps}
+                                            isStreaming={message.isStreaming}
+                                            hasContent={!!message.content}
+                                        />
+                                    )}
+                                    {/* Content */}
+                                    {message.content && (
+                                        <MarkdownRenderer content={message.content} isStreaming={message.isStreaming} />
+                                    )}
                                     {message.isStreaming && message.content && (
                                         <span className={styles.cursor} />
                                     )}
-                                    {message.isStreaming && !message.content && streamingStatus && (
+                                    {/* Fallback: streaming status when no status steps exist yet */}
+                                    {message.isStreaming && !message.content && !message.statusSteps?.length && streamingStatus && (
                                         <StreamingStatus
                                             type={streamingStatus.type}
                                             content={streamingStatus.content}
@@ -112,23 +125,6 @@ const ChatMessages = ({ messages, streamingStatus, onRetry }) => {
                         )}
                     </div>
                 ))}
-
-                {/* Standalone streaming status (when no assistant message exists yet) */}
-                {streamingStatus && messages[messages.length - 1]?.role !== 'assistant' && (
-                    <div className={styles.messageRow}>
-                        <div className={styles.aiIcon}>
-                            <img src={aiAvatarUrl} alt="AI助手" width="30" height="30" style={{ borderRadius: '50%' }} />
-                        </div>
-                        <div className={`${styles.bubble} ${styles.aiBubble}`}>
-                            <StreamingStatus
-                                type={streamingStatus.type}
-                                content={streamingStatus.content}
-                                isVisible={true}
-                                onRetry={onRetry}
-                            />
-                        </div>
-                    </div>
-                )}
 
                 <div ref={messagesEndRef} />
             </div>

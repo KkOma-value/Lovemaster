@@ -10,6 +10,32 @@ export const useChatMessages = () => {
     const [streamingStatus, setStreamingStatus] = useState(null);
     const currentResponseRef = useRef('');
 
+    const addStatusStep = useCallback((type, content) => {
+        const step = { type, content, timestamp: Date.now() };
+        setMessages(prev => {
+            const lastMsg = prev[prev.length - 1];
+            if (lastMsg?.role === 'assistant' && lastMsg.isStreaming) {
+                const steps = lastMsg.statusSteps || [];
+                // Deduplicate: skip if last step has the same type
+                if (steps.length > 0 && steps[steps.length - 1].type === type) {
+                    return [
+                        ...prev.slice(0, -1),
+                        { ...lastMsg, statusSteps: [...steps.slice(0, -1), step] }
+                    ];
+                }
+                return [
+                    ...prev.slice(0, -1),
+                    { ...lastMsg, statusSteps: [...steps, step] }
+                ];
+            }
+            // Create new assistant message with status step
+            return [
+                ...prev,
+                { role: 'assistant', content: '', isStreaming: true, statusSteps: [step] }
+            ];
+        });
+    }, []);
+
     const addStreamingContent = useCallback((newChunk) => {
         currentResponseRef.current += newChunk;
         setMessages(prev => {
@@ -77,6 +103,7 @@ export const useChatMessages = () => {
         setInputValue,
         setStreamingStatus,
         setIsLoading,
+        addStatusStep,
         addStreamingContent,
         finalizeStreaming,
         addUserMessage,

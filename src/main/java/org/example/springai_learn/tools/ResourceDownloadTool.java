@@ -10,13 +10,19 @@ import org.springframework.ai.tool.annotation.ToolParam;
 public class ResourceDownloadTool {
 
     private final String fileSaveDir;
+    private final boolean persistLocally;
 
     public ResourceDownloadTool() {
-        this.fileSaveDir = FileConstant.FILE_SAVE_DIR;
+        this(FileConstant.FILE_SAVE_DIR, true);
     }
 
     public ResourceDownloadTool(String fileSaveDir) {
+        this(fileSaveDir, true);
+    }
+
+    public ResourceDownloadTool(String fileSaveDir, boolean persistLocally) {
         this.fileSaveDir = StrUtil.isBlank(fileSaveDir) ? FileConstant.FILE_SAVE_DIR : fileSaveDir.trim();
+        this.persistLocally = persistLocally;
     }
 
     @Tool(description = "Download a resource from a given URL")
@@ -30,25 +36,7 @@ public class ResourceDownloadTool {
             return "Error downloading resource: fileName is blank";
         }
 
-        String fileDir = fileSaveDir + "/download";
-
-        // 如果文件已存在，添加时间戳避免覆盖
-        String baseName = FileUtil.mainName(fileName);
-        String ext = FileUtil.extName(fileName);
-        String finalFileName = fileName;
-        java.io.File checkFile = new java.io.File(fileDir, fileName);
-        if (checkFile.exists()) {
-            long timestamp = System.currentTimeMillis();
-            finalFileName = baseName + "_" + timestamp + (StrUtil.isNotBlank(ext) ? "." + ext : "");
-        }
-
-        String filePath = fileDir + "/" + finalFileName;
-
         try {
-            // 创建目录
-            FileUtil.mkdir(fileDir);
-
-            // 使用 Hutool 的 createGet 方法以便检查响应头
             var response = HttpUtil.createGet(url)
                     .timeout(30000)
                     .execute();
@@ -67,10 +55,37 @@ public class ResourceDownloadTool {
                         + ". Only images are supported.";
             }
 
-            // 保存文件
-            FileUtil.writeBytes(response.bodyBytes(), filePath);
+            byte[] body = response.bodyBytes();
+            String finalFileName = fileName;
 
-            return "Resource downloaded successfully to: " + filePath + " (Content-Type: " + contentType + ")";
+            if (persistLocally) {
+                String fileDir = fileSaveDir + "/download";
+                FileUtil.mkdir(fileDir);
+
+                String baseName = FileUtil.mainName(fileName);
+                String ext = FileUtil.extName(fileName);
+                java.io.File checkFile = new java.io.File(fileDir, fileName);
+                if (checkFile.exists()) {
+                    long timestamp = System.currentTimeMillis();
+                    finalFileName = baseName + "_" + timestamp + (StrUtil.isNotBlank(ext) ? "." + ext : "");
+                }
+
+                String filePath = fileDir + "/" + finalFileName;
+                FileUtil.writeBytes(body, filePath);
+                return "Resource downloaded successfully\n"
+                        + "sourceUrl: " + url + "\n"
+                        + "fileName: " + finalFileName + "\n"
+                        + "contentType: " + contentType + "\n"
+                        + "bytes: " + body.length + "\n"
+                        + "localPath: " + filePath;
+            }
+
+            return "Resource downloaded successfully\n"
+                    + "sourceUrl: " + url + "\n"
+                    + "fileName: " + finalFileName + "\n"
+                    + "contentType: " + contentType + "\n"
+                    + "bytes: " + body.length + "\n"
+                    + "storageMode: deferred-upload";
         } catch (Exception e) {
             return "Error downloading resource: " + e.getMessage();
         }

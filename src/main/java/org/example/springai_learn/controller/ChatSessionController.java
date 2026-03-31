@@ -5,10 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.auth.entity.ChatMessage;
 import org.example.springai_learn.auth.entity.Conversation;
+import org.example.springai_learn.auth.entity.ConversationImage;
+import org.example.springai_learn.auth.repository.ConversationImageRepository;
+import org.example.springai_learn.auth.repository.ConversationRepository;
 import org.example.springai_learn.dto.ChatSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +30,8 @@ import java.util.Map;
 public class ChatSessionController {
 
     private final DatabaseChatMemory databaseChatMemory;
+    private final ConversationImageRepository conversationImageRepository;
+    private final ConversationRepository conversationRepository;
 
     private String getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -84,6 +91,29 @@ public class ChatSessionController {
                 .map(msg -> Map.of(
                         "role", msg.getRole(),
                         "content", msg.getContent()))
+                .toList();
+    }
+
+    /**
+     * 获取指定会话的图片列表
+     */
+    @GetMapping("/{chatId}/images")
+    public List<Map<String, String>> getImages(
+            @PathVariable String chatId,
+            @RequestParam(defaultValue = "coach") String chatType) {
+        String userId = getCurrentUserId();
+        log.info("获取会话图片: chatId={}, chatType={}, userId={}", chatId, chatType, userId);
+
+        conversationRepository.findByIdAndUserIdAndChatType(chatId, userId, chatType)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "会话不存在"));
+
+        List<ConversationImage> images = conversationImageRepository
+                .findByConversationIdOrderByCreatedAtAsc(chatId);
+        return images.stream()
+                .map(img -> Map.of(
+                        "type", img.getFileType() != null ? img.getFileType() : "image",
+                        "name", img.getFileName() != null ? img.getFileName() : "",
+                        "url", img.getPublicUrl() != null ? img.getPublicUrl() : ""))
                 .toList();
     }
 }
