@@ -1,285 +1,215 @@
-# Lovemaster - Spring AI
+# Lovemaster
 
-## 项目简介
+Lovemaster 是一个面向恋爱陪伴与恋爱教练场景的全栈 AI 应用。
 
-Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.5 + Spring AI，前端采用 React（Vite）构建，并包含独立的 MCP Servers 模块。项目集成了大语言模型聊天、Dify 云端知识库（RAG）、AI 工具调用、JWT 用户认证等核心能力。
+- 后端：Spring Boot 3.4.5 + Spring AI + Java 21
+- 前端：React 19 + Vite 7，位于 `springai-front-react/`
+- MCP Server：独立 Spring Boot 模块，位于 `mcp-servers/`
+- 检索增强：Dify Dataset API
+
+## 当前模式设计
+
+项目当前有两种核心聊天模式：
+
+### 1. Love 模式
+
+定位：恋爱陪伴、纯聊天、直接给建议。
+
+当前链路：
+
+`MultimodalIntakeService -> RagKnowledgeService -> LoveChatOrchestrator -> LoveApp`
+
+特点：
+
+- 支持文本和聊天截图输入
+- 先做截图理解、OCR 摘录、问题重写
+- 会查 Dify 知识库补充上下文
+- 最终以陪伴式对话直接回答用户
+- 不进入工具调用链路
+
+### 2. Coach 模式
+
+定位：恋爱教练，既支持闲聊，也支持调用工具解决问题。
+
+当前链路：
+
+`MultimodalIntakeService -> RagKnowledgeService -> BrainAgentService -> (direct answer | ToolsAgentService) -> BrainAgentService`
+
+特点：
+
+- 先做输入理解与问题重写
+- BrainAgent 先判断是否真的需要工具
+- 不需要工具时直接回答
+- 需要工具时，再进入 ToolsAgent 执行工具任务
+- 工具完成后由 BrainAgent 综合结果，生成最终回答
+
+这就是当前已经落地的“先思考，后行动”实现。
+
+## 核心架构
+
+### Multimodal Intake
+
+[`MultimodalIntakeService`](./src/main/java/org/example/springai_learn/ai/service/MultimodalIntakeService.java)
+
+职责：
+
+- 识别图片和聊天截图
+- 提取 OCR 关键信息
+- 重写用户问题
+- 输出结构化分析结果 `IntakeAnalysisResult`
+
+### Brain Agent
+
+[`BrainAgentService`](./src/main/java/org/example/springai_learn/ai/service/BrainAgentService.java)
+
+职责：
+
+- 在 Coach 模式下决定是否需要工具
+- 不需要工具时直接回答
+- 需要工具时生成工具任务描述
+- 在工具执行后综合工具结果
+
+### Tools Agent
+
+[`ToolsAgentService`](./src/main/java/org/example/springai_learn/ai/service/ToolsAgentService.java)
+
+职责：
+
+- 接收 Brain 的任务
+- 合并本地工具与 MCP 工具
+- 使用 `ChatClient + ToolCallingManager` 执行多轮工具调用
+- 支持预算控制、文件事件推送、会话记忆持久化
 
 ## 技术栈
 
-### 核心框架
-- **Spring Boot**: 3.4.5
-- **Spring AI**: 1.0.0-M6
-- **Java**: 21
+### 后端
+
+- Spring Boot 3.4.5
+- Spring AI 1.0.0-M6
+- Java 21
+- PostgreSQL
+- Spring JDBC
+
+### AI 模型
+
+- NVIDIA NIM OpenAI-compatible endpoint
+  - `rewriteModel`: Qwen3.5 VLM 122B
+  - `toolsModel`: DeepSeek-R1
+  - `brainModel`: Kimi-K2-Thinking
+- 阿里云 DashScope
+- LangChain4j DashScope 社区版
+- Spring AI MCP Client
 
 ### 前端
-- **React 19** + **Vite 7**（`springai-front-react/`）
-  - Framer Motion、React Router、Three.js
-  - TailwindCSS、Lucide React
 
-### AI 集成
-- **阿里云通义千问**: Spring AI Alibaba Starter 1.0.0-M6.1
-- **NVIDIA NIM 平台**: 多模型编排
-  - **Qwen3.5 VLM 122B** (`rewriteModel`): 多模态问题重写与图像理解（via NVIDIA NIM）
-  - **DeepSeek-R1** (`toolsModel`): KkomaManus 工具调用 Agent
-  - **Kimi-K2-Thinking** (`brainModel`): Coach 模式 Brain 决策与综合
-- **LangChain4j**: DashScope社区版 1.0.0-beta2
-- **MCP客户端**: Spring AI MCP Client 1.0.0-M6
-- **Dify 云端知识库**: 通过 Dify Dataset API 实现 RAG 检索
+- React 19
+- Vite 7
+- Framer Motion
+- React Router
+- Three.js
 
-### 数据存储
-- **PostgreSQL**: 用户数据、会话消息持久化
-- **Spring JDBC**: 数据库操作
+### 其他
 
-### 文档处理
-- **iText Core**: 9.1.0（PDF生成和处理，支持亚洲字体）
-- **JSoup**: 1.19.1（HTML解析和网页抓取）
-- **Spring AI Markdown Reader**: 1.0.0-M6（文档读取器）
+- Dify Dataset API
+- iText 9.1.0
+- JSoup
+- Hutool
+- Knife4j
+- Lombok
 
-### 工具库
-- **Hutool**: 5.8.37 (Java工具库)
-- **Knife4j**: 4.4.0 (API文档增强)
-- **Lombok**: 1.18.30 (代码简化)
-- **Kryo**: 5.6.2 (高性能序列化，用于聊天记忆持久化)
-- **Google OAuth**: 2.7.2（Google账号登录）
+## 主要能力
 
-### 其他功能
-- **用户认证**: JWT + Refresh Token，图片上传
-- **邮件发送**: Spring Boot Mail
-- **JSON Schema**: victools/jsonschema-generator 4.38.0
-
-## 核心功能
-
-### 1. AI 聊天系统
-- **Love App 聊天**: 基于情感咨询场景的实时聊天，支持上下文记忆
-- **Coach 模式**: 采用 Brain→Tools→Brain 三层架构
-  - **BrainAgent**: 决策大脑，判断请求是否需要工具支持
-  - **ToolsAgent**: 工具执行代理，通过 KkomaManus 执行具体工具
-  - **流程**: Intake → RAG → Brain决策 → (可选)Tools执行 → Brain综合回答
-- **Manus AI 代理**: 智能对话代理系统，基于 DeepSeek-R1 支持多工具调用
-- **多模态理解**: Qwen3.5 VLM 支持图像输入与 OCR，实现视觉理解能力
-- **流式响应**: SSE (Server-Sent Events) 实时流式输出
-- **会话管理**: 多会话持久化、历史消息加载
-
-### 2. 用户认证系统
-- **JWT 认证**: Access Token + Refresh Token 双令牌机制
-- **注册/登录**: 邮箱注册、密码登录
-- **Google OAuth**: Google账号一键登录
-- **图片上传**: 用户头像上传与管理
-
-### 3. AI 代理系统
-
-项目采用两层代理架构：基础代理层提供通用 Agent 能力，Coach 模式在此基础上构建 Brain→Tools→Brain 的协作流程。
-
-#### 基础代理层
-
-```
-BaseAgent → ReActAgent → ToolCallAgent → KkomaManus
-```
-
-- **BaseAgent**: 生命周期管理（IDLE / RUNNING / FINISHED / ERROR）、内存管理与 SSE 流式输出
-- **ReActAgent**: 实现 think / act 循环，分离推理与行动
-- **ToolCallAgent**: 增加工具调用、预算控制（90万请求 / 2万工具响应字符上限）与终止检测
-- **KkomaManus**: 基于 DeepSeek-R1 的全自主代理，支持 ChatMemory 持久化、`doTerminate` 自动结束，并作为 ToolsAgent 的执行引擎
-
-#### Coach 模式代理层
-
-- **BrainAgentService**: 决策大脑（Kimi-K2-Thinking），判断是否需要工具支持，或直接生成回答
-- **ToolsAgentService**: 工具执行代理，调度 KkomaManus 完成具体工具调用
-- **MultimodalIntakeService**: 多模态输入处理（Qwen3.5 VLM），负责 OCR 识别与问题重写
-
-### 4. Brain→Tools→Brain 架构 (Coach 模式)
-
-Coach 模式采用创新的三层决策架构：
-
-```
-                    CoachChatOrchestrator
-                              |
-        +---------------------+---------------------+
-        |                     |                     |
-        v                     v                     v
-+---------------+    +---------------+    +-------------------+
-| Intake 阶段   |    | Brain 决策     |    | Response 输出     |
-|  (OCR+重写)   |--->|                |--->|                   |
-+---------------+    +-------+-------+    +-------------------+
-                             |
-              +--------------+--------------+
-              |                             |
-              v                             v
-      +---------------+           +---------------+
-      |   直接回答    |           |   工具调用      |
-      |  (无需工具)   |           | (ToolsAgent)   |
-      +---------------+           +-------+-------+
-                                          |
-                                          v
-                                   +--------------+
-                                   |  KkomaManus  |
-                                   |    执行工具   |
-                                   +------+-------+
-                                          |
-                                          v
-                                   +--------------+
-                                   | Brain 综合   |
-                                   | 生成最终回答  |
-                                   +--------------+
-```
-
-**工作流程**：
-1. **Intake 阶段**: MultimodalIntakeService 处理文本/截图，OCR 识别 + 问题重写
-2. **RAG 阶段**: RagKnowledgeService 检索 Dify 知识库
-3. **Brain 决策**: BrainAgentService 判断是否需要工具
-   - 不需要工具 → 直接生成回答
-   - 需要工具 → 生成任务描述，激活 ToolsAgent
-4. **工具执行**: ToolsAgentService 通过 KkomaManus 执行工具
-5. **Brain 综合**: BrainAgentService 综合工具结果，生成最终回答
-
-### 5. AI 工具集
-- **邮件发送工具** (`EmailSendTool`): 智能邮件发送功能
-- **网络搜索工具** (`WebSearchTool`): 集成搜索API
-- **网页抓取工具** (`WebScrapingTool`): 网页内容提取
-- **文件操作工具** (`FileOperationTool`): 文件处理功能
-- **PDF生成工具** (`PDFGenerationTool`): 动态PDF文档生成，支持中文
-- **终端操作工具** (`TerminalOperationTool`): 系统命令执行
-- **资源下载工具** (`ResourceDownloadTool`): 资源下载管理
-- **图片搜索工具** (`ImageSearchTool`): Pexels API 图片搜索
-- **终止工具** (`TerminateTool`): 流程控制
-
-### 6. RAG 知识库检索（Dify 云端）
-- **Dify 集成**: 通过 Dify Dataset API 进行知识检索，无需本地向量数据库
-- **混合搜索**: 支持 `hybrid_search` 模式
-- **自动重试**: 内置指数退避重试机制（默认 2 次）
-- **无缝降级**: 知识库不可用时自动跳过，不影响正常聊天
-
-### 7. 聊天记忆管理
-- **对话上下文**: 维护聊天历史和上下文
-- **记忆持久化**: 基于Kryo序列化的文件存储
-- **多类型会话**: 支持不同聊天类型使用独立存储目录
-
-### 8. MCP Servers
-- **独立模块**: Spring Boot 3.5.0 应用
-- **图片搜索服务**: 集成Pexels API
-- **WebMVC模式**: 基于 spring-ai-mcp-server-webmvc
+- 文本聊天与截图聊天
+- Love / Coach 双模式
+- Dify 知识库召回
+- SSE 流式响应
+- 工具调用与多步执行
+- 会话持久化
+- JWT 登录与 Google OAuth
+- 图片上传
+- MCP Server 扩展工具能力
 
 ## 项目结构
 
-### 仓库概览
-
-```
+```text
 Lovemaster/
-├── src/                         # Spring Boot 后端
-├── mcp-servers/                 # MCP Servers（独立 Spring Boot 应用）
-├── springai-front-react/        # React 前端（Vite）
-├── start.bat / start.sh         # 一键启动脚本
-└── CLAUDE.md                    # Claude Code 开发指引
+├── src/                               # Spring Boot 后端
+├── mcp-servers/                       # MCP Server 模块
+├── springai-front-react/              # React 前端
+├── openspec/                          # 变更规范与设计文档
+├── start.bat
+├── start.sh
+└── README.md
 ```
 
-### 后端目录结构（src/）
+### 后端核心目录
 
-```
+```text
 src/main/java/org/example/springai_learn/
-├── SpringAiLearnApplication.java          # 应用启动类
-├── controller/                            # 控制器层
-│   ├── AiController.java                 # AI相关API接口
-│   ├── ChatSessionController.java        # 会话管理接口
-│   ├── FileController.java               # 文件操作接口
-│   └── HealthController.java             # 健康检查接口
-├── agent/                                # AI代理模块
-│   ├── BaseAgent.java                    # 基础代理类
-│   ├── ToolCallAgent.java               # 工具调用代理
-│   ├── ReActAgent.java                  # ReAct代理
-│   ├── KkomaManus.java                  # Manus代理
-│   └── model/                           # 代理数据模型
-├── ai/                                   # AI 核心模块
-│   ├── orchestrator/                     # 聊天编排器
-│   │   ├── LoveChatOrchestrator.java     # Love 聊天编排
-│   │   └── CoachChatOrchestrator.java    # Coach 聊天编排
-│   ├── service/                          # AI 服务
-│   │   ├── BrainAgentService.java        # Brain 决策服务（核心大脑）
-│   │   ├── ToolsAgentService.java        # 工具执行代理
-│   │   ├── DifyKnowledgeService.java     # Dify 知识库检索
-│   │   ├── RagKnowledgeService.java      # RAG 服务整合
-│   │   ├── MultimodalIntakeService.java  # 多模态输入处理
-│   │   ├── AiErrorMessageResolver.java   # AI 错误处理
-│   │   └── SseEventHelper.java           # SSE 事件辅助
-│   ├── dto/                              # 数据传输对象
-│   └── context/                          # 上下文模型
-│       ├── BrainDecision.java            # Brain 决策结果
-├── app/                                  # 应用层
-│   └── LoveApp.java                     # Love App聊天应用
-├── auth/                                 # 用户认证模块
-│   ├── controller/                       # AuthController, ImageController
-│   ├── security/                         # SecurityConfig, JWT 过滤器
-│   ├── service/                          # AuthService, TokenService
-│   ├── entity/                           # User, ChatMessage, Conversation 等
-│   ├── repository/                       # Spring Data JDBC
-│   └── dto/                              # LoginRequest, RegisterRequest 等
-├── tools/                               # AI工具集
-│   ├── EmailSendTool.java               # 邮件发送工具
-│   ├── WebSearchTool.java               # 网络搜索工具
-│   ├── WebScrapingTool.java             # 网页抓取工具
-│   ├── FileOperationTool.java           # 文件操作工具
-│   ├── PDFGenerationTool.java           # PDF生成工具
-│   ├── TerminalOperationTool.java       # 终端操作工具
-│   ├── ResourceDownloadTool.java        # 资源下载工具
-│   ├── ImageSearchTool.java             # 图片搜索工具（Pexels）
-│   ├── TerminateTool.java               # 终止工具
-│   └── ToolRegistration.java            # 工具注册管理
-├── config/                              # 配置类
-├── mcp/                                 # MCP相关配置
-├── ChatMemory/                          # 聊天记忆管理
-├── constant/                            # 常量定义
-├── dto/                                 # 数据传输对象
-├── advisor/                             # 顾问模式实现
-└── demo/                               # 演示示例
+├── controller/                        # HTTP 接口
+├── ai/
+│   ├── context/                       # ChatInputContext / BrainDecision 等
+│   ├── orchestrator/                  # LoveChatOrchestrator / CoachChatOrchestrator
+│   └── service/                       # MultimodalIntake / Brain / Tools / RAG / SSE
+├── app/                               # LoveApp
+├── auth/                              # 用户认证
+├── tools/                             # 工具注册与工具实现
+├── mcp/                               # MCP 相关配置
+├── ChatMemory/                        # 聊天记忆
+├── advisor/                           # Spring AI advisors
+└── config/                            # 模型与系统配置
 ```
 
-### React 前端结构（springai-front-react/src/）
+### React 前端核心目录
 
-```
-src/
-├── App.jsx                      # 主应用组件
-├── main.jsx                     # 入口文件
-├── components/                  # 组件库
-│   ├── Chat/                   # 聊天相关组件
-│   ├── Layout/                 # 布局组件
-│   ├── ManusPanel/             # Manus面板组件
-│   ├── Sidebar/                # 侧边栏组件
-│   ├── ParticleBackground/     # 粒子背景效果
-│   ├── WebGLBackground/        # Three.js WebGL动态背景
-│   └── ui/                     # UI基础组件
-├── pages/                      # 页面组件
-│   ├── Auth/                   # 登录/注册页面
-│   ├── Chat/                   # 聊天页面
-│   └── Home/                   # 首页
-├── services/                   # API服务
-├── hooks/                      # 自定义Hooks
-└── styles/                     # 样式文件
+```text
+springai-front-react/src/
+├── components/
+│   ├── Chat/
+│   ├── ManusPanel/
+│   ├── Sidebar/
+│   └── ui/
+├── hooks/
+├── pages/
+│   ├── Home/
+│   ├── Chat/
+│   └── Auth/
+└── services/
 ```
 
-## 环境要求
+## 运行要求
 
-- **Java**: 21+
-- **Maven**: 3.6+
-- **PostgreSQL**: 12+
-- **Node.js**: 18+（如需运行前端）
-- **Dify 账号**: 用于知识库检索（云端，无需本地向量数据库）
+- Java 21+
+- Maven 3.6+
+- PostgreSQL 12+
+- Node.js 18+
 
-## 配置说明
+## 本地配置
 
-> 所有密钥/Token 请只放到本地的 `src/main/resources/application-local.yml`（已在 `.gitignore` 中忽略），或通过环境变量注入。
+所有密钥都应放在本地文件 `src/main/resources/application-local.yml` 或环境变量中，不要提交到仓库。
 
-### 1. 数据库配置
+可以从下面任一模板复制：
 
-在 `application-local.yml` 中配置 PostgreSQL：
+- `src/main/resources/application-local.yml.example`
+- `src/main/resources/application-local.yml.template`
+
+示例：
+
+```bash
+cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
+```
+
+### 数据库
 
 ```yaml
 spring:
   datasource:
-    url: jdbc:postgresql://your-host:5432/your-database
-    username: your-username
-    password: your-password
+    url: jdbc:postgresql://localhost:5432/your_db
+    username: your_user
+    password: your_password
 ```
 
-### 2. AI 模型配置 (NVIDIA NIM)
+### NVIDIA NIM
 
 ```yaml
 spring:
@@ -290,26 +220,12 @@ spring:
 
 nvidia:
   model:
-    rewrite: qwen/qwen3.5-122b-a10b    # 多模态输入处理（OCR + 问题重写）
-    tools: deepseek-ai/deepseek-r1      # 工具调用模型（ToolsAgent 使用）
-    brain: moonshotai/kimi-k2-thinking  # Brain 决策与综合模型（Coach 模式核心）
+    rewrite: qwen/qwen3.5-122b-a10b
+    tools: deepseek-ai/deepseek-r1
+    brain: moonshotai/kimi-k2-thinking
 ```
 
-**模型分工说明**：
-- `rewrite`: Intake 阶段使用，处理图像 OCR 和文本重写
-- `tools`: ToolsAgent 阶段使用，执行具体工具调用
-- `brain`: BrainAgent 阶段使用，进行决策判断和结果综合
-
-### 3. 阿里云模型配置
-
-```yaml
-spring:
-  ai:
-    alibaba:
-      api-key: your-dashscope-api-key
-```
-
-### 4. Dify 知识库配置
+### Dify
 
 ```yaml
 dify:
@@ -319,84 +235,49 @@ dify:
     dataset-id: your-dify-dataset-id
 ```
 
-获取方式：登录 Dify 控制台 → 知识库 → API 页面获取 Dataset ID 和 API Key。
-
-### 5. 邮件服务配置
+### 其他常见配置
 
 ```yaml
 spring:
-  mail:
-    host: smtp.qq.com
-    port: 465
-    username: your-email@qq.com
-    password: your-auth-code
-```
+  ai:
+    alibaba:
+      api-key: your-dashscope-api-key
 
-### 6. 搜索 API 配置
-
-```yaml
 search-api:
   api-key: ${SEARCH_API_KEY:}
 
 pexels:
   api-key: ${PEXELS_API_KEY:}
-```
 
-### 7. Google OAuth 配置
-
-```yaml
 oauth:
   google:
     client-id: your-google-client-id
 ```
 
-获取方式：在 [Google Cloud Console](https://console.cloud.google.com/) 创建 OAuth 2.0 客户端，获取 Client ID。
-
-### 8. MCP 本地自动构建（stdio）
-
-```yaml
-spring:
-  ai:
-    mcp:
-      client:
-        enabled: ${APP_MCP_CLIENT_ENABLED:true}
-        initialized: ${APP_MCP_CLIENT_INITIALIZED:false}
-        stdio:
-          servers-configuration: classpath:mcp-servers.json
-```
-
 ## 快速开始
 
-### 1. 克隆项目
+### 1. 启动后端
 
 ```bash
-git clone https://github.com/KkOma-value/Lovemaster.git
-cd Lovemaster
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-### 2. 配置环境
+默认后端地址：
 
-复制并编辑配置文件：
+- API: `http://localhost:8088/api`
+
+### 2. 启动 MCP Server
 
 ```bash
-cp src/main/resources/application-local.yml.template src/main/resources/application-local.yml
+cd mcp-servers
+mvn spring-boot:run -Dspring-boot.run.profiles=local
 ```
 
-在 `application-local.yml` 中填入你的 API 密钥、数据库和 Dify 配置。
+默认地址：
 
-### 3. 一键启动（推荐）
+- MCP Server: `http://localhost:8127`
 
-**Windows:**
-```bash
-start.bat
-```
-
-**Linux/Mac:**
-```bash
-./start.sh
-```
-
-### 4. 启动前端
+### 3. 启动 React 前端
 
 ```bash
 cd springai-front-react
@@ -404,102 +285,128 @@ npm install
 npm run dev
 ```
 
-### 5. 访问应用
+默认地址：
 
-- **前端页面**: http://localhost:5173
-  - 首页: 精美的Three.js WebGL动态背景
-  - 登录/注册: 支持邮箱和Google OAuth登录
-  - 聊天页面: 实时AI对话界面
-- **API 文档**: http://localhost:8088/api/swagger-ui.html
-- **健康检查**: http://localhost:8088/api/health
+- React: `http://localhost:5173`
 
-前端开发模式下已配置 `/api` 代理到后端 `http://localhost:8088`。
+前端开发环境已将 `/api` 代理到后端 `http://localhost:8088`。
 
-## API 文档
+## 常用命令
 
-### 主要接口
+### 后端
 
-#### 1. Love App 聊天
-
-```http
-GET /api/ai/love_app/chat/sse?message={message}&chatId={chatId}
+```bash
+mvn test
+mvn -DskipTests=true package
+mvn -DskipTests compile
 ```
 
-SSE 流式聊天，响应格式：`data: {"type":"message","content":"..."}` → `data: [DONE]`
+### React
 
-#### 2. Manus AI 聊天
-
-```http
-GET /api/ai/manus/chat?message={message}&chatId={chatId}
+```bash
+cd springai-front-react
+npm run lint
+npm run build
 ```
 
-Agent 模式聊天，支持工具调用。
+### MCP Server
 
-#### 3. 用户认证
-
-```http
-POST /api/auth/register        # 邮箱注册
-POST /api/auth/login           # 邮箱登录
-POST /api/auth/google          # Google OAuth登录（传递idToken）
-POST /api/auth/refresh         # 刷新 Token
-POST /api/auth/upload-image    # 上传头像
+```bash
+cd mcp-servers
+mvn test
+mvn -DskipTests=true package
 ```
 
-**Google OAuth 登录示例：**
+## API 概览
+
+### Love 模式 SSE
 
 ```http
+GET /api/ai/love_app/chat/sse?message={message}&chatId={chatId}&imageUrl={imageUrl}
+```
+
+用于恋爱陪伴模式。当前实现为纯聊天回答，不走工具执行链路。
+
+### Coach 模式 SSE
+
+```http
+GET /api/ai/manus/chat?message={message}&chatId={chatId}&imageUrl={imageUrl}
+```
+
+用于恋爱教练模式。虽然路由仍保留 `manus` 命名，但当前实现已经是新的 Coach 架构：
+
+- 先 Intake
+- 再 RAG
+- 再 Brain 判断
+- 按需进入 ToolsAgent
+
+### 会话管理
+
+```http
+GET    /api/ai/sessions?chatType={chatType}
+GET    /api/ai/sessions/{chatId}/messages?chatType={chatType}&limit={limit}
+DELETE /api/ai/sessions/{chatId}?chatType={chatType}
+```
+
+### 认证相关
+
+```http
+POST /api/auth/register
+POST /api/auth/login
 POST /api/auth/google
-Content-Type: application/json
-
-{
-  "idToken": "google-oauth-id-token",
-  "email": "user@example.com",
-  "name": "User Name",
-  "picture": "https://..."
-}
+POST /api/auth/refresh
+POST /api/auth/upload-image
 ```
 
-#### 4. 会话管理
+## 工具能力
 
-```http
-GET    /api/ai/sessions?chatType={chatType}              # 会话列表
-DELETE /api/ai/sessions/{chatId}?chatType={chatType}      # 删除会话
-GET    /api/ai/sessions/{chatId}/messages?limit={limit}   # 消息历史
-```
+当前工具由 `ToolRegistration` 统一注册，支持本地工具和 MCP 工具扩展。
 
-## 开发指南
+常见工具包括：
 
-### 添加新的 AI 工具
+- 邮件发送
+- 网络搜索
+- 网页抓取
+- 文件操作
+- PDF 生成
+- 终端执行
+- 资源下载
+- 图片搜索
+- 终止工具 `doTerminate`
 
-1. 在 `tools` 包下创建新的工具类
-2. 使用 `@Tool` 和 `@ToolParam` 注解
+## 开发说明
+
+### 添加新工具
+
+1. 在 `src/main/java/org/example/springai_learn/tools/` 下新增工具类
+2. 使用 Spring AI Tool 注解定义方法
 3. 在 `ToolRegistration` 中注册
 
-```java
-@Component
-public class MyCustomTool {
-    @Tool(description = "工具描述")
-    public String myToolFunction(
-            @ToolParam(description = "参数描述") String parameter) {
-        return "工具执行结果";
-    }
-}
-```
+### 调整聊天链路
 
-### 创建新的 AI 代理
+如果要改 Love / Coach 模式的行为，优先检查这些文件：
 
-1. 继承 `BaseAgent` 类
-2. 实现特定的代理逻辑
-3. 配置所需的工具和参数
-4. 在控制器中暴露代理接口
+- `ai/orchestrator/LoveChatOrchestrator.java`
+- `ai/orchestrator/CoachChatOrchestrator.java`
+- `ai/service/MultimodalIntakeService.java`
+- `ai/service/BrainAgentService.java`
+- `ai/service/ToolsAgentService.java`
+- `app/LoveApp.java`
+
+### OpenSpec
+
+涉及新能力、架构调整、proposal/spec/plan 时，请先查看：
+
+- `openspec/AGENTS.md`
 
 ## 注意事项
 
-1. **API密钥安全**: 不要将密钥提交到版本控制，使用 `application-local.yml` 或环境变量
-2. **Dify 配置**: 确保 Dataset ID 和 API Key 正确，否则知识库检索会返回 404
-3. **数据库**: PostgreSQL 服务需正常运行
-4. **内存管理**: AI 模型可能消耗较多内存，建议分配足够的 JVM 堆空间
+1. 不要把 API Key、数据库密码提交到仓库
+2. Dify 数据集配置错误时，RAG 可能返回空结果或失败
+3. PostgreSQL 需要先可用
+4. Coach 模式是否进入工具链路，由 `BrainAgentService` 决定
+5. Love 模式当前设计为不调用工具的直接对话模式
 
-## 许可证
+## License
 
-MIT License
+MIT

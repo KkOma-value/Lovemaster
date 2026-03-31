@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
  *
  * <ul>
  *   <li>rewriteModel → Qwen3.5 VLM 122B (用于 MultimodalIntakeService 的问题重写，支持图像识别)</li>
- *   <li>toolsModel   → DeepSeek-R1 (用于 KkomaManus 工具调用 Agent)</li>
+ *   <li>toolsModel   → DeepSeek-R1 (用于 ToolsAgentService 工具调用)</li>
  *   <li>brainModel   → Kimi-K2-Thinking (用于 Coach 模式的直接回答)</li>
  * </ul>
  */
@@ -58,7 +58,7 @@ public class NvidiaModelConfig {
     }
 
     // =========================================================================
-    //  toolsModel — DeepSeek-R1 (用于 KkomaManus 工具调用)
+    //  toolsModel — DeepSeek-R1 (用于 ToolsAgentService 工具调用)
     // =========================================================================
 
     @Bean("toolsModel")
