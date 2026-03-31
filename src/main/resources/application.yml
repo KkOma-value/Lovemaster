@@ -131,6 +131,6 @@ search-api:
 # NVIDIA NIM model names (used by NvidiaModelConfig)
 nvidia:
   model:
-    rewrite: ${NVIDIA_MODEL_REWRITE:minimaxai/minimax-m2.5}
+    rewrite: ${NVIDIA_MODEL_REWRITE:qwen/qwen3.5-122b-a10b}
     tools: ${NVIDIA_MODEL_TOOLS:deepseek-ai/deepseek-r1}
     brain: ${NVIDIA_MODEL_BRAIN:moonshotai/kimi-k2-thinking}

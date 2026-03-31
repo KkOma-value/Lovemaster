@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  * NVIDIA NIM 模型配置 — 通过 OpenAI 兼容接口创建三个独立的 ChatModel Bean。
  *
  * <ul>
- *   <li>rewriteModel → MiniMax M2.5 (用于 MultimodalIntakeService 的问题重写)</li>
+ *   <li>rewriteModel → Qwen3.5 VLM 122B (用于 MultimodalIntakeService 的问题重写，支持图像识别)</li>
  *   <li>toolsModel   → DeepSeek-R1 (用于 KkomaManus 工具调用 Agent)</li>
  *   <li>brainModel   → Kimi-K2-Thinking (用于 Coach 模式的直接回答)</li>
  * </ul>
@@ -30,7 +30,7 @@ public class NvidiaModelConfig {
 
     // ---- model names (configurable via application-local.yml or env vars) ----
 
-    @Value("${nvidia.model.rewrite:minimaxai/minimax-m2.5}")
+    @Value("${nvidia.model.rewrite:qwen/qwen3.5-122b-a10b}")
     private String rewriteModelName;
 
     @Value("${nvidia.model.tools:deepseek-ai/deepseek-r1}")
@@ -40,7 +40,7 @@ public class NvidiaModelConfig {
     private String brainModelName;
 
     // =========================================================================
-    //  rewriteModel — MiniMax M2.5
+    //  rewriteModel — Qwen3.5 VLM 122B
     // =========================================================================
 
     @Bean("rewriteModel")
