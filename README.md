@@ -18,6 +18,10 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 
 ### AI 集成
 - **阿里云通义千问**: Spring AI Alibaba Starter 1.0.0-M6.1
+- **NVIDIA NIM 平台**: 多模型编排
+  - **Qwen3.5 VLM 122B**: 多模态问题重写与图像理解（via NVIDIA NIM）
+  - **DeepSeek-R1**: KkomaManus 工具调用 Agent
+  - **Kimi-K2-Thinking**: Coach 模式直接回答
 - **LangChain4j**: DashScope社区版 1.0.0-beta2
 - **MCP客户端**: Spring AI MCP Client 1.0.0-M6
 - **Dify 云端知识库**: 通过 Dify Dataset API 实现 RAG 检索
@@ -47,8 +51,9 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 
 ### 1. AI 聊天系统
 - **Love App 聊天**: 基于情感咨询场景的实时聊天，支持上下文记忆
-- **Coach 聊天**: 智能路由的情感教练模式
-- **Manus AI 代理**: 智能对话代理系统，支持多工具调用
+- **Coach 聊天**: 智能路由的情感教练模式，由 Kimi-K2-Thinking 模型驱动
+- **Manus AI 代理**: 智能对话代理系统，基于 DeepSeek-R1 支持多工具调用
+- **多模态理解**: Qwen3.5 VLM 支持图像输入与 OCR，实现视觉理解能力
 - **流式响应**: SSE (Server-Sent Events) 实时流式输出
 - **会话管理**: 多会话持久化、历史消息加载
 
@@ -209,7 +214,23 @@ spring:
     password: your-password
 ```
 
-### 2. AI 模型配置
+### 2. AI 模型配置 (NVIDIA NIM)
+
+```yaml
+spring:
+  ai:
+    openai:
+      base-url: https://integrate.api.nvidia.com
+      api-key: your-nvidia-api-key
+
+nvidia:
+  model:
+    rewrite: qwen/qwen3.5-122b-a10b    # 多模态重写模型
+    tools: deepseek-ai/deepseek-r1      # 工具调用模型
+    brain: moonshotai/kimi-k2-thinking  # 思考模型
+```
+
+### 3. 阿里云模型配置
 
 ```yaml
 spring:
@@ -218,7 +239,7 @@ spring:
       api-key: your-dashscope-api-key
 ```
 
-### 3. Dify 知识库配置
+### 4. Dify 知识库配置
 
 ```yaml
 dify:
@@ -230,7 +251,7 @@ dify:
 
 获取方式：登录 Dify 控制台 → 知识库 → API 页面获取 Dataset ID 和 API Key。
 
-### 4. 邮件服务配置
+### 5. 邮件服务配置
 
 ```yaml
 spring:
@@ -241,7 +262,7 @@ spring:
     password: your-auth-code
 ```
 
-### 5. 搜索 API 配置
+### 6. 搜索 API 配置
 
 ```yaml
 search-api:
@@ -251,7 +272,7 @@ pexels:
   api-key: ${PEXELS_API_KEY:}
 ```
 
-### 6. Google OAuth 配置
+### 7. Google OAuth 配置
 
 ```yaml
 oauth:
@@ -261,7 +282,7 @@ oauth:
 
 获取方式：在 [Google Cloud Console](https://console.cloud.google.com/) 创建 OAuth 2.0 客户端，获取 Client ID。
 
-### 7. MCP 本地自动构建（stdio）
+### 8. MCP 本地自动构建（stdio）
 
 ```yaml
 spring:
