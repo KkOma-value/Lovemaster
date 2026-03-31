@@ -2,81 +2,70 @@ package org.example.springai_learn.ai.orchestrator;
 
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
-import org.example.springai_learn.agent.KkomaManus;
+import org.example.springai_learn.ai.context.BrainDecision;
 import org.example.springai_learn.ai.context.ChatInputContext;
-import org.example.springai_learn.ai.context.CoachRoutingDecision;
 import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
 import org.example.springai_learn.ai.service.AiErrorMessageResolver;
-import org.example.springai_learn.ai.service.CoachRoutingService;
+import org.example.springai_learn.ai.service.BrainAgentService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
+import org.example.springai_learn.ai.service.ToolsAgentService;
 import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
 
+/**
+ * Coach 模式编排器 — Brain→Tools→Brain 架构。
+ * <p>
+ * 流程：
+ * 1. Intake 阶段：MultimodalIntakeService 处理文本/截图
+ * 2. RAG 阶段：RagKnowledgeService 检索知识
+ * 3. Brain 决策：BrainAgentService 判断是否需要工具
+ * 4a. 不需要工具 → Brain 直接回答
+ * 4b. 需要工具 → 激活 ToolsAgent 执行 → Brain 综合结果回答
+ */
 @Service
 @Slf4j
 public class CoachChatOrchestrator {
 
     private final MultimodalIntakeService multimodalIntakeService;
     private final RagKnowledgeService ragKnowledgeService;
-    private final CoachRoutingService coachRoutingService;
+    private final BrainAgentService brainAgentService;
+    private final ToolsAgentService toolsAgentService;
     private final SseEventHelper sseEventHelper;
-    private final ToolCallback[] allTools;
-    private final ChatModel brainModel;
-    private final ChatModel toolsModel;
     private final DatabaseChatMemory databaseChatMemory;
-
-    @Autowired(required = false)
-    private ToolCallbackProvider mcpToolCallbackProvider;
 
     public CoachChatOrchestrator(
             MultimodalIntakeService multimodalIntakeService,
             RagKnowledgeService ragKnowledgeService,
-            CoachRoutingService coachRoutingService,
+            BrainAgentService brainAgentService,
+            ToolsAgentService toolsAgentService,
             SseEventHelper sseEventHelper,
-            ToolCallback[] allTools,
-            @Qualifier("brainModel") ChatModel brainModel,
-            @Qualifier("toolsModel") ChatModel toolsModel,
             DatabaseChatMemory databaseChatMemory) {
         this.multimodalIntakeService = multimodalIntakeService;
         this.ragKnowledgeService = ragKnowledgeService;
-        this.coachRoutingService = coachRoutingService;
+        this.brainAgentService = brainAgentService;
+        this.toolsAgentService = toolsAgentService;
         this.sseEventHelper = sseEventHelper;
-        this.allTools = allTools;
-        this.brainModel = brainModel;
-        this.toolsModel = toolsModel;
         this.databaseChatMemory = databaseChatMemory;
     }
 
-    @Value("${app.file-save-dir:${user.dir}/tmp}")
-    private String baseDir;
-
     public SseEmitter stream(ChatInputContext context) {
-        SseEmitter emitter = new SseEmitter(300000L);
+        SseEmitter emitter = new SseEmitter(600_000L); // 10 分钟超时（工具执行可能较长）
         emitter.onTimeout(() -> log.warn("CoachChatOrchestrator SSE 超时: chatId={}", context.chatId()));
 
         Thread.startVirtualThread(() -> {
             try {
-                // Step 1: Intake — OCR + structured rewrite
+                // ── Step 1: Intake — OCR + 结构化重写 ──
                 sseEventHelper.send(emitter, "intake_status",
                         context.hasImage()
-                                ? "正在读取聊天截图，并判断这件事要不要进入任务执行..."
-                                : "正在整理你的问题，并判断是否需要进入任务执行...");
+                                ? "宝，我正在看你的聊天截图，帮你整理一下..."
+                                : "正在整理你的问题，帮你想清楚该怎么回...");
                 IntakeAnalysisResult analysis = multimodalIntakeService.analyze(context);
 
                 if (analysis.hasImage()) {
@@ -85,48 +74,47 @@ public class CoachChatOrchestrator {
                             : "截图识别完成：" + shorten(analysis.ocrText(), 88);
                     sseEventHelper.send(emitter, "ocr_result", ocrHint);
                 }
-
                 sseEventHelper.send(emitter, "rewrite_result",
                         "我已经把任务整理成更清晰的问题：" + shorten(analysis.rewrittenQuestion(), 96));
 
-                // Step 2: RAG — retrieve relevant knowledge using rewritten question
+                // ── Step 2: RAG — 检索相关知识 ──
                 sseEventHelper.send(emitter, "rag_status", "正在查阅恋爱知识库，补充参考资料...");
                 String ragKnowledge = ragKnowledgeService.retrieveKnowledge(analysis.rewrittenQuestion());
 
-                // Step 3: Route — decide whether to use tools
-                CoachRoutingDecision decision = coachRoutingService.decide(context, analysis, ragKnowledge);
+                // ── Step 3: Brain 决策 — 判断是否需要工具 ──
+                sseEventHelper.send(emitter, "status", "正在分析你的需求...");
+                BrainDecision decision = brainAgentService.decide(context, analysis, ragKnowledge);
                 sseEventHelper.send(emitter, "status", decision.userFacingPrelude());
 
-                if (!decision.shouldUseTools()) {
-                    String answer = generateDirectCoachAnswer(decision.directAnswerPrompt());
-                    saveCoachConversation(context, answer);
-                    if (context.hasImage()) {
-                        databaseChatMemory.setImageUrlOnLatestUserMessage(context.chatId(), context.imageUrl());
-                    }
+                String conversationId = ConversationIds.forMode(context.userId(), context.mode(), context.chatId());
+
+                if (!decision.needsTools()) {
+                    // ── Path A: Brain 直接回答（无需工具） ──
+                    log.info("BrainAgent 决定直接回答: chatId={}", context.chatId());
+                    String answer = decision.directAnswer();
+                    saveConversation(conversationId, context, answer);
                     sseEventHelper.send(emitter, "content", answer);
                     sseEventHelper.done(emitter);
                     emitter.complete();
                     return;
                 }
 
-                // Step 4: Tools — delegate to KkomaManus
-                sseEventHelper.send(emitter, "tool_call", "我开始进入任务执行，继续帮你搜索、整理并产出结果。");
-                String conversationId = ConversationIds.forMode(context.userId(), context.mode(), context.chatId());
-                KkomaManus kkomaManus = new KkomaManus(allTools, toolsModel, mcpToolCallbackProvider,
-                        conversationId, databaseChatMemory);
-                emitter.onCompletion(() -> {
-                    kkomaManus.saveToChatMemory();
-                    if (context.hasImage()) {
-                        databaseChatMemory.setImageUrlOnLatestUserMessage(context.chatId(), context.imageUrl());
-                    }
-                });
-                emitter.onError(ex -> {
-                    kkomaManus.saveToChatMemory();
-                    if (context.hasImage()) {
-                        databaseChatMemory.setImageUrlOnLatestUserMessage(context.chatId(), context.imageUrl());
-                    }
-                });
-                kkomaManus.runStream(decision.toolTaskPrompt(), emitter);
+                // ── Path B: Brain 激活 ToolsAgent ──
+                log.info("BrainAgent 激活 ToolsAgent: chatId={}", context.chatId());
+                sseEventHelper.send(emitter, "tool_call", "宝，我帮你查点资料整理一下，稍等哈~");
+
+                // Step 4: ToolsAgent 执行工具任务（同步，file_created 事件通过 emitter 推送）
+                String toolResult = toolsAgentService.activate(decision, conversationId, emitter);
+
+                // Step 5: Brain 综合工具结果，生成最终回答
+                sseEventHelper.send(emitter, "status", "工具执行完成，正在综合结论...");
+                String finalAnswer = brainAgentService.synthesize(decision, toolResult);
+
+                // 保存 & 发送
+                saveConversation(conversationId, context, finalAnswer);
+                sseEventHelper.send(emitter, "content", finalAnswer);
+                sseEventHelper.done(emitter);
+                emitter.complete();
             } catch (Exception e) {
                 log.error("CoachChatOrchestrator 处理失败: {}", e.getMessage(), e);
                 sseEventHelper.send(emitter, "error", "处理失败：" + AiErrorMessageResolver.resolve(e));
@@ -137,31 +125,20 @@ public class CoachChatOrchestrator {
         return emitter;
     }
 
+    private void saveConversation(String conversationId, ChatInputContext context, String answer) {
+        databaseChatMemory.add(conversationId, List.of(
+                new UserMessage(context.userMessage()),
+                new AssistantMessage(answer)
+        ));
+        if (context.hasImage()) {
+            databaseChatMemory.setImageUrlOnLatestUserMessage(context.chatId(), context.imageUrl());
+        }
+    }
+
     private String shorten(String text, int limit) {
         if (text == null || text.isBlank()) {
             return "";
         }
         return text.length() <= limit ? text : text.substring(0, limit) + "...";
-    }
-
-    private String generateDirectCoachAnswer(String promptText) {
-        String systemPrompt = """
-                你是 Lovemaster 的 Coach 模式大脑代理。
-                你的工作是先讲清楚局势，再给出可执行建议。
-                如果当前不需要工具执行，就直接把结论说透，但不要假装已经进行了搜索或外部调查。
-                """;
-        ChatResponse response = brainModel.call(new Prompt(List.of(
-                new SystemMessage(systemPrompt),
-                new UserMessage(promptText)
-        )));
-        return response.getResult().getOutput().getText();
-    }
-
-    private void saveCoachConversation(ChatInputContext context, String answer) {
-        String compositeId = ConversationIds.forMode(context.userId(), context.mode(), context.chatId());
-        databaseChatMemory.add(compositeId, List.of(
-                new UserMessage(context.userMessage()),
-                new AssistantMessage(answer)
-        ));
     }
 }

@@ -1,25 +1,19 @@
 package org.example.springai_learn.ai.orchestrator;
 
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
+import org.example.springai_learn.ai.context.BrainDecision;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ChatMode;
-import org.example.springai_learn.ai.context.CoachRoutingDecision;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
-import org.example.springai_learn.ai.service.CoachRoutingService;
+import org.example.springai_learn.ai.service.BrainAgentService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
+import org.example.springai_learn.ai.service.ToolsAgentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.ai.chat.messages.AssistantMessage;
-import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.chat.model.ChatResponse;
-import org.springframework.ai.chat.model.Generation;
-import org.springframework.ai.chat.prompt.Prompt;
-import org.springframework.ai.tool.ToolCallback;
 
-import java.lang.reflect.Field;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,34 +26,30 @@ class CoachChatOrchestratorTest {
 
     private MultimodalIntakeService intakeService;
     private RagKnowledgeService ragKnowledgeService;
-    private CoachRoutingService routingService;
+    private BrainAgentService brainAgentService;
+    private ToolsAgentService toolsAgentService;
     private SseEventHelper sseEventHelper;
-    private ChatModel brainModel;
-    private ChatModel toolsModel;
     private DatabaseChatMemory databaseChatMemory;
     private CoachChatOrchestrator orchestrator;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         intakeService = mock(MultimodalIntakeService.class);
         ragKnowledgeService = mock(RagKnowledgeService.class);
-        routingService = mock(CoachRoutingService.class);
+        brainAgentService = mock(BrainAgentService.class);
+        toolsAgentService = mock(ToolsAgentService.class);
         sseEventHelper = mock(SseEventHelper.class);
-        brainModel = mock(ChatModel.class);
-        toolsModel = mock(ChatModel.class);
         databaseChatMemory = mock(DatabaseChatMemory.class);
 
         orchestrator = new CoachChatOrchestrator(
-                intakeService, ragKnowledgeService, routingService,
-                sseEventHelper, new ToolCallback[]{}, brainModel, toolsModel, databaseChatMemory);
-
-        setField(orchestrator, "baseDir", "/tmp");
+                intakeService, ragKnowledgeService, brainAgentService,
+                toolsAgentService, sseEventHelper, databaseChatMemory);
     }
 
     // --- 直接回答路径 ---
 
     @Test
-    void stream_directAnswer_shouldCallRagAndPassKnowledgeToRouting() {
+    void stream_directAnswer_shouldCallBrainAndReturnDirectly() {
         ChatInputContext context = new ChatInputContext(
                 "user-1", "chat-1", ChatMode.COACH, "他在跟我玩欲擒故纵吗", null);
 
@@ -68,24 +58,23 @@ class CoachChatOrchestratorTest {
                 "请分析对方的态度并给出应对策略",
                 List.of(), "判断对方意图", false);
 
-        mockChatModelResponse("你的判断有一定道理，但不要过早下结论。");
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge("请分析对方的态度并给出应对策略"))
                 .thenReturn("欲擒故纵的常见信号包括...");
-        when(routingService.decide(eq(context), eq(analysis), eq("欲擒故纵的常见信号包括...")))
-                .thenReturn(new CoachRoutingDecision(false, "请分析对方态度。", "",
-                        "我来直接分析这个问题。"));
+        when(brainAgentService.decide(eq(context), eq(analysis), eq("欲擒故纵的常见信号包括...")))
+                .thenReturn(BrainDecision.directAnswer(
+                        "你的判断有一定道理，但不要过早下结论。",
+                        "", "我来直接分析这个问题。"));
 
         orchestrator.stream(context);
 
         verify(ragKnowledgeService, timeout(ASYNC_TIMEOUT_MS))
                 .retrieveKnowledge("请分析对方的态度并给出应对策略");
-        verify(routingService, timeout(ASYNC_TIMEOUT_MS))
+        verify(brainAgentService, timeout(ASYNC_TIMEOUT_MS))
                 .decide(eq(context), eq(analysis), eq("欲擒故纵的常见信号包括..."));
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
-                .send(any(), eq("rag_status"), contains("知识库"));
-        verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
-                .send(any(), eq("content"), anyString());
+                .send(any(), eq("content"), eq("你的判断有一定道理，但不要过早下结论。"));
+        verify(toolsAgentService, never()).activate(any(), any(), any());
     }
 
     @Test
@@ -98,11 +87,11 @@ class CoachChatOrchestratorTest {
                 true, "截图文字内容", "截图摘要", "分析截图中的对话",
                 List.of(), "获取建议", false);
 
-        mockChatModelResponse("这是我的分析结果。");
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
-        when(routingService.decide(any(), any(), any()))
-                .thenReturn(new CoachRoutingDecision(false, "请分析。", "", "我来分析。"));
+        when(brainAgentService.decide(any(), any(), any()))
+                .thenReturn(BrainDecision.directAnswer(
+                        "这是我的分析结果。", "", "我来分析。"));
 
         orchestrator.stream(context);
 
@@ -120,11 +109,11 @@ class CoachChatOrchestratorTest {
                 false, "", "想约对方", "如何主动约对方出来",
                 List.of(), "获取约会建议", false);
 
-        mockChatModelResponse("以轻松的方式提出约会邀请。");
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
-        when(routingService.decide(any(), any(), any()))
-                .thenReturn(new CoachRoutingDecision(false, "请给建议。", "", "好的。"));
+        when(brainAgentService.decide(any(), any(), any()))
+                .thenReturn(BrainDecision.directAnswer(
+                        "以轻松的方式提出约会邀请。", "", "好的。"));
 
         orchestrator.stream(context);
 
@@ -138,28 +127,39 @@ class CoachChatOrchestratorTest {
         assertTrue(cid.contains("chat-3"), "conversationId 应包含 chatId");
     }
 
-    // --- RAG 知识传递校验 ---
+    // --- 工具路径 ---
 
     @Test
-    void stream_shouldPassRagKnowledgeToRoutingDecision() {
+    void stream_toolPath_shouldActivateToolsAgentAndSynthesize() {
         ChatInputContext context = new ChatInputContext(
-                "user-1", "chat-5", ChatMode.COACH, "帮我查异地恋维系技巧", null);
+                "user-1", "chat-4", ChatMode.COACH,
+                "帮我查一下异地恋见面怎么安排", null);
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 false, "", "需要查资料", "异地恋如何维系",
                 List.of(), "搜索并整理", true);
 
-        String ragKnowledge = "异地恋维系技巧：定期视频、共同计划...";
-        mockChatModelResponse("保持沟通节奏。");
+        BrainDecision toolDecision = BrainDecision.useTools(
+                "搜索异地恋见面安排攻略并整理成计划",
+                "用户想要异地恋见面计划",
+                "宝，我帮你查点资料整理一下，稍等哈~");
+
         when(intakeService.analyze(context)).thenReturn(analysis);
-        when(ragKnowledgeService.retrieveKnowledge("异地恋如何维系")).thenReturn(ragKnowledge);
-        when(routingService.decide(eq(context), eq(analysis), eq(ragKnowledge)))
-                .thenReturn(new CoachRoutingDecision(false, "请直接分析。", "", "我直接分析。"));
+        when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
+        when(brainAgentService.decide(any(), any(), any())).thenReturn(toolDecision);
+        when(toolsAgentService.activate(eq(toolDecision), anyString(), any()))
+                .thenReturn("搜索结果：异地恋见面建议包括...");
+        when(brainAgentService.synthesize(eq(toolDecision), eq("搜索结果：异地恋见面建议包括...")))
+                .thenReturn("宝，我帮你整理好了异地恋见面攻略！");
 
         orchestrator.stream(context);
 
-        verify(routingService, timeout(ASYNC_TIMEOUT_MS))
-                .decide(eq(context), eq(analysis), eq(ragKnowledge));
+        verify(toolsAgentService, timeout(ASYNC_TIMEOUT_MS))
+                .activate(eq(toolDecision), anyString(), any());
+        verify(brainAgentService, timeout(ASYNC_TIMEOUT_MS))
+                .synthesize(eq(toolDecision), eq("搜索结果：异地恋见面建议包括..."));
+        verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
+                .send(any(), eq("content"), eq("宝，我帮你整理好了异地恋见面攻略！"));
     }
 
     // --- 异常处理 ---
@@ -176,32 +176,5 @@ class CoachChatOrchestratorTest {
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
                 .send(any(), eq("error"), contains("处理失败"));
         verify(ragKnowledgeService, never()).retrieveKnowledge(any());
-    }
-
-    // --- 工具方法 ---
-
-    private void mockChatModelResponse(String text) {
-        ChatResponse chatResponse = mock(ChatResponse.class);
-        Generation generation = mock(Generation.class);
-        when(generation.getOutput()).thenReturn(new AssistantMessage(text));
-        when(chatResponse.getResult()).thenReturn(generation);
-        doReturn(chatResponse).when(brainModel).call(any(Prompt.class));
-    }
-
-    private static void setField(Object target, String fieldName, Object value) throws Exception {
-        Field field = findField(target.getClass(), fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
-    }
-
-    private static Field findField(Class<?> clazz, String fieldName) throws NoSuchFieldException {
-        try {
-            return clazz.getDeclaredField(fieldName);
-        } catch (NoSuchFieldException e) {
-            if (clazz.getSuperclass() != null) {
-                return findField(clazz.getSuperclass(), fieldName);
-            }
-            throw e;
-        }
     }
 }

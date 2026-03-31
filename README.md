@@ -19,9 +19,9 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 ### AI 集成
 - **阿里云通义千问**: Spring AI Alibaba Starter 1.0.0-M6.1
 - **NVIDIA NIM 平台**: 多模型编排
-  - **Qwen3.5 VLM 122B**: 多模态问题重写与图像理解（via NVIDIA NIM）
-  - **DeepSeek-R1**: KkomaManus 工具调用 Agent
-  - **Kimi-K2-Thinking**: Coach 模式直接回答
+  - **Qwen3.5 VLM 122B** (`rewriteModel`): 多模态问题重写与图像理解（via NVIDIA NIM）
+  - **DeepSeek-R1** (`toolsModel`): KkomaManus 工具调用 Agent
+  - **Kimi-K2-Thinking** (`brainModel`): Coach 模式 Brain 决策与综合
 - **LangChain4j**: DashScope社区版 1.0.0-beta2
 - **MCP客户端**: Spring AI MCP Client 1.0.0-M6
 - **Dify 云端知识库**: 通过 Dify Dataset API 实现 RAG 检索
@@ -51,7 +51,10 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 
 ### 1. AI 聊天系统
 - **Love App 聊天**: 基于情感咨询场景的实时聊天，支持上下文记忆
-- **Coach 聊天**: 智能路由的情感教练模式，由 Kimi-K2-Thinking 模型驱动
+- **Coach 模式**: 采用 Brain→Tools→Brain 三层架构
+  - **BrainAgent**: 决策大脑，判断请求是否需要工具支持
+  - **ToolsAgent**: 工具执行代理，通过 KkomaManus 执行具体工具
+  - **流程**: Intake → RAG → Brain决策 → (可选)Tools执行 → Brain综合回答
 - **Manus AI 代理**: 智能对话代理系统，基于 DeepSeek-R1 支持多工具调用
 - **多模态理解**: Qwen3.5 VLM 支持图像输入与 OCR，实现视觉理解能力
 - **流式响应**: SSE (Server-Sent Events) 实时流式输出
@@ -64,12 +67,65 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 - **图片上传**: 用户头像上传与管理
 
 ### 3. AI 代理系统
-- **基础代理** (`BaseAgent`): 提供代理的基础功能和生命周期管理
-- **工具调用代理** (`ToolCallAgent`): 支持函数调用的智能代理
-- **ReAct代理** (`ReActAgent`): 推理-行动循环代理
-- **KkomaManus**: 专用AI助手代理，支持流式输出和对话记忆
 
-### 4. AI 工具集
+采用分层架构设计：
+
+```
+BaseAgent → ReActAgent → ToolCallAgent → KkomaManus
+```
+
+**核心代理**：
+- **BaseAgent**: 提供代理基础功能和生命周期管理
+- **ToolCallAgent**: 支持函数调用的智能代理
+- **ReActAgent**: 推理-行动循环代理
+- **KkomaManus**: 专用 AI 助手代理，支持流式输出和对话记忆
+
+### 4. Brain→Tools→Brain 架构 (Coach 模式)
+
+Coach 模式采用创新的三层决策架构：
+
+```
+                    CoachChatOrchestrator
+                              |
+        +---------------------+---------------------+
+        |                     |                     |
+        v                     v                     v
++---------------+    +---------------+    +-------------------+
+| Intake 阶段   |    | Brain 决策    |    | Response 输出     |
+|  (OCR+重写)   |--->|               |--->|                   |
++---------------+    +-------+-------+    +-------------------+
+                             |
+              +--------------+--------------+
+              |                             |
+              v                             v
+      +---------------+           +---------------+
+      |   直接回答    |           |   工具调用    |
+      |  (无需工具)   |           | (ToolsAgent)  |
+      +---------------+           +-------+-------+
+                                          |
+                                          v
+                                   +--------------+
+                                   |  KkomaManus  |
+                                   |    执行工具  |
+                                   +------+-------+
+                                          |
+                                          v
+                                   +--------------+
+                                   | Brain 综合   |
+                                   | 生成最终回答 |
+                                   +--------------+
+```
+
+**工作流程**：
+1. **Intake 阶段**: MultimodalIntakeService 处理文本/截图，OCR 识别 + 问题重写
+2. **RAG 阶段**: RagKnowledgeService 检索 Dify 知识库
+3. **Brain 决策**: BrainAgentService 判断是否需要工具
+   - 不需要工具 → 直接生成回答
+   - 需要工具 → 生成任务描述，激活 ToolsAgent
+4. **工具执行**: ToolsAgentService 通过 KkomaManus 执行工具
+5. **Brain 综合**: BrainAgentService 综合工具结果，生成最终回答
+
+### 5. AI 工具集
 - **邮件发送工具** (`EmailSendTool`): 智能邮件发送功能
 - **网络搜索工具** (`WebSearchTool`): 集成搜索API
 - **网页抓取工具** (`WebScrapingTool`): 网页内容提取
@@ -80,18 +136,18 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 - **图片搜索工具** (`ImageSearchTool`): Pexels API 图片搜索
 - **终止工具** (`TerminateTool`): 流程控制
 
-### 5. RAG 知识库检索（Dify 云端）
+### 6. RAG 知识库检索（Dify 云端）
 - **Dify 集成**: 通过 Dify Dataset API 进行知识检索，无需本地向量数据库
 - **混合搜索**: 支持 `hybrid_search` 模式
 - **自动重试**: 内置指数退避重试机制（默认 2 次）
 - **无缝降级**: 知识库不可用时自动跳过，不影响正常聊天
 
-### 6. 聊天记忆管理
+### 7. 聊天记忆管理
 - **对话上下文**: 维护聊天历史和上下文
 - **记忆持久化**: 基于Kryo序列化的文件存储
 - **多类型会话**: 支持不同聊天类型使用独立存储目录
 
-### 7. MCP Servers
+### 8. MCP Servers
 - **独立模块**: Spring Boot 3.5.0 应用
 - **图片搜索服务**: 集成Pexels API
 - **WebMVC模式**: 基于 spring-ai-mcp-server-webmvc
@@ -130,14 +186,16 @@ src/main/java/org/example/springai_learn/
 │   │   ├── LoveChatOrchestrator.java     # Love 聊天编排
 │   │   └── CoachChatOrchestrator.java    # Coach 聊天编排
 │   ├── service/                          # AI 服务
+│   │   ├── BrainAgentService.java        # Brain 决策服务（核心大脑）
+│   │   ├── ToolsAgentService.java        # 工具执行代理
 │   │   ├── DifyKnowledgeService.java     # Dify 知识库检索
 │   │   ├── RagKnowledgeService.java      # RAG 服务整合
-│   │   ├── CoachRoutingService.java      # Coach 路由服务
 │   │   ├── MultimodalIntakeService.java  # 多模态输入处理
 │   │   ├── AiErrorMessageResolver.java   # AI 错误处理
 │   │   └── SseEventHelper.java           # SSE 事件辅助
 │   ├── dto/                              # 数据传输对象
 │   └── context/                          # 上下文模型
+│       ├── BrainDecision.java            # Brain 决策结果
 ├── app/                                  # 应用层
 │   └── LoveApp.java                     # Love App聊天应用
 ├── auth/                                 # 用户认证模块
@@ -225,10 +283,15 @@ spring:
 
 nvidia:
   model:
-    rewrite: qwen/qwen3.5-122b-a10b    # 多模态重写模型
-    tools: deepseek-ai/deepseek-r1      # 工具调用模型
-    brain: moonshotai/kimi-k2-thinking  # 思考模型
+    rewrite: qwen/qwen3.5-122b-a10b    # 多模态输入处理（OCR + 问题重写）
+    tools: deepseek-ai/deepseek-r1      # 工具调用模型（ToolsAgent 使用）
+    brain: moonshotai/kimi-k2-thinking  # Brain 决策与综合模型（Coach 模式核心）
 ```
+
+**模型分工说明**：
+- `rewrite`: Intake 阶段使用，处理图像 OCR 和文本重写
+- `tools`: ToolsAgent 阶段使用，执行具体工具调用
+- `brain`: BrainAgent 阶段使用，进行决策判断和结果综合
 
 ### 3. 阿里云模型配置
 
