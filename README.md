@@ -68,17 +68,24 @@ Lovemaster 是一个全栈 AI 情感咨询应用：后端基于 Spring Boot 3.4.
 
 ### 3. AI 代理系统
 
-采用分层架构设计：
+项目采用两层代理架构：基础代理层提供通用 Agent 能力，Coach 模式在此基础上构建 Brain→Tools→Brain 的协作流程。
+
+#### 基础代理层
 
 ```
 BaseAgent → ReActAgent → ToolCallAgent → KkomaManus
 ```
 
-**核心代理**：
-- **BaseAgent**: 提供代理基础功能和生命周期管理
-- **ToolCallAgent**: 支持函数调用的智能代理
-- **ReActAgent**: 推理-行动循环代理
-- **KkomaManus**: 专用 AI 助手代理，支持流式输出和对话记忆
+- **BaseAgent**: 生命周期管理（IDLE / RUNNING / FINISHED / ERROR）、内存管理与 SSE 流式输出
+- **ReActAgent**: 实现 think / act 循环，分离推理与行动
+- **ToolCallAgent**: 增加工具调用、预算控制（90万请求 / 2万工具响应字符上限）与终止检测
+- **KkomaManus**: 基于 DeepSeek-R1 的全自主代理，支持 ChatMemory 持久化、`doTerminate` 自动结束，并作为 ToolsAgent 的执行引擎
+
+#### Coach 模式代理层
+
+- **BrainAgentService**: 决策大脑（Kimi-K2-Thinking），判断是否需要工具支持，或直接生成回答
+- **ToolsAgentService**: 工具执行代理，调度 KkomaManus 完成具体工具调用
+- **MultimodalIntakeService**: 多模态输入处理（Qwen3.5 VLM），负责 OCR 识别与问题重写
 
 ### 4. Brain→Tools→Brain 架构 (Coach 模式)
 
