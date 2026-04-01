@@ -1,0 +1,49 @@
+.banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 8px auto;
+    max-width: 400px;
+    width: fit-content;
+    pointer-events: none;
+}
+
+.generating {
+    background: rgba(232, 122, 93, 0.1);
+    color: #B0624A;
+    border: 1px solid rgba(232, 122, 93, 0.2);
+}
+
+.completed {
+    background: rgba(74, 160, 98, 0.1);
+    color: #3A7D4F;
+    border: 1px solid rgba(74, 160, 98, 0.2);
+}
+
+.failed {
+    background: rgba(220, 80, 60, 0.1);
+    color: #B84A3A;
+    border: 1px solid rgba(220, 80, 60, 0.2);
+}
+
+.text {
+    line-height: 1.2;
+}
+
+.spinIcon {
+    animation: bannerSpin 1.2s linear infinite;
+}
+
+@keyframes bannerSpin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinIcon {
+        animation: none;
+    }
+}
