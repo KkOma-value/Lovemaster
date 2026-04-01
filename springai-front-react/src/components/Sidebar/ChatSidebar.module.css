@@ -289,3 +289,54 @@
   background: rgba(196, 123, 90, 0.1);
   color: #2D1B0E;
 }
+
+/* Run Status Indicators */
+.runIndicator {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+}
+
+.runSpinner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(196, 123, 90, 0.3);
+    border-top-color: #C47B5A;
+    animation: sidebarSpin 1s linear infinite;
+}
+
+@keyframes sidebarSpin {
+    to { transform: rotate(360deg); }
+}
+
+.runDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #C47B5A;
+    animation: dotFadeIn 0.3s ease;
+}
+
+@keyframes dotFadeIn {
+    from { opacity: 0; transform: scale(0); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.runFailedIcon {
+    color: #E87A5D;
+    flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .runSpinner {
+        animation: none;
+        border-color: #C47B5A;
+    }
+    .runDot {
+        animation: none;
+    }
+}
