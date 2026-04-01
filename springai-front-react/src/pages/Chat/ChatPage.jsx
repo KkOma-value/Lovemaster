@@ -1,54 +1,44 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
-import ManusPanel from '../../components/ManusPanel/ManusPanel';
-import { getChatMessages, getChatImages } from '../../services/chatApi';
-import { useSSEConnection } from '../../hooks/useSSEConnection';
-import { useChatMessages } from '../../hooks/useChatMessages';
-import { useChatStorage } from '../../hooks/useChatStorage';
-import { usePanelData } from '../../hooks/usePanelData';
+import { getChatImages, getChatMessages } from '../../services/chatApi';
 import { useChatSessions } from '../../hooks/useChatSessions';
+import { useChatRuntime } from '../../contexts/ChatRuntimeContext';
+import { useBackgroundRuns } from '../../hooks/useBackgroundRuns';
 import styles from './ChatPage.module.css';
+
+const noop = () => {};
 
 const ChatPage = () => {
     const { type } = useParams();
     const chatType = type || 'loveapp';
-    const showManusPanel = chatType === 'coach';
+    const isCoach = chatType === 'coach';
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [inputValue, setInputValue] = useState('');
 
-    // SSE connection
-    const { connectSSE, cleanupSSE } = useSSEConnection(chatType);
-
-    // Message state
     const {
-        messages,
-        inputValue,
-        isLoading,
-        streamingStatus,
-        setInputValue,
-        setStreamingStatus,
-        setIsLoading,
-        addStatusStep,
-        addStreamingContent,
-        finalizeStreaming,
-        addUserMessage,
-        addErrorMessage,
-        setMessagesDirect
-    } = useChatMessages();
+        runs,
+        activeRunCount,
+        registerRun,
+        completeRun,
+        failRun,
+        clearRun
+    } = useBackgroundRuns();
 
-    // Storage
-    const storageHooks = useChatStorage(chatType);
-
-    // Panel data (initial instance, will be re-created with currentChatId)
-    const panelDataHook = usePanelData(null, showManusPanel, storageHooks);
     const {
-        setChatId: setPanelChatId,
-        setPanelData,
-        setIsPanelOpen
-    } = panelDataHook;
+        getChatState,
+        hydrateMessages,
+        clearChatRuntime,
+        sendMessage,
+        runtimeEntries
+    } = useChatRuntime();
+
+    const stopChatRuntime = useCallback((chatId) => {
+        clearChatRuntime(chatType, chatId);
+    }, [chatType, clearChatRuntime]);
 
     // Chat sessions
     const {
@@ -59,14 +49,36 @@ const ChatPage = () => {
         autoCreateChat,
         deleteChat,
         updateChatTitle
-    } = useChatSessions(chatType, cleanupSSE, panelDataHook.resetPanel);
+    } = useChatSessions(chatType, stopChatRuntime, noop);
 
-    // Sync currentChatId to panelData hook (breaks circular dependency)
+    const runtime = getChatState(chatType, currentChatId);
+    const runtimeRef = useRef(runtime);
+    const messages = runtime.messages;
+    const isLoading = runtime.isLoading;
+    const streamingStatus = runtime.streamingStatus;
+    const recoveryStatus = (() => {
+        if (!currentChatId) {
+            return null;
+        }
+
+        const runStatus = runs[currentChatId]?.status;
+        if (runStatus === 'completed') {
+            return 'completed';
+        }
+        if (runStatus === 'failed') {
+            return 'failed';
+        }
+        if (runStatus === 'generating' && !runtime.hasLocalConnection) {
+            return 'generating';
+        }
+        return null;
+    })();
+
     useEffect(() => {
-        setPanelChatId(currentChatId);
-    }, [currentChatId, setPanelChatId]);
+        runtimeRef.current = runtime;
+    }, [runtime]);
 
-    // Load messages when currentChatId changes
+    // Load messages (and fallback images for coach) when currentChatId changes
     useEffect(() => {
         if (!currentChatId) return;
 
@@ -74,65 +86,55 @@ const ChatPage = () => {
         const activeChatId = currentChatId;
 
         const loadMessages = async () => {
+            const runtimeAtLoadStart = runtimeRef.current;
+
+            if (runtimeAtLoadStart.messages.length > 0) {
+                return;
+            }
+
+            if (runtimeAtLoadStart.isLoading && runtimeAtLoadStart.messages.length > 0) {
+                return;
+            }
+
             try {
-                const msgs = await getChatMessages(activeChatId, chatType);
-                if (!cancelled) {
-                    setMessagesDirect(msgs.length > 0 ? msgs : []);
+                let msgs = await getChatMessages(activeChatId, chatType);
+                if (cancelled) return;
+
+                // For coach mode, load conversation images and attach to the last assistant message
+                // as fallback (in case markdown content doesn't already include images)
+                if (isCoach && msgs.length > 0) {
+                    try {
+                        const images = await getChatImages(activeChatId, chatType);
+                        if (!cancelled && Array.isArray(images) && images.length > 0) {
+                            // Find the last assistant message and attach images
+                            const lastAssistantIdx = msgs.findLastIndex(m => m.role === 'assistant');
+                            if (lastAssistantIdx >= 0) {
+                                msgs = [...msgs];
+                                msgs[lastAssistantIdx] = {
+                                    ...msgs[lastAssistantIdx],
+                                    images
+                                };
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Failed to load images:', error);
+                    }
                 }
+
+                hydrateMessages(chatType, activeChatId, msgs.length > 0 ? msgs : []);
             } catch (error) {
                 console.error('Failed to load messages:', error);
                 if (!cancelled) {
-                    setMessagesDirect([]);
+                    hydrateMessages(chatType, activeChatId, []);
                 }
-            }
-        };
-
-        const loadImages = async () => {
-            if (!showManusPanel) return;
-            try {
-                const images = await getChatImages(activeChatId, chatType);
-                if (!cancelled) {
-                    setPanelData(prev => ({
-                        ...prev,
-                        files: Array.isArray(images) ? images : []
-                    }));
-                    if (images?.length > 0) {
-                        setIsPanelOpen(true);
-                    }
-                }
-            } catch (error) {
-                console.error('Failed to load images:', error);
             }
         };
 
         loadMessages();
-        loadImages();
-        setStreamingStatus(null);
         return () => {
             cancelled = true;
         };
-    }, [
-        currentChatId,
-        chatType,
-        showManusPanel,
-        setMessagesDirect,
-        setStreamingStatus,
-        setPanelData,
-        setIsPanelOpen
-    ]);
-
-    // Refresh messages from backend
-    const refreshMessages = useCallback(async (chatId = currentChatId) => {
-        if (!chatId) return;
-        try {
-            const msgs = await getChatMessages(chatId, chatType);
-            if (msgs.length > 0) {
-                setMessagesDirect(msgs);
-            }
-        } catch (error) {
-            console.error('Failed to refresh messages:', error);
-        }
-    }, [currentChatId, chatType, setMessagesDirect]);
+    }, [currentChatId, chatType, isCoach, hydrateMessages]);
 
     // Send message handler
     const handleSendMessage = useCallback(async (msgText = inputValue, imageUrl = null) => {
@@ -147,154 +149,117 @@ const ChatPage = () => {
         }
 
         const userMessage = textToUse.trim();
-
-        // Cleanup any existing connection
-        cleanupSSE({ resetResponse: true });
-
-        // Add user message
-        addUserMessage(userMessage, imageUrl);
         setInputValue('');
-        setIsLoading(true);
-        const initialType = imageUrl ? 'intake_status' : 'thinking';
-        const initialContent = imageUrl
-            ? (showManusPanel
-                ? '正在读取聊天截图，并判断这件事要不要进入任务执行...'
-                : '正在识别聊天截图，准备给你回复建议...')
-            : (showManusPanel
-                ? '正在整理问题，并判断是否需要继续执行任务...'
-                : '正在分析对话语气，准备回复建议...');
-        addStatusStep(initialType, initialContent);
-        setStreamingStatus({ type: initialType, content: initialContent });
-
-        // Reset panel data for new message
-        if (showManusPanel) {
-            panelDataHook.resetPanel();
-        }
 
         // Update chat title if this is the first user message
-        const currentChat = chatList.find(c => c.id === activeChatId);
+        const currentChat = chatList.find(chat => chat.id === activeChatId);
         if (currentChat?.title === '新的对话') {
             const title = userMessage.length > 20
-                ? userMessage.substring(0, 20) + '...'
+                ? `${userMessage.substring(0, 20)}...`
                 : userMessage;
             updateChatTitle(activeChatId, title);
         }
 
-        // SSE message handlers
-        const handleMessage = (parsed) => {
-            // Handle panel messages
-            if (showManusPanel) {
-                panelDataHook.handlePanelMessage(parsed);
-            }
-
-            switch (parsed.type) {
-                case 'thinking':
-                case 'status':
-                case 'intake_status':
-                case 'ocr_result':
-                case 'rewrite_result':
-                    addStatusStep(parsed.type, parsed.content);
-                    setStreamingStatus({ type: parsed.type, content: parsed.content });
-                    if (showManusPanel && panelDataHook.isPanelOpen && parsed.content) {
-                        panelDataHook.addTerminalOutput(`[${parsed.type}] ${parsed.content}`);
-                    }
-                    break;
-
-                case 'rag_status':
-                    addStatusStep(parsed.type, parsed.content);
-                    setStreamingStatus({ type: parsed.type, content: parsed.content });
-                    break;
-
-                case 'tool_call':
-                    addStatusStep(parsed.type, parsed.content);
-                    setStreamingStatus({ type: parsed.type, content: parsed.content });
-                    if (showManusPanel && parsed.content) {
-                        panelDataHook.setIsPanelOpen(true);
-                        panelDataHook.addTerminalOutput(`[${parsed.type}] ${parsed.content}`);
-                    }
-                    break;
-
-                case 'content':
-                    if (parsed.content) {
-                        setStreamingStatus(null);
-                        addStreamingContent(parsed.content);
-                    }
-                    break;
-
-                case 'done':
-                    // finalizeStreaming now handles skipping typewriter and showing all content
-                    finalizeStreaming();
-                    if (showManusPanel) {
-                        panelDataHook.completeAllTasks();
-                    }
-                    refreshMessages();
-                    break;
-
-                case 'error':
-                    setStreamingStatus({ type: 'error', content: parsed.content });
-                    addErrorMessage(parsed.content || '抱歉，AI 服务暂时不可用。');
-                    finalizeStreaming();
-                    if (showManusPanel) {
-                        panelDataHook.addTerminalOutput(`错误: ${parsed.content}`, 'error');
-                    }
-                    break;
-
-                default:
-                    if (parsed.content) {
-                        addStreamingContent(parsed.content);
-                    }
-            }
-        };
-
-        const handleError = (error) => {
-            console.error('SSE Error:', error);
-            const errorMessage = error?.name === 'AuthExpiredError'
-                ? error.message
-                : '抱歉，连接出现问题，请稍后重试。';
-
-            addErrorMessage(errorMessage);
-            finalizeStreaming();
-            setIsLoading(false);
-            setStreamingStatus(null);
-        };
-
-        const handleComplete = () => {
-            setStreamingStatus(null);
-            finalizeStreaming();
-            setIsLoading(false);
-            refreshMessages();
-        };
-
-        // Create SSE connection
-        await connectSSE(userMessage, activeChatId, imageUrl, {
-            onData: handleMessage,
-            onError: handleError,
-            onComplete: handleComplete
+        await sendMessage({
+            chatType,
+            chatId: activeChatId,
+            message: userMessage,
+            imageUrl
         });
     }, [
-        inputValue, isLoading, currentChatId, chatList,
-        cleanupSSE, connectSSE, showManusPanel,
-        addUserMessage, setInputValue, setIsLoading, setStreamingStatus,
-        addStatusStep, addStreamingContent, finalizeStreaming, addErrorMessage,
-        updateChatTitle, refreshMessages, panelDataHook, autoCreateChat
+        inputValue,
+        isLoading,
+        currentChatId,
+        autoCreateChat,
+        chatList,
+        updateChatTitle,
+        sendMessage,
+        chatType
     ]);
 
     // New chat handler
     const handleNewChat = useCallback(() => {
         createNewChat();
-        setMessagesDirect([]);
-        cleanupSSE();
-        panelDataHook.resetPanel();
-    }, [createNewChat, setMessagesDirect, cleanupSSE, panelDataHook]);
+        setInputValue('');
+    }, [createNewChat]);
 
     // Delete chat handler
     const handleDeleteChat = useCallback(async (chatId) => {
-        await deleteChat(chatId, storageHooks.removePanelDataFromStorage);
-    }, [deleteChat, storageHooks.removePanelDataFromStorage]);
+        await deleteChat(chatId, noop);
+    }, [deleteChat]);
 
     const handleToggleSidebar = useCallback(() => {
         setIsSidebarOpen(prev => !prev);
     }, []);
+
+    // Sync background badges from the runtime store so terminal states clear correctly.
+    useEffect(() => {
+        const relevantRuntimes = new Map(
+            runtimeEntries
+                .filter(runtimeEntry => runtimeEntry.chatType === chatType && runtimeEntry.chatId)
+                .map(runtimeEntry => [runtimeEntry.chatId, runtimeEntry])
+        );
+
+        relevantRuntimes.forEach((runtimeEntry, runChatId) => {
+            const isCurrentChat = runChatId === currentChatId;
+            const currentStatus = runs[runChatId]?.status;
+
+            if (runtimeEntry.runStatus === 'QUEUED' || runtimeEntry.runStatus === 'RUNNING') {
+                if (!isCurrentChat && !currentStatus) {
+                    registerRun(runChatId, null);
+                }
+                return;
+            }
+
+            if (runtimeEntry.runStatus === 'COMPLETED') {
+                if (isCurrentChat) {
+                    if (currentStatus) {
+                        clearRun(runChatId);
+                    }
+                } else if (currentStatus !== 'completed') {
+                    completeRun(runChatId);
+                }
+                return;
+            }
+
+            if (runtimeEntry.runStatus === 'FAILED') {
+                if (isCurrentChat) {
+                    if (currentStatus) {
+                        clearRun(runChatId);
+                    }
+                } else if (currentStatus !== 'failed') {
+                    failRun(runChatId, runtimeEntry.errorMessage);
+                }
+                return;
+            }
+
+            if (currentStatus) {
+                clearRun(runChatId);
+            }
+        });
+
+        Object.keys(runs).forEach(runChatId => {
+            if (!relevantRuntimes.has(runChatId)) {
+                clearRun(runChatId);
+            }
+        });
+    }, [runtimeEntries, chatType, currentChatId, runs, registerRun, completeRun, failRun, clearRun]);
+
+    // Navigate to first active background run when pill is clicked
+    const handleNavigateToRun = useCallback(() => {
+        const generatingRun = Object.entries(runs).find(([, run]) => run.status === 'generating');
+        if (generatingRun) {
+            const [runChatId] = generatingRun;
+            setCurrentChatId(runChatId);
+        }
+    }, [runs, setCurrentChatId]);
+
+    // Clear recovery status
+    const handleRecoveryDismiss = useCallback(() => {
+        if (currentChatId) {
+            clearRun(currentChatId);
+        }
+    }, [currentChatId, clearRun]);
 
     return (
         <motion.div
@@ -313,6 +278,7 @@ const ChatPage = () => {
                     onSelectChat={setCurrentChatId}
                     onNewChat={handleNewChat}
                     onDeleteChat={handleDeleteChat}
+                    backgroundRuns={runs}
                 />
             </div>
 
@@ -326,16 +292,12 @@ const ChatPage = () => {
                         isLoading={isLoading}
                         streamingStatus={streamingStatus}
                         chatType={chatType}
+                        activeRunCount={activeRunCount}
+                        onNavigateToRun={handleNavigateToRun}
+                        recoveryStatus={recoveryStatus}
+                        onRecoveryDismiss={handleRecoveryDismiss}
                     />
                 </div>
-
-                {showManusPanel && (
-                    <ManusPanel
-                        isOpen={panelDataHook.isPanelOpen}
-                        onToggle={panelDataHook.togglePanel}
-                        panelData={panelDataHook.panelData}
-                    />
-                )}
             </main>
         </motion.div>
     );

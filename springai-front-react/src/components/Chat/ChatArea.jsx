@@ -4,6 +4,8 @@ import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { Heart, Home } from 'lucide-react';
 import ChatMessages from './ChatMessages';
 import ChatInput from './ChatInput';
+import BackgroundRunsPill from './BackgroundRunsPill';
+import RecoveryBanner from './RecoveryBanner';
 import styles from './ChatArea.module.css';
 
 const ChatArea = ({
@@ -13,12 +15,16 @@ const ChatArea = ({
     setInputValue,
     isLoading,
     streamingStatus,
+    activeRunCount = 0,
+    onNavigateToRun,
+    recoveryStatus = null,
+    onRecoveryDismiss
 }) => {
     const navigate = useNavigate();
     const isWelcomeState = messages.length === 0;
 
     const chatConfig = {
-        title: '恋爱陪伴',
+        title: '恋爱教练',
         welcomeTitle: '我是你的恋爱助手，今天有什么可以帮忙的？',
     };
 
@@ -35,6 +41,10 @@ const ChatArea = ({
                         <Heart size={14} className={styles.titleIcon} />
                         <span className={styles.headerTitle}>{chatConfig.title}</span>
                     </div>
+                    <BackgroundRunsPill
+                        activeCount={activeRunCount}
+                        onNavigate={onNavigateToRun}
+                    />
                 </div>
                 <button
                     onClick={handleHomeClick}
@@ -79,6 +89,10 @@ const ChatArea = ({
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
                         >
+                            <RecoveryBanner
+                                status={recoveryStatus}
+                                onDismiss={onRecoveryDismiss}
+                            />
                             <ChatMessages
                                 messages={messages}
                                 streamingStatus={streamingStatus}

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.advisor.MyLoggerAdvisor;
 import org.example.springai_learn.ai.context.BrainDecision;
+import org.example.springai_learn.ai.context.ToolsAgentResult;
 import org.example.springai_learn.auth.service.ConversationImageStorageService;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.AssistantMessage;
@@ -26,8 +27,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.File;
-import java.net.URI;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -121,11 +120,14 @@ public class ToolsAgentService {
      * @param emitter        SSE 发送器（file_created 等事件通过此推送）
      * @return 工具执行的结果文本
      */
-    public String activate(BrainDecision decision, String conversationId, SseEmitter emitter) {
+    public ToolsAgentResult activate(BrainDecision decision, String conversationId, SseEmitter emitter) {
         log.info("ToolsAgent 被激活: conversationId={}, taskPrompt={}",
                 conversationId, shorten(decision.toolTaskPrompt(), 120));
 
         databaseChatMemory.ensureConversationExists(conversationId);
+
+        // 收集已存储图片（供 Brain 合成时引用）
+        List<ToolsAgentResult.StoredImageRef> collectedImages = new ArrayList<>();
 
         // 构建合并工具列表（包含 MCP 工具）
         List<FunctionCallback> mergedTools = buildMergedToolList();
@@ -233,7 +235,7 @@ public class ToolsAgentService {
             if (toolResponseMessage != null) {
                 boolean hasTerminate = false;
                 for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
-                    checkAndSendFileEvent(response.name(), response.responseData(), emitter, conversationId);
+                    checkAndSendFileEvent(response.name(), response.responseData(), emitter, conversationId, collectedImages);
                     log.info("工具 {} 执行完成", response.name());
                     if ("doTerminate".equals(response.name())) {
                         hasTerminate = true;
@@ -253,11 +255,8 @@ public class ToolsAgentService {
             }
         }
 
-        // 保存会话历史
-        saveHistory(conversationId, messages);
-
-        log.info("ToolsAgent 执行完成: result={}", shorten(lastResult, 200));
-        return lastResult;
+        log.info("ToolsAgent 执行完成: result={}, images={}", shorten(lastResult, 200), collectedImages.size());
+        return new ToolsAgentResult(lastResult, collectedImages);
     }
 
     // ---- 历史消息管理 ----
@@ -399,7 +398,8 @@ public class ToolsAgentService {
 
     // ---- 文件事件 SSE 推送 ----
 
-    private void checkAndSendFileEvent(String toolName, String result, SseEmitter emitter, String conversationId) {
+    private void checkAndSendFileEvent(String toolName, String result, SseEmitter emitter,
+                                       String conversationId, List<ToolsAgentResult.StoredImageRef> collectedImages) {
         if (emitter == null || result == null) {
             return;
         }
@@ -412,14 +412,11 @@ public class ToolsAgentService {
         }
         cleanResult = cleanResult.replace("\\n", "\n");
 
-        // searchImage 返回图片 URL，直接发送预览，但不持久化
+        // searchImage 仅提供候选 URL，不代表已产出可下载工件。
         if ("searchImage".equals(toolName)) {
             List<String> imageUrls = extractImageUrls(cleanResult);
-            for (int i = 0; i < imageUrls.size(); i++) {
-                String url = imageUrls.get(i);
-                String name = deriveFileNameFromUrl(url, i + 1);
-                log.info("检测到 searchImage 图片 URL: {}", url);
-                sendFileCreated(emitter, "image", name, url, url);
+            if (!imageUrls.isEmpty()) {
+                log.info("检测到 searchImage 返回 {} 个候选图片 URL，等待后续下载后再发送 file_created", imageUrls.size());
             }
         }
 
@@ -452,6 +449,10 @@ public class ToolsAgentService {
                         storedImage.getFileName(), storedImage.getPublicUrl());
                 sendFileCreated(emitter, "image", storedImage.getFileName(),
                         storedImage.getStoragePath(), storedImage.getPublicUrl());
+                if (collectedImages != null) {
+                    collectedImages.add(new ToolsAgentResult.StoredImageRef(
+                            storedImage.getFileName(), storedImage.getPublicUrl()));
+                }
                 return;
             }
 
@@ -487,6 +488,10 @@ public class ToolsAgentService {
                     escape(fileUrl != null ? fileUrl : ""));
             emitter.send(json);
         } catch (Exception e) {
+            if (isCompletedEmitterError(e)) {
+                log.debug("SSE 已结束，忽略 file_created 事件: {}", e.getMessage());
+                return;
+            }
             log.warn("发送 file_created 事件失败: {}", e.getMessage());
         }
     }
@@ -543,19 +548,9 @@ public class ToolsAgentService {
         return null;
     }
 
-    private String deriveFileNameFromUrl(String url, int index) {
-        if (url == null || url.isBlank()) return "image_" + index + ".jpg";
-        try {
-            URI uri = new URI(url);
-            String path = uri.getPath();
-            if (path != null && !path.isBlank()) {
-                String name = Path.of(path).getFileName().toString();
-                if (!name.isBlank()) return name;
-            }
-        } catch (Exception e) {
-            log.debug("从 URL 提取文件名失败: {}", url);
-        }
-        return "image_" + index + ".jpg";
+    private boolean isCompletedEmitterError(Exception e) {
+        String message = e.getMessage();
+        return message != null && message.contains("ResponseBodyEmitter has already completed");
     }
 
     private String shorten(String text, int limit) {

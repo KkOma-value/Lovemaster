@@ -7,12 +7,15 @@ import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
 import org.example.springai_learn.ai.service.AiErrorMessageResolver;
+import org.example.springai_learn.ai.service.ChatRunService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
 import org.example.springai_learn.app.LoveApp;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -24,18 +27,28 @@ public class LoveChatOrchestrator {
     private final SseEventHelper sseEventHelper;
     private final LoveApp loveApp;
     private final DatabaseChatMemory databaseChatMemory;
+    private final ChatRunService chatRunService;
 
-    public SseEmitter stream(ChatInputContext context) {
+    public SseEmitter stream(ChatInputContext context, String runId) {
         SseEmitter emitter = new SseEmitter(300000L);
-        emitter.onTimeout(() -> log.warn("LoveChatOrchestrator SSE 超时: chatId={}", context.chatId()));
+        emitter.onTimeout(() -> {
+            log.warn("LoveChatOrchestrator SSE 超时: chatId={}, runId={}", context.chatId(), runId);
+            chatRunService.markFailedIfActive(runId, "请求超时");
+        });
+        sseEventHelper.send(emitter, "run_started", "", Map.of(
+                "runId", runId,
+                "chatId", context.chatId(),
+                "chatType", "loveapp",
+                "status", "QUEUED"
+        ));
 
         Thread.startVirtualThread(() -> {
             try {
                 // Step 1: Intake — OCR + structured rewrite
                 if (context.hasImage()) {
-                    sseEventHelper.send(emitter, "intake_status", "正在识别聊天截图，整理双方对话...");
+                    publishStatus(emitter, runId, "intake_status", "正在识别聊天截图，整理双方对话...");
                 } else {
-                    sseEventHelper.send(emitter, "thinking", "正在分析你的问题，准备回复建议...");
+                    publishStatus(emitter, runId, "thinking", "正在分析你的问题，准备回复建议...");
                 }
                 IntakeAnalysisResult analysis = multimodalIntakeService.analyze(context);
 
@@ -43,17 +56,17 @@ public class LoveChatOrchestrator {
                     String ocrHint = analysis.ocrText() == null || analysis.ocrText().isBlank()
                             ? "截图识别完成，正在提炼对话重点。"
                             : "截图识别完成：" + shorten(analysis.ocrText(), 88);
-                    sseEventHelper.send(emitter, "ocr_result", ocrHint);
+                    publishStatus(emitter, runId, "ocr_result", ocrHint);
                 }
 
-                sseEventHelper.send(emitter, "rewrite_result",
+                publishStatus(emitter, runId, "rewrite_result",
                         "我已经把你的问题整理好了：" + shorten(analysis.rewrittenQuestion(), 96));
 
                 // Step 2: RAG — retrieve relevant knowledge using rewritten question
-                sseEventHelper.send(emitter, "rag_status", "正在查阅恋爱知识库，补充参考资料...");
+                publishStatus(emitter, runId, "rag_status", "正在查阅恋爱知识库，补充参考资料...");
                 String ragKnowledge = ragKnowledgeService.retrieveKnowledge(analysis.rewrittenQuestion());
 
-                sseEventHelper.send(emitter, "status", "正在生成对方意图分析和可直接发送的回复建议...");
+                publishStatus(emitter, runId, "status", "正在生成对方意图分析和可直接发送的回复建议...");
 
                 // Step 3: Build system context — inject intake analysis + RAG knowledge
                 String systemContext = buildSystemContext(analysis, ragKnowledge);
@@ -70,21 +83,27 @@ public class LoveChatOrchestrator {
                             log.warn("保存 imageUrl 失败: {}", e.getMessage());
                         }
                     }
-                    sseEventHelper.done(emitter);
+                    chatRunService.markCompleted(runId, null);
+                    sseEventHelper.done(emitter, terminalDonePayload(runId, context.chatId(), "loveapp"));
                     emitter.complete();
                 }).doOnError(e -> {
                     log.error("流式聊天失败: {}", e.getMessage(), e);
-                    sseEventHelper.send(emitter, "error", "处理失败：" + AiErrorMessageResolver.resolve(e));
+                    String resolved = "处理失败：" + AiErrorMessageResolver.resolve(e);
+                    chatRunService.markFailed(runId, resolved);
+                    sseEventHelper.send(emitter, "error", resolved);
                     emitter.complete();
                 }).subscribe(chunk -> {
                     if (chunk != null && !chunk.isBlank()) {
+                        chatRunService.appendContent(runId, chunk);
                         sseEventHelper.send(emitter, "content", chunk);
                     }
                 });
 
             } catch (Exception e) {
                 log.error("LoveChatOrchestrator 处理失败: {}", e.getMessage(), e);
-                sseEventHelper.send(emitter, "error", "处理失败：" + AiErrorMessageResolver.resolve(e));
+                String resolved = "处理失败：" + AiErrorMessageResolver.resolve(e);
+                chatRunService.markFailed(runId, resolved);
+                sseEventHelper.send(emitter, "error", resolved);
                 emitter.complete();
             }
         });
@@ -129,5 +148,22 @@ public class LoveChatOrchestrator {
 
     private String safe(String text) {
         return text == null ? "" : text;
+    }
+
+    private void publishStatus(SseEmitter emitter, String runId, String type, String content) {
+        chatRunService.recordEvent(runId, type, content);
+        if ("thinking".equals(type)) {
+            chatRunService.markRunning(runId, content);
+        }
+        sseEventHelper.send(emitter, type, content);
+    }
+
+    private Map<String, Object> terminalDonePayload(String runId, String chatId, String chatType) {
+        return Map.of(
+                "runId", runId,
+                "chatId", chatId,
+                "chatType", chatType,
+                "status", "COMPLETED"
+        );
     }
 }

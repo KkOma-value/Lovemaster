@@ -9,6 +9,14 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -29,8 +37,15 @@ public class ImageSearchTool {
     @Value("${pexels.per-page:3}")
     private int perPage;
 
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(15))
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
+
     // Pexels 常规搜索接口（请以文档为准）
     private static final String API_URL = "https://api.pexels.com/v1/search";
+    private static final String USER_AGENT = "Lovemaster-MCP/1.0";
 
     @Tool(description = "search image from web")
     public String searchImage(@ToolParam(description = "Search query keyword") String query) {
@@ -103,31 +118,13 @@ public class ImageSearchTool {
         if (StrUtil.isBlank(apiKey)) {
             throw new IllegalStateException("Pexels API key is not configured (set PEXELS_API_KEY or pexels.api-key)");
         }
-        // 设置请求头（包含API密钥）
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", apiKey);
-
-        // 设置请求参数（可按文档补充 page、per_page 等参数）
         Map<String, Object> params = new HashMap<>();
         params.put("query", query);
         params.put("page", 1);
         params.put("per_page", Math.max(1, Math.min(perPage, 10)));
 
-        // 发送 GET 请求（设置超时，避免 MCP callTool 默认 20s 等待超时）
-        var httpResponse = HttpUtil.createGet(API_URL)
-                .addHeaders(headers)
-                .form(params)
-            .timeout(Math.max(1000, timeoutMs))
-                .execute()
-            ;
+        String responseBody = executeSearchRequest(buildSearchUri(params));
 
-        int status = httpResponse.getStatus();
-        String responseBody = httpResponse.body();
-        if (status < 200 || status >= 300) {
-            throw new IllegalStateException("Pexels API error: status=" + status + ", body=" + responseBody);
-        }
-
-        // 解析响应JSON（假设响应结构包含"photos"数组，每个元素包含"medium"字段）
         return JSONUtil.parseObj(responseBody)
                 .getJSONArray("photos")
                 .stream()
@@ -136,5 +133,65 @@ public class ImageSearchTool {
                 .map(photo -> photo.getStr("medium"))
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
+    }
+
+    private URI buildSearchUri(Map<String, Object> params) {
+        String queryString = params.entrySet().stream()
+                .map(entry -> encode(entry.getKey()) + "=" + encode(String.valueOf(entry.getValue())))
+                .collect(Collectors.joining("&"));
+        return URI.create(API_URL + "?" + queryString);
+    }
+
+    private String executeSearchRequest(URI uri) {
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofMillis(Math.max(1000, timeoutMs)))
+                .header("Authorization", apiKey)
+                .header("Accept", "application/json")
+                .header("User-Agent", USER_AGENT)
+                .GET()
+                .build();
+
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= 3; attempt++) {
+            try {
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                int status = response.statusCode();
+                if (status < 200 || status >= 300) {
+                    throw new IllegalStateException("Pexels API error: status=" + status + ", body=" + response.body());
+                }
+                return response.body();
+            } catch (IOException e) {
+                lastException = e;
+                if (attempt >= 3) {
+                    break;
+                }
+                sleepBeforeRetry(attempt);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Pexels API request interrupted", e);
+            }
+        }
+        throw new IllegalStateException("Pexels API request failed after retries: " + rootMessage(lastException), lastException);
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            Thread.sleep(Math.min(250L * attempt, 1000L));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Retry interrupted", e);
+        }
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null && current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current == null ? "unknown error" : current.getMessage();
     }
 }

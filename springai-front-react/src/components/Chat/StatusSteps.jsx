@@ -12,6 +12,14 @@ const STEP_LABELS = {
     tool_call: '调用工具',
 };
 
+const getStepDisplayText = (step) => {
+    // Don't show rewrite content to user — only show the label
+    if (step.type === 'rewrite_result') {
+        return STEP_LABELS[step.type];
+    }
+    return step.content || STEP_LABELS[step.type] || '处理中';
+};
+
 const StatusSteps = ({ steps, isStreaming, hasContent }) => {
     const [userExpanded, setUserExpanded] = useState(false);
 
@@ -19,25 +27,17 @@ const StatusSteps = ({ steps, isStreaming, hasContent }) => {
 
     const isActive = isStreaming && !hasContent;
 
-    // Active state: show full steps with animation
+    // Active state: only show the current (latest) step — clean single-line indicator
     if (isActive) {
+        const currentStep = steps[steps.length - 1];
         return (
             <div className={styles.statusStepsContainer}>
-                {steps.map((step, idx) => {
-                    const isLast = idx === steps.length - 1;
-                    return (
-                        <div key={idx} className={`${styles.statusStep} ${isLast ? styles.statusStepActive : styles.statusStepDone}`}>
-                            {isLast ? (
-                                <span className={styles.thinkingDot} />
-                            ) : (
-                                <Check size={12} className={styles.statusCheckIcon} />
-                            )}
-                            <span className={styles.statusStepText}>
-                                {step.content || STEP_LABELS[step.type] || '处理中'}
-                            </span>
-                        </div>
-                    );
-                })}
+                <div className={`${styles.statusStep} ${styles.statusStepActive}`}>
+                    <span className={styles.thinkingDot} />
+                    <span className={styles.statusStepText}>
+                        {getStepDisplayText(currentStep)}
+                    </span>
+                </div>
                 <div className={styles.shimmerBar} />
             </div>
         );
@@ -68,7 +68,7 @@ const StatusSteps = ({ steps, isStreaming, hasContent }) => {
                         <div key={idx} className={`${styles.statusStep} ${styles.statusStepDone}`}>
                             <Check size={12} className={styles.statusCheckIcon} />
                             <span className={styles.statusStepText}>
-                                {step.content || STEP_LABELS[step.type] || '处理中'}
+                                {getStepDisplayText(step)}
                             </span>
                         </div>
                     ))}

@@ -88,9 +88,15 @@ public class ChatSessionController {
 
         List<ChatMessage> messages = databaseChatMemory.getAllMessages(chatId);
         return messages.stream()
-                .map(msg -> Map.of(
-                        "role", msg.getRole(),
-                        "content", msg.getContent()))
+                .map(msg -> {
+                    Map<String, String> entry = new java.util.LinkedHashMap<>();
+                    entry.put("role", msg.getRole());
+                    entry.put("content", msg.getContent());
+                    if (msg.getImageUrl() != null && !msg.getImageUrl().isBlank()) {
+                        entry.put("imageUrl", msg.getImageUrl());
+                    }
+                    return entry;
+                })
                 .toList();
     }
 

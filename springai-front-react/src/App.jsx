@@ -10,6 +10,7 @@ import RegisterPage from './pages/Auth/RegisterPage';
 import SetPasswordPage from './pages/Auth/SetPasswordPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
+import { ChatRuntimeProvider } from './contexts/ChatRuntimeContext';
 
 const GOOGLE_CLIENT_ID = '59540883835-shhhvumlokiqd24eb2jnjq7o6dt9rohk.apps.googleusercontent.com';
 
@@ -38,10 +39,12 @@ function App() {
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
         <AuthProvider>
-          <Navbar />
-          <AppLayout>
-            <AnimatedRoutes />
-          </AppLayout>
+          <ChatRuntimeProvider>
+            <Navbar />
+            <AppLayout>
+              <AnimatedRoutes />
+            </AppLayout>
+          </ChatRuntimeProvider>
         </AuthProvider>
       </Router>
     </GoogleOAuthProvider>

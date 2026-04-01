@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { User, ChevronDown } from 'lucide-react';
 import aiAvatarUrl from '../../assets/illustrations/ai-avatar.svg';
 import MarkdownRenderer from './MarkdownRenderer';
+import ImageWithLightbox from './ImageWithLightbox';
 import StatusSteps from './StatusSteps';
 import StreamingStatus from './StreamingStatus';
 import styles from './ChatArea.module.css';
@@ -96,6 +97,25 @@ const ChatMessages = ({ messages, streamingStatus, onRetry }) => {
                                             isVisible={true}
                                             onRetry={onRetry}
                                         />
+                                    )}
+                                    {/* Fallback images from file_created events */}
+                                    {message.images?.length > 0 && (
+                                        <div style={{
+                                            marginTop: '12px',
+                                            paddingTop: '12px',
+                                            borderTop: '1px solid #E5E7EB',
+                                            display: 'grid',
+                                            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                                            gap: '8px',
+                                        }}>
+                                            {message.images.map((img, i) => (
+                                                <ImageWithLightbox
+                                                    key={img.url || i}
+                                                    src={img.url}
+                                                    alt={img.name || '图片'}
+                                                />
+                                            ))}
+                                        </div>
                                     )}
                                     {message.isError && (
                                         <div className={styles.errorInline}>

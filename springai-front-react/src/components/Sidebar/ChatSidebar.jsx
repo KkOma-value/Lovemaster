@@ -29,7 +29,8 @@ const ChatSidebar = ({
     currentChatId,
     chatList = [],
     onSelectChat,
-    onDeleteChat
+    onDeleteChat,
+    backgroundRuns = {}
 }) => {
     const { user, logout, updateAvatarUrl } = useAuth();
     const { compressImage, uploadImage } = useImageUpload();
@@ -111,6 +112,7 @@ const ChatSidebar = ({
                             isActive={currentChatId === chat.id}
                             onSelect={onSelectChat}
                             onDelete={onDeleteChat}
+                            runStatus={backgroundRuns[chat.id] || null}
                         />
                     </motion.div>
                 ))}

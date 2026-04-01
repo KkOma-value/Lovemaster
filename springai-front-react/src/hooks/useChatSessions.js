@@ -6,11 +6,11 @@ import { getChatSessions, deleteChatSession } from '../services/chatApi';
  * Handles loading sessions, selecting chats, creating new chats, deleting chats
  *
  * @param {string} chatType - 'loveapp' or 'coach'
- * @param {Function} cleanupSSE - Cleanup function for SSE connections
+ * @param {Function} stopChatRuntime - Stop function for active chat runtime
  * @param {Function} resetPanel - Reset function for panel data
  * @returns {Object} Session state and handlers
  */
-export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
+export const useChatSessions = (chatType, stopChatRuntime, resetPanel) => {
     const [chatList, setChatList] = useState([]);
     const [currentChatId, setCurrentChatId] = useState(null);
 
@@ -56,6 +56,7 @@ export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
         try {
             await deleteChatSession(chatId, chatType);
             removePanelDataFromStorage(chatId);
+            stopChatRuntime(chatId);
 
             setChatList(prev => {
                 const remaining = prev.filter(c => c.id !== chatId);
@@ -63,11 +64,9 @@ export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
                 if (chatId === currentChatId) {
                     if (remaining.length > 0) {
                         setCurrentChatId(remaining[0].id);
-                        cleanupSSE();
                     } else {
                         const newChat = createNewChat();
                         resetPanel();
-                        cleanupSSE();
                         return [newChat];
                     }
                 }
@@ -77,7 +76,7 @@ export const useChatSessions = (chatType, cleanupSSE, resetPanel) => {
         } catch (error) {
             console.error('Failed to delete chat:', error);
         }
-    }, [chatType, currentChatId, cleanupSSE, createNewChat, resetPanel]);
+    }, [chatType, currentChatId, stopChatRuntime, createNewChat, resetPanel]);
 
     const updateChatTitle = useCallback((chatId, title) => {
         setChatList(prev => prev.map(chat => {

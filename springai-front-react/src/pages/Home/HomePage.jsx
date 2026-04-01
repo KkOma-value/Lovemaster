@@ -1,10 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, MessageCircle, Sparkles, Shield, Zap } from 'lucide-react';
 import heroLoversUrl from '../../assets/illustrations/hero-lovers.svg';
 import leafDecoUrl from '../../assets/illustrations/leaf-deco.svg';
 import VideoCanvasBackground from '../../components/VideoCanvasBackground';
+import { useChatRuntime } from '../../contexts/ChatRuntimeContext';
+import pillStyles from '../../components/Chat/BackgroundRunsPill.module.css';
 import styles from './HomePage.module.css';
 
 const features = [
@@ -33,6 +35,8 @@ const features = [
 const HomePage = () => {
     const navigate = useNavigate();
     const PageMotion = motion.div;
+    const { activeRuns } = useChatRuntime();
+    const activeRunCount = activeRuns.length;
 
     // Track card index for staggered entrance delay - 0.2s between each card
     let cardIndex = 0;
@@ -45,6 +49,36 @@ const HomePage = () => {
                 aria-hidden="true"
             />
             <VideoCanvasBackground />
+
+            {/* Global background runs indicator */}
+            <AnimatePresence>
+                {activeRunCount > 0 && (
+                    <motion.button
+                        className={pillStyles.pill}
+                        onClick={() => {
+                            const run = activeRuns[0];
+                            navigate(`/chat/${run?.chatType === 'coach' ? 'coach' : 'loveapp'}`);
+                        }}
+                        initial={{ opacity: 0, scale: 0.8, y: -4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: -4 }}
+                        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                        style={{
+                            position: 'fixed',
+                            top: '16px',
+                            right: '16px',
+                            zIndex: 100
+                        }}
+                        aria-live="polite"
+                        aria-label={`${activeRunCount} 个回复正在后台生成`}
+                    >
+                        <span className={pillStyles.dot} />
+                        <span className={pillStyles.text}>
+                            正在后台生成 {activeRunCount} 个回复
+                        </span>
+                    </motion.button>
+                )}
+            </AnimatePresence>
 
             <PageMotion
                 initial={{ opacity: 0, y: 6 }}

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
 
 import java.nio.charset.StandardCharsets;
@@ -50,14 +51,21 @@ public class SupabaseStorageClient {
 
         HttpEntity<byte[]> request = new HttpEntity<>(data, headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(
-                url, HttpMethod.POST, request, String.class);
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    url, HttpMethod.POST, request, String.class);
 
-        if (response.getStatusCode().is2xxSuccessful()) {
-            log.info("Supabase Storage 上传成功: path={}", storagePath);
-            return getPublicUrl(storagePath);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Supabase Storage 上传成功: path={}", storagePath);
+                return getPublicUrl(storagePath);
+            }
+            throw new RuntimeException("Supabase Storage 上传失败: " + response.getStatusCode());
+        } catch (RestClientResponseException e) {
+            throw new IllegalStateException(
+                    "Supabase Storage 上传失败: status=" + e.getRawStatusCode()
+                            + ", body=" + e.getResponseBodyAsString(StandardCharsets.UTF_8),
+                    e);
         }
-        throw new RuntimeException("Supabase Storage 上传失败: " + response.getStatusCode());
     }
 
     /**

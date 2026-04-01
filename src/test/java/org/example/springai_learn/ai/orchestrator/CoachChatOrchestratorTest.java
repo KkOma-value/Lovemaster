@@ -5,7 +5,9 @@ import org.example.springai_learn.ai.context.BrainDecision;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ChatMode;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
+import org.example.springai_learn.ai.context.ToolsAgentResult;
 import org.example.springai_learn.ai.service.BrainAgentService;
+import org.example.springai_learn.ai.service.ChatRunService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
@@ -30,6 +32,7 @@ class CoachChatOrchestratorTest {
     private ToolsAgentService toolsAgentService;
     private SseEventHelper sseEventHelper;
     private DatabaseChatMemory databaseChatMemory;
+    private ChatRunService chatRunService;
     private CoachChatOrchestrator orchestrator;
 
     @BeforeEach
@@ -40,10 +43,11 @@ class CoachChatOrchestratorTest {
         toolsAgentService = mock(ToolsAgentService.class);
         sseEventHelper = mock(SseEventHelper.class);
         databaseChatMemory = mock(DatabaseChatMemory.class);
+        chatRunService = mock(ChatRunService.class);
 
         orchestrator = new CoachChatOrchestrator(
                 intakeService, ragKnowledgeService, brainAgentService,
-                toolsAgentService, sseEventHelper, databaseChatMemory);
+                toolsAgentService, sseEventHelper, databaseChatMemory, chatRunService);
     }
 
     // --- 直接回答路径 ---
@@ -66,7 +70,7 @@ class CoachChatOrchestratorTest {
                         "你的判断有一定道理，但不要过早下结论。",
                         "", "我来直接分析这个问题。"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-1");
 
         verify(ragKnowledgeService, timeout(ASYNC_TIMEOUT_MS))
                 .retrieveKnowledge("请分析对方的态度并给出应对策略");
@@ -93,7 +97,7 @@ class CoachChatOrchestratorTest {
                 .thenReturn(BrainDecision.directAnswer(
                         "这是我的分析结果。", "", "我来分析。"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-2");
 
         verify(databaseChatMemory, timeout(ASYNC_TIMEOUT_MS))
                 .setImageUrlOnLatestUserMessage(
@@ -115,13 +119,14 @@ class CoachChatOrchestratorTest {
                 .thenReturn(BrainDecision.directAnswer(
                         "以轻松的方式提出约会邀请。", "", "好的。"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-3");
 
         ArgumentCaptor<String> conversationIdCaptor = ArgumentCaptor.forClass(String.class);
-        verify(databaseChatMemory, timeout(ASYNC_TIMEOUT_MS))
+        verify(databaseChatMemory, timeout(ASYNC_TIMEOUT_MS).times(2))
                 .add(conversationIdCaptor.capture(), anyList());
 
-        String cid = conversationIdCaptor.getValue();
+        // 用户消息立即持久化 + assistant 消息在回答生成后持久化，两次调用使用相同的 conversationId
+        String cid = conversationIdCaptor.getAllValues().getFirst();
         assertTrue(cid.contains("user-1"), "conversationId 应包含 userId");
         assertTrue(cid.contains("coach"), "conversationId 应包含 chatType");
         assertTrue(cid.contains("chat-3"), "conversationId 应包含 chatId");
@@ -147,17 +152,18 @@ class CoachChatOrchestratorTest {
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
         when(brainAgentService.decide(any(), any(), any())).thenReturn(toolDecision);
+        ToolsAgentResult toolResult = new ToolsAgentResult("搜索结果：异地恋见面建议包括...", List.of());
         when(toolsAgentService.activate(eq(toolDecision), anyString(), any()))
-                .thenReturn("搜索结果：异地恋见面建议包括...");
-        when(brainAgentService.synthesize(eq(toolDecision), eq("搜索结果：异地恋见面建议包括...")))
+                .thenReturn(toolResult);
+        when(brainAgentService.synthesize(eq(toolDecision), eq("搜索结果：异地恋见面建议包括..."), eq(List.of())))
                 .thenReturn("宝，我帮你整理好了异地恋见面攻略！");
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-4");
 
         verify(toolsAgentService, timeout(ASYNC_TIMEOUT_MS))
                 .activate(eq(toolDecision), anyString(), any());
         verify(brainAgentService, timeout(ASYNC_TIMEOUT_MS))
-                .synthesize(eq(toolDecision), eq("搜索结果：异地恋见面建议包括..."));
+                .synthesize(eq(toolDecision), eq("搜索结果：异地恋见面建议包括..."), eq(List.of()));
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
                 .send(any(), eq("content"), eq("宝，我帮你整理好了异地恋见面攻略！"));
     }
@@ -171,7 +177,7 @@ class CoachChatOrchestratorTest {
 
         when(intakeService.analyze(context)).thenThrow(new RuntimeException("OCR 服务不可用"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-5");
 
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
                 .send(any(), eq("error"), contains("处理失败"));

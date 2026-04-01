@@ -1,13 +1,20 @@
 package org.example.springai_learn.tools;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,17 +30,28 @@ public class ImageSearchTool {
     private final String apiKey;
     private final int timeoutMs;
     private final int perPage;
+    private final String apiUrl;
+    private final HttpClient httpClient;
+    private final int maxRetries;
 
     private static final String API_URL = "https://api.pexels.com/v1/search";
+    private static final String USER_AGENT = "Lovemaster/1.0";
 
     public ImageSearchTool(String apiKey) {
         this(apiKey, 15000, 3);
     }
 
     public ImageSearchTool(String apiKey, int timeoutMs, int perPage) {
+        this(apiKey, timeoutMs, perPage, API_URL, defaultHttpClient(timeoutMs), 2);
+    }
+
+    ImageSearchTool(String apiKey, int timeoutMs, int perPage, String apiUrl, HttpClient httpClient, int maxRetries) {
         this.apiKey = apiKey;
         this.timeoutMs = timeoutMs;
         this.perPage = perPage;
+        this.apiUrl = apiUrl;
+        this.httpClient = httpClient;
+        this.maxRetries = Math.max(0, maxRetries);
     }
 
     @Tool(description = "Search for images on Pexels and return DIRECT image URLs that can be downloaded. Use this tool to find real image URLs before calling downloadResource.")
@@ -70,26 +88,13 @@ public class ImageSearchTool {
      * 搜索中等尺寸的图片列表
      */
     private List<String> searchMediumImages(String query) {
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Authorization", apiKey);
-
         Map<String, Object> params = new HashMap<>();
         params.put("query", query);
         params.put("page", 1);
         params.put("per_page", Math.max(1, Math.min(perPage, 10)));
 
-        var httpResponse = HttpUtil.createGet(API_URL)
-                .addHeaders(headers)
-                .form(params)
-                .timeout(Math.max(1000, timeoutMs))
-                .execute();
-
-        int status = httpResponse.getStatus();
-        String responseBody = httpResponse.body();
-
-        if (status < 200 || status >= 300) {
-            throw new IllegalStateException("Pexels API error: status=" + status + ", body=" + responseBody);
-        }
+        URI uri = buildSearchUri(params);
+        String responseBody = executeSearchRequest(uri);
 
         return JSONUtil.parseObj(responseBody)
                 .getJSONArray("photos")
@@ -99,5 +104,75 @@ public class ImageSearchTool {
                 .map(photo -> photo.getStr("medium"))
                 .filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
+    }
+
+    private URI buildSearchUri(Map<String, Object> params) {
+        String queryString = params.entrySet().stream()
+                .map(entry -> encode(entry.getKey()) + "=" + encode(String.valueOf(entry.getValue())))
+                .collect(Collectors.joining("&"));
+        return URI.create(apiUrl + "?" + queryString);
+    }
+
+    private String executeSearchRequest(URI uri) {
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofMillis(Math.max(1000, timeoutMs)))
+                .header("Authorization", apiKey)
+                .header("Accept", "application/json")
+                .header("User-Agent", USER_AGENT)
+                .GET()
+                .build();
+
+        Exception lastException = null;
+        for (int attempt = 1; attempt <= maxRetries + 1; attempt++) {
+            try {
+                HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                int status = response.statusCode();
+                if (status < 200 || status >= 300) {
+                    throw new IllegalStateException("Pexels API error: status=" + status + ", body=" + response.body());
+                }
+                return response.body();
+            } catch (IOException e) {
+                lastException = e;
+                if (attempt > maxRetries) {
+                    break;
+                }
+                log.warn("Pexels API 请求失败，准备重试: attempt={}, error={}", attempt, e.getMessage());
+                sleepBeforeRetry(attempt);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Pexels API request interrupted", e);
+            }
+        }
+
+        throw new IllegalStateException("Pexels API request failed after retries: " + rootMessage(lastException), lastException);
+    }
+
+    private void sleepBeforeRetry(int attempt) {
+        try {
+            Thread.sleep(Math.min(250L * attempt, 1000L));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Retry interrupted", e);
+        }
+    }
+
+    private static HttpClient defaultHttpClient(int timeoutMs) {
+        return HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(Math.max(1000, timeoutMs)))
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .version(HttpClient.Version.HTTP_1_1)
+                .build();
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    private String rootMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null && current.getCause() != null) {
+            current = current.getCause();
+        }
+        return current == null ? "unknown error" : current.getMessage();
     }
 }

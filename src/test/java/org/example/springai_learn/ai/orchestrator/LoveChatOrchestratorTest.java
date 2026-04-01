@@ -4,6 +4,7 @@ import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ChatMode;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
+import org.example.springai_learn.ai.service.ChatRunService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
@@ -11,6 +12,7 @@ import org.example.springai_learn.app.LoveApp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -27,6 +29,7 @@ class LoveChatOrchestratorTest {
     private SseEventHelper sseEventHelper;
     private LoveApp loveApp;
     private DatabaseChatMemory databaseChatMemory;
+    private ChatRunService chatRunService;
     private LoveChatOrchestrator orchestrator;
 
     @BeforeEach
@@ -36,8 +39,9 @@ class LoveChatOrchestratorTest {
         sseEventHelper = mock(SseEventHelper.class);
         loveApp = mock(LoveApp.class);
         databaseChatMemory = mock(DatabaseChatMemory.class);
+        chatRunService = mock(ChatRunService.class);
         orchestrator = new LoveChatOrchestrator(intakeService, ragKnowledgeService,
-                sseEventHelper, loveApp, databaseChatMemory);
+                sseEventHelper, loveApp, databaseChatMemory, chatRunService);
     }
 
     // --- 文本输入流程 ---
@@ -54,15 +58,15 @@ class LoveChatOrchestratorTest {
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge("对方为什么突然不回消息了"))
                 .thenReturn("恋爱中保持冷静是关键。");
-        when(loveApp.doChatWithRAGContext(any(), any(), eq("user-1:loveapp:chat-1")))
-                .thenReturn("建议先不要催他，观察 24 小时后再发一条轻松的消息。");
+        when(loveApp.doChatWithRAGContextStream(any(), any(), eq("user-1:loveapp:chat-1")))
+                .thenReturn(Flux.just("建议先不要催他，观察 24 小时后再发一条轻松的消息。"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-1");
 
         verify(ragKnowledgeService, timeout(ASYNC_TIMEOUT_MS))
                 .retrieveKnowledge("对方为什么突然不回消息了");
         verify(loveApp, timeout(ASYNC_TIMEOUT_MS))
-                .doChatWithRAGContext(
+                .doChatWithRAGContextStream(
                         eq("他突然不回消息了怎么办"),
                         contains("恋爱中保持冷静"),
                         eq("user-1:loveapp:chat-1"));
@@ -83,9 +87,9 @@ class LoveChatOrchestratorTest {
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
-        when(loveApp.doChatWithRAGContext(any(), any(), any())).thenReturn("回复");
+        when(loveApp.doChatWithRAGContextStream(any(), any(), any())).thenReturn(Flux.just("回复"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-2");
 
         // Wait for flow to complete, then assert no imageUrl save
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS)).send(any(), eq("content"), any());
@@ -107,10 +111,10 @@ class LoveChatOrchestratorTest {
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("分手信号解读知识。");
-        when(loveApp.doChatWithRAGContext(any(), any(), any()))
-                .thenReturn("这可能不是分手，先冷静分析。");
+        when(loveApp.doChatWithRAGContextStream(any(), any(), any()))
+                .thenReturn(Flux.just("这可能不是分手，先冷静分析。"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-3");
 
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
                 .send(any(), eq("intake_status"), contains("截图"));
@@ -133,13 +137,13 @@ class LoveChatOrchestratorTest {
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
-        when(loveApp.doChatWithRAGContext(any(), any(), any())).thenReturn("我来回答。");
+        when(loveApp.doChatWithRAGContextStream(any(), any(), any())).thenReturn(Flux.just("我来回答。"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-4");
 
         ArgumentCaptor<String> systemContextCaptor = ArgumentCaptor.forClass(String.class);
         verify(loveApp, timeout(ASYNC_TIMEOUT_MS))
-                .doChatWithRAGContext(any(), systemContextCaptor.capture(), any());
+                .doChatWithRAGContextStream(any(), systemContextCaptor.capture(), any());
         assertFalse(systemContextCaptor.getValue().contains("相关知识参考"),
                 "RAG 无结果时不应包含知识参考块");
     }
@@ -153,10 +157,10 @@ class LoveChatOrchestratorTest {
 
         when(intakeService.analyze(context)).thenThrow(new RuntimeException("模型调用超时"));
 
-        orchestrator.stream(context);
+        orchestrator.stream(context, "run-5");
 
         verify(sseEventHelper, timeout(ASYNC_TIMEOUT_MS))
                 .send(any(), eq("error"), contains("处理失败"));
-        verify(loveApp, never()).doChatWithRAGContext(any(), any(), any());
+        verify(loveApp, never()).doChatWithRAGContextStream(any(), any(), any());
     }
 }

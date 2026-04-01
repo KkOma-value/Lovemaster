@@ -32,7 +32,9 @@ const authFetch = async (url, options = {}) => {
         if (response.status === 401 || response.status === 403) {
             throw new AuthExpiredError();
         }
-        throw new Error(`Failed request: ${response.statusText}`);
+        const error = new Error(`Failed request: ${response.status} ${response.statusText}`.trim());
+        error.status = response.status;
+        throw error;
     }
     return response.json();
 };
@@ -202,4 +204,21 @@ export async function getChatMessages(chatId, chatType = 'loveapp', limit = 100)
  */
 export async function getChatImages(chatId, chatType = 'coach') {
     return authFetch(`${API_BASE}/ai/sessions/${encodeURIComponent(chatId)}/images?chatType=${chatType}`);
+}
+
+/**
+ * Get active chat runs for current user
+ * @returns {Promise<Array>}
+ */
+export async function getActiveRuns() {
+    return authFetch(`${API_BASE}/ai/runs`);
+}
+
+/**
+ * Get a chat run by id
+ * @param {string} runId
+ * @returns {Promise<Object>}
+ */
+export async function getChatRun(runId) {
+    return authFetch(`${API_BASE}/ai/runs/${encodeURIComponent(runId)}`);
 }

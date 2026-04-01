@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ai.context.BrainDecision;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
+import org.example.springai_learn.ai.context.ToolsAgentResult;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -72,18 +73,21 @@ public class BrainAgentService {
     /**
      * Phase 3: Brain 综合工具结果，生成最终回答。
      */
-    public String synthesize(BrainDecision decision, String toolResults) {
+    public String synthesize(BrainDecision decision, String toolResults,
+                             List<ToolsAgentResult.StoredImageRef> storedImages) {
+        String imageBlock = buildImageBlock(storedImages);
         String userPrompt = """
                 # 原始任务上下文
                 %s
 
                 # 工具执行结果
                 %s
-
+                %s
                 请基于以上信息，给用户一个完整、有用的最终回答。
                 """.formatted(
                 safe(decision.synthesisContext()),
-                safe(toolResults)
+                safe(toolResults),
+                imageBlock
         );
 
         ChatResponse response = brainModel.call(new Prompt(List.of(
@@ -150,6 +154,21 @@ public class BrainAgentService {
         return text.substring(idx + marker.length()).trim();
     }
 
+    private String buildImageBlock(List<ToolsAgentResult.StoredImageRef> storedImages) {
+        if (storedImages == null || storedImages.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder("\n# 已下载的图片资源\n");
+        sb.append("以下图片已下载并存储到云端，你必须在回答中使用 markdown 图片格式展示它们：\n");
+        for (ToolsAgentResult.StoredImageRef img : storedImages) {
+            sb.append("- ").append(img.fileName())
+                    .append(": ![").append(img.fileName())
+                    .append("](").append(img.publicUrl()).append(")\n");
+        }
+        sb.append("\n注意：请将每张图片以 ![有意义的中文描述](url) 格式嵌入到相关文字描述之后，不要集中放在最后。\n");
+        return sb.toString();
+    }
+
     private String safe(String text) {
         return text == null ? "" : text;
     }
@@ -199,5 +218,12 @@ public class BrainAgentService {
             - 短句、口语化
             - 不要暴露内部工具名称或技术细节
             - 如果工具执行了搜索/生成，自然地呈现结果
+
+            图片展示规则（非常重要）：
+            - 如果"已下载的图片资源"部分提供了图片 URL，你必须在回答中使用 markdown 图片语法展示
+            - 格式：![有意义的中文描述](图片URL)
+            - 每张图片放在相关文字描述之后，图片独占一行
+            - 描述文字要有意义，比如"故宫全景"、"景山公园俯瞰"，不要用文件名
+            - 不要跳过任何提供的图片，全部展示
             """;
 }

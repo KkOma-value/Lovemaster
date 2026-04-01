@@ -7,6 +7,7 @@ import org.example.springai_learn.ai.context.ChatMode;
 import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.ai.orchestrator.CoachChatOrchestrator;
 import org.example.springai_learn.ai.orchestrator.LoveChatOrchestrator;
+import org.example.springai_learn.ai.service.ChatRunService;
 import org.example.springai_learn.app.LoveApp;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,6 +28,9 @@ public class AiController {
 
     @Resource
     private CoachChatOrchestrator coachChatOrchestrator;
+
+    @Resource
+    private ChatRunService chatRunService;
 
     private String getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -49,7 +53,8 @@ public class AiController {
             @RequestParam(required = false) String imageUrl) {
         log.info("开始 Love 模式 SSE: message={}, chatId={}, imageUrl={}", message, chatId, imageUrl);
         ChatInputContext context = new ChatInputContext(getCurrentUserId(), chatId, ChatMode.LOVE, message, imageUrl);
-        return loveChatOrchestrator.stream(context);
+        String runId = chatRunService.createRun(getCurrentUserId(), "loveapp", chatId, message, imageUrl).getId();
+        return loveChatOrchestrator.stream(context, runId);
     }
 
     /**
@@ -65,6 +70,7 @@ public class AiController {
             @RequestParam(required = false) String imageUrl) {
         log.info("开始 Coach 模式 SSE: message={}, chatId={}, imageUrl={}", message, chatId, imageUrl);
         ChatInputContext context = new ChatInputContext(getCurrentUserId(), chatId, ChatMode.COACH, message, imageUrl);
-        return coachChatOrchestrator.stream(context);
+        String runId = chatRunService.createRun(getCurrentUserId(), "coach", chatId, message, imageUrl).getId();
+        return coachChatOrchestrator.stream(context, runId);
     }
 }

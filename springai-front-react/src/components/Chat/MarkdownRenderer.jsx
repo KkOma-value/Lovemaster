@@ -2,6 +2,7 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { preprocessStreamingMarkdown } from '../../utils/streamingMarkdownProcessor';
+import ImageWithLightbox from './ImageWithLightbox';
 
 const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
     const processedContent = preprocessStreamingMarkdown(content, isStreaming);
@@ -63,6 +64,11 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                             </code>
                         );
                     },
+                    // Images — render with lightbox for known sources
+                    img({ src, alt }) {
+                        if (!src) return null;
+                        return <ImageWithLightbox src={src} alt={alt} />;
+                    },
                     // Links
                     a({ href, children, ...props }) {
                         return (
@@ -103,10 +109,16 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                     li: ({ children }) => (
                         <li style={{ marginBottom: '6px' }}>{children}</li>
                     ),
-                    // Paragraphs
-                    p: ({ children }) => (
-                        <p style={{ marginBottom: '12px' }}>{children}</p>
-                    ),
+                    // Paragraphs — unwrap if the only child is a block element (e.g. image)
+                    p: ({ children, node }) => {
+                        const hasImage = node?.children?.some(
+                            (child) => child.tagName === 'img'
+                        );
+                        if (hasImage) {
+                            return <div style={{ marginBottom: '12px' }}>{children}</div>;
+                        }
+                        return <p style={{ marginBottom: '12px' }}>{children}</p>;
+                    },
                     // Headings
                     h1: ({ children }) => (
                         <h1 style={{

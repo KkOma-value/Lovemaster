@@ -41,7 +41,8 @@ const StreamingStatus = ({ type, content, isVisible = true, onRetry }) => {
 };
 
 function getStatusText(type, content) {
-    if (content) return content;
+    // Don't show rewrite content to user
+    if (content && type !== 'rewrite_result') return content;
 
     switch (type) {
         case 'thinking':

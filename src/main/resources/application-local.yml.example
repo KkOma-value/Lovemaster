@@ -5,9 +5,16 @@
 spring:
   # 数据库配置（如需使用向量存储功能）
   datasource:
+    # 本地 PostgreSQL 示例
     url: jdbc:postgresql://localhost:5432/springai
     username: your_db_username
     password: your_db_password
+    # 如果使用 Supabase，优先把 Dashboard 里的 Session Pooler JDBC URL 放进环境变量 DB_POOLER_URL，
+    # 不要优先使用 db.<project-ref>.supabase.co:5432 直连地址；某些网络下会在 SSL 握手阶段超时。
+    # 常用环境变量：
+    # DB_POOLER_URL=jdbc:postgresql://<pooler-host>:5432/postgres?sslmode=require
+    # DB_CONNECT_TIMEOUT_SECONDS=10
+    # DB_SOCKET_TIMEOUT_SECONDS=30
 
   # AI 模型配置 - 阿里云通义千问 (DashScope)
   # 本项目使用阿里云 DashScope 作为 AI 模型提供商
