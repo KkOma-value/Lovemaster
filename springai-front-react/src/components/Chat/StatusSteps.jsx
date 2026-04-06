@@ -12,10 +12,38 @@ const STEP_LABELS = {
     tool_call: '调用工具',
 };
 
+const TOOL_NAMES = {
+    webSearch: '网页搜索',
+    webScraping: '网页抓取',
+    searchImage: '图片搜索',
+    downloadResource: '图片下载',
+    downloadImage: '图片下载',
+    generatePDF: '文档生成',
+    terminalOperation: '终端执行',
+    fileOperation: '文件操作',
+    sendEmail: '邮件发送',
+    doTerminate: '任务完成',
+};
+
+const getToolFriendlyName = (content) => {
+    if (!content) return '';
+    // Match patterns like "已执行 webSearch..." or "Calling tool: webSearch"
+    const toolMatch = content.match(/(?:已执行|Calling tool:|调用)\s*(\w+)/);
+    if (toolMatch) {
+        const toolKey = toolMatch[1];
+        return TOOL_NAMES[toolKey] || toolKey;
+    }
+    return content;
+};
+
 const getStepDisplayText = (step) => {
     // Don't show rewrite content to user — only show the label
     if (step.type === 'rewrite_result') {
         return STEP_LABELS[step.type];
+    }
+    if (step.type === 'tool_call') {
+        const friendlyName = getToolFriendlyName(step.content);
+        return friendlyName || STEP_LABELS[step.type];
     }
     return step.content || STEP_LABELS[step.type] || '处理中';
 };

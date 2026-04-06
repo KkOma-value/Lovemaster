@@ -7,6 +7,8 @@ import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.auth.entity.ChatRun;
 import org.example.springai_learn.auth.entity.ChatRunStatus;
 import org.example.springai_learn.auth.repository.ChatRunRepository;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +16,40 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 @Service
+@EnableScheduling
 @RequiredArgsConstructor
 @Slf4j
 public class ChatRunService {
 
     private static final Set<ChatRunStatus> ACTIVE_STATUSES = Set.of(ChatRunStatus.QUEUED, ChatRunStatus.RUNNING);
+
+    /**
+     * 内部记录类 - 用于内存暂存待写入的状态
+     */
+    private record PendingStatus(String eventType, String statusText, LocalDateTime timestamp) {}
+
+    /**
+     * 内部记录类 - 用于内存暂存流式内容
+     */
+    private record PendingContent(StringBuilder content, LocalDateTime lastUpdate) {
+        PendingContent() {
+            this(new StringBuilder(), LocalDateTime.now());
+        }
+    }
+
+    /**
+     * 内存暂存 - runId -> 待写入的状态
+     */
+    private final ConcurrentHashMap<String, PendingStatus> pendingStatuses = new ConcurrentHashMap<>();
+
+    /**
+     * 内存暂存 - runId -> 待写入的流式内容
+     */
+    private final ConcurrentHashMap<String, PendingContent> pendingContents = new ConcurrentHashMap<>();
 
     private static final Set<String> STATUS_EVENT_TYPES = Set.of(
             "thinking",
@@ -85,29 +113,92 @@ public class ChatRunService {
         });
     }
 
+    /**
+     * 异步记录事件 - 仅写入内存，不立即刷盘
+     * 定时任务会周期性将暂存的数据写入数据库
+     *
+     * @param runId 运行ID
+     * @param eventType 事件类型
+     * @param content 事件内容
+     */
+    public void recordEventAsync(String runId, String eventType, String content) {
+        pendingStatuses.put(runId, new PendingStatus(eventType, content, LocalDateTime.now()));
+    }
+
+    /**
+     * 定时刷盘 - 每秒执行一次，将内存中的待写入状态和内容刷入数据库
+     */
+    @Scheduled(fixedRate = 1000)
+    public void flushPendingStatuses() {
+        if (pendingStatuses.isEmpty() && pendingContents.isEmpty()) {
+            return;
+        }
+        // 刷盘状态
+        pendingStatuses.forEach((runId, pending) -> {
+            try {
+                updateRun(runId, run -> {
+                    if (run.getStartedAt() == null) {
+                        run.setStartedAt(LocalDateTime.now());
+                    }
+                    if (run.getStatus() == ChatRunStatus.QUEUED) {
+                        run.setStatus(ChatRunStatus.RUNNING);
+                    }
+                    run.setLastEventType(pending.eventType());
+                    if (STATUS_EVENT_TYPES.contains(pending.eventType())) {
+                        run.setLatestStatusText(pending.statusText());
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("刷盘状态失败: runId={}, error={}", runId, e.getMessage());
+            }
+        });
+        pendingStatuses.clear();
+        // 刷盘内容（保留在内存，终态时一次性写入）
+        // 注意：这里只更新 lastEventType，不写入 partialResponse
+        pendingContents.forEach((runId, pending) -> {
+            try {
+                updateRun(runId, run -> {
+                    if (run.getStartedAt() == null) {
+                        run.setStartedAt(LocalDateTime.now());
+                    }
+                    if (run.getStatus() == ChatRunStatus.QUEUED) {
+                        run.setStatus(ChatRunStatus.RUNNING);
+                    }
+                    run.setLastEventType("content");
+                });
+            } catch (Exception e) {
+                log.warn("刷盘内容状态失败: runId={}, error={}", runId, e.getMessage());
+            }
+        });
+        // pendingContents 不清空，终态时才清空
+    }
+
     @Transactional
     public void appendContent(String runId, String chunk) {
         if (chunk == null || chunk.isBlank()) {
             return;
         }
-        updateRun(runId, run -> {
-            if (run.getStartedAt() == null) {
-                run.setStartedAt(LocalDateTime.now());
+        // 内存暂存，不立即写 DB
+        pendingContents.compute(runId, (k, existing) -> {
+            if (existing == null) {
+                return new PendingContent(new StringBuilder(chunk), LocalDateTime.now());
             }
-            if (run.getStatus() == ChatRunStatus.QUEUED) {
-                run.setStatus(ChatRunStatus.RUNNING);
-            }
-            run.setLastEventType("content");
-            String existing = run.getPartialResponse() == null ? "" : run.getPartialResponse();
-            run.setPartialResponse(existing + chunk);
+            existing.content().append(chunk);
+            return new PendingContent(existing.content(), LocalDateTime.now());
         });
     }
 
     @Transactional
     public void markCompleted(String runId, String finalContent) {
         updateRun(runId, run -> {
-            if (finalContent != null && !finalContent.isBlank()) {
-                run.setPartialResponse(finalContent);
+            // 优先使用暂存的流式内容，否则使用传入的 finalContent
+            String contentToSave = finalContent;
+            PendingContent pending = pendingContents.get(runId);
+            if (pending != null && pending.content().length() > 0) {
+                contentToSave = pending.content().toString();
+            }
+            if (contentToSave != null && !contentToSave.isBlank()) {
+                run.setPartialResponse(contentToSave);
             }
             if (run.getStartedAt() == null) {
                 run.setStartedAt(LocalDateTime.now());
@@ -117,11 +208,19 @@ public class ChatRunService {
             run.setLastEventType("done");
             run.setFinishedAt(LocalDateTime.now());
         });
+        // 清理暂存
+        pendingContents.remove(runId);
+        pendingStatuses.remove(runId);
     }
 
     @Transactional
     public void markFailed(String runId, String errorMessage) {
         updateRun(runId, run -> {
+            // 失败时也尝试保存暂存内容（部分响应可能有用）
+            PendingContent pending = pendingContents.get(runId);
+            if (pending != null && pending.content().length() > 0) {
+                run.setPartialResponse(pending.content().toString());
+            }
             if (run.getStartedAt() == null) {
                 run.setStartedAt(LocalDateTime.now());
             }
@@ -131,6 +230,9 @@ public class ChatRunService {
             run.setLastEventType("error");
             run.setFinishedAt(LocalDateTime.now());
         });
+        // 清理暂存
+        pendingContents.remove(runId);
+        pendingStatuses.remove(runId);
     }
 
     @Transactional

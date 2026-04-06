@@ -128,6 +128,17 @@ const appendImageToStreamingMessage = (messages, imageData) => {
     return messages;
 };
 
+const replaceLastAssistantContent = (messages, newContent) => {
+    const lastIdx = messages.length - 1;
+    if (lastIdx >= 0 && messages[lastIdx]?.role === 'assistant') {
+        return [
+            ...messages.slice(0, lastIdx),
+            { ...messages[lastIdx], content: newContent }
+        ];
+    }
+    return messages;
+};
+
 const finalizeStreamingMessage = (messages) => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.isStreaming) {
@@ -265,11 +276,6 @@ export function ChatRuntimeProvider({ children }) {
             updateRuntime(chatType, chatId, current => {
                 // 如果有本地连接且正在流式传输，保留当前状态
                 if (current.hasLocalConnection && current.messages.some(message => message.isStreaming)) {
-                    return current;
-                }
-
-                // 如果当前处于活跃状态（QUEUED/RUNNING），不要覆盖现有消息
-                if (ACTIVE_STATUSES.has(current.runStatus) && current.messages.length > 0) {
                     return current;
                 }
 
@@ -441,6 +447,15 @@ export function ChatRuntimeProvider({ children }) {
                         streamingStatus: null,
                         hasLocalConnection: false
                     };
+
+                case 'content_replace':
+                    if (parsed.content) {
+                        return {
+                            ...current,
+                            messages: replaceLastAssistantContent(current.messages, parsed.content)
+                        };
+                    }
+                    return current;
 
                 case 'file_created':
                     if (parsed.data?.type === 'image' && parsed.data?.url) {

@@ -5,6 +5,7 @@ import org.example.springai_learn.ai.context.BrainDecision;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
 import org.example.springai_learn.ai.context.ToolsAgentResult;
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
@@ -12,6 +13,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
@@ -68,6 +70,58 @@ public class BrainAgentService {
 
         String synthesisContext = buildSynthesisContext(context, analysis, ragBlock);
         return parseDecision(output, synthesisContext, analysis);
+    }
+
+    /**
+     * 快速路径：直接流式回答用户问题（无需工具）。
+     */
+    public Flux<String> streamDirectAnswer(ChatInputContext context, String ragKnowledge) {
+        String ragBlock = formatRagBlock(ragKnowledge);
+
+        String userPrompt = """
+                # 用户问题
+                %s
+                %s
+                请像闺蜜一样亲切自然地回答这个问题。
+                """.formatted(
+                safe(context.userMessage()),
+                ragBlock
+        );
+
+        return ChatClient.builder(brainModel).build()
+                .prompt()
+                .system(DIRECT_ANSWER_SYSTEM_PROMPT)
+                .user(userPrompt)
+                .stream()
+                .content();
+    }
+
+    /**
+     * Phase 3: Brain 综合工具结果，生成最终回答（流式）。
+     */
+    public Flux<String> streamSynthesize(BrainDecision decision, String toolResults,
+                                          List<ToolsAgentResult.StoredImageRef> storedImages) {
+        String imageBlock = buildImageBlock(storedImages);
+        String userPrompt = """
+                # 原始任务上下文
+                %s
+
+                # 工具执行结果
+                %s
+                %s
+                请基于以上信息，给用户一个完整、有用的最终回答。
+                """.formatted(
+                safe(decision.synthesisContext()),
+                safe(toolResults),
+                imageBlock
+        );
+
+        return ChatClient.builder(brainModel).build()
+                .prompt()
+                .system(SYNTHESIZE_SYSTEM_PROMPT)
+                .user(userPrompt)
+                .stream()
+                .content();
     }
 
     /**
@@ -159,13 +213,15 @@ public class BrainAgentService {
             return "";
         }
         StringBuilder sb = new StringBuilder("\n# 已下载的图片资源\n");
-        sb.append("以下图片已下载并存储到云端，你必须在回答中使用 markdown 图片格式展示它们：\n");
+        sb.append("以下图片已存储，你必须在回答中使用 markdown 图片语法展示它们。\n");
+        sb.append("直接复制下面的 markdown 图片标签，只需修改方括号里的描述文字为有意义的中文描述：\n\n");
         for (ToolsAgentResult.StoredImageRef img : storedImages) {
-            sb.append("- ").append(img.fileName())
-                    .append(": ![").append(img.fileName())
-                    .append("](").append(img.publicUrl()).append(")\n");
+            sb.append("![").append(img.fileName()).append("](").append(img.publicUrl()).append(")\n\n");
         }
-        sb.append("\n注意：请将每张图片以 ![有意义的中文描述](url) 格式嵌入到相关文字描述之后，不要集中放在最后。\n");
+        sb.append("要求：\n");
+        sb.append("- 将每张图片嵌入到相关文字描述之后，不要集中放在最后\n");
+        sb.append("- URL 必须原封不动地复制，不要修改、缩短或重新编写 URL\n");
+        sb.append("- 只修改方括号 [] 内的描述文字\n");
         return sb.toString();
     }
 
@@ -198,6 +254,18 @@ public class BrainAgentService {
             [TOOLS:NO]
             [DIRECT_ANSWER]
             <像闺蜜一样亲切自然地回答用户，先给结论再展开分析>
+
+            风格：
+            - 像闺蜜一样说话，亲切自然，用"宝""亲爱的"等称呼
+            - 先给答案，再展开分析
+            - 短句、口语化
+            - 不聊政治、宗教、政策
+            """;
+
+    private static final String DIRECT_ANSWER_SYSTEM_PROMPT = """
+            你是 Lovemaster 的恋爱顾问 Luna。
+
+            你需要像闺蜜一样亲切自然地回答用户的恋爱相关问题。
 
             风格：
             - 像闺蜜一样说话，亲切自然，用"宝""亲爱的"等称呼

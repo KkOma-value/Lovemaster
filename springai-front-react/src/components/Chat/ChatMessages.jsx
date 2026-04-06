@@ -98,25 +98,31 @@ const ChatMessages = ({ messages, streamingStatus, onRetry }) => {
                                             onRetry={onRetry}
                                         />
                                     )}
-                                    {/* Fallback images from file_created events */}
-                                    {message.images?.length > 0 && (
-                                        <div style={{
-                                            marginTop: '12px',
-                                            paddingTop: '12px',
-                                            borderTop: '1px solid #E5E7EB',
-                                            display: 'grid',
-                                            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                                            gap: '8px',
-                                        }}>
-                                            {message.images.map((img, i) => (
-                                                <ImageWithLightbox
-                                                    key={img.url || i}
-                                                    src={img.url}
-                                                    alt={img.name || '图片'}
-                                                />
-                                            ))}
-                                        </div>
-                                    )}
+                                    {/* Fallback images — only show images NOT already in markdown content */}
+                                    {(() => {
+                                        const fallbackImages = (message.images || []).filter(img =>
+                                            !message.content || !img.url || !message.content.includes(img.url)
+                                        );
+                                        if (fallbackImages.length === 0) return null;
+                                        return (
+                                            <div style={{
+                                                marginTop: '12px',
+                                                paddingTop: '12px',
+                                                borderTop: '1px solid #E5E7EB',
+                                                display: 'grid',
+                                                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+                                                gap: '8px',
+                                            }}>
+                                                {fallbackImages.map((img, i) => (
+                                                    <ImageWithLightbox
+                                                        key={img.url || i}
+                                                        src={img.url}
+                                                        alt={img.name || '图片'}
+                                                    />
+                                                ))}
+                                            </div>
+                                        );
+                                    })()}
                                     {message.isError && (
                                         <div className={styles.errorInline}>
                                             <span>{message.content}</span>

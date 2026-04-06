@@ -70,9 +70,9 @@ const ImageWithLightbox = ({ src, alt }) => {
                 alt={alt || ''}
                 style={{
                     ...imgStyle,
-                    display: loaded ? 'block' : 'none',
+                    opacity: loaded ? 1 : 0,
+                    position: loaded ? 'static' : 'absolute',
                 }}
-                loading="lazy"
                 onLoad={() => setLoaded(true)}
                 onError={() => setError(true)}
                 onClick={() => setLightboxOpen(true)}

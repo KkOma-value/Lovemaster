@@ -74,6 +74,8 @@ public class FileController {
             case "jpg", "jpeg" -> "image/jpeg";
             case "png" -> "image/png";
             case "gif" -> "image/gif";
+            case "webp" -> "image/webp";
+            case "svg" -> "image/svg+xml";
             default -> "application/octet-stream";
         };
         response.setContentType(contentType);

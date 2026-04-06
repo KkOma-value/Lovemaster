@@ -31,6 +31,7 @@ public class LoveChatOrchestrator {
 
     public SseEmitter stream(ChatInputContext context, String runId) {
         SseEmitter emitter = new SseEmitter(300000L);
+        sseEventHelper.registerLifecycle(emitter);
         emitter.onTimeout(() -> {
             log.warn("LoveChatOrchestrator SSE 超时: chatId={}, runId={}", context.chatId(), runId);
             chatRunService.markFailedIfActive(runId, "请求超时");

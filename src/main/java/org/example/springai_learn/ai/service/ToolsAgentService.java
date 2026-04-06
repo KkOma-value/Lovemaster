@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.Map;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -90,6 +92,7 @@ public class ToolsAgentService {
     private final ChatModel toolsModel;
     private final DatabaseChatMemory databaseChatMemory;
     private final ConversationImageStorageService conversationImageStorageService;
+    private final SseEventHelper sseEventHelper;
 
     @Autowired(required = false)
     private ToolCallbackProvider mcpToolCallbackProvider;
@@ -98,11 +101,13 @@ public class ToolsAgentService {
             ToolCallback[] allTools,
             @Qualifier("toolsModel") ChatModel toolsModel,
             DatabaseChatMemory databaseChatMemory,
-            ConversationImageStorageService conversationImageStorageService) {
+            ConversationImageStorageService conversationImageStorageService,
+            SseEventHelper sseEventHelper) {
         this.allTools = allTools;
         this.toolsModel = toolsModel;
         this.databaseChatMemory = databaseChatMemory;
         this.conversationImageStorageService = conversationImageStorageService;
+        this.sseEventHelper = sseEventHelper;
 
         // 合并所有工具回调（注册工具 + MCP 工具在 activate 时延迟合并）
         List<FunctionCallback> toolList = new ArrayList<>(List.of(allTools));
@@ -234,9 +239,17 @@ public class ToolsAgentService {
 
             if (toolResponseMessage != null) {
                 boolean hasTerminate = false;
+                int toolStepCount = 1;
                 for (ToolResponseMessage.ToolResponse response : toolResponseMessage.getResponses()) {
                     checkAndSendFileEvent(response.name(), response.responseData(), emitter, conversationId, collectedImages);
                     log.info("工具 {} 执行完成", response.name());
+
+                    // 推送工具执行进度
+                    String friendlyName = friendlyToolName(response.name());
+                    sseEventHelper.send(emitter, "tool_call", "已执行 " + friendlyName + "...",
+                        Map.of("tool", response.name(), "step", toolStepCount));
+                    toolStepCount++;
+
                     if ("doTerminate".equals(response.name())) {
                         hasTerminate = true;
                         lastResult = response.responseData();
@@ -260,6 +273,23 @@ public class ToolsAgentService {
     }
 
     // ---- 历史消息管理 ----
+
+    private String friendlyToolName(String toolName) {
+        if (toolName == null) return "工具";
+        return switch (toolName) {
+            case "webSearch" -> "网页搜索";
+            case "webScraping" -> "网页抓取";
+            case "searchImage" -> "图片搜索";
+            case "downloadResource" -> "图片下载";
+            case "downloadImage" -> "图片下载";
+            case "generatePDF" -> "文档生成";
+            case "terminalOperation" -> "终端执行";
+            case "fileOperation" -> "文件操作";
+            case "sendEmail" -> "邮件发送";
+            case "doTerminate" -> "任务完成";
+            default -> toolName;
+        };
+    }
 
     private List<Message> loadHistory(String conversationId) {
         if (conversationId == null || conversationId.isEmpty()) {
@@ -478,22 +508,12 @@ public class ToolsAgentService {
 
     private void sendFileCreated(SseEmitter emitter, String fileType, String fileName,
                                   String filePath, String fileUrl) {
-        try {
-            String json = String.format(
-                    "{\"type\":\"file_created\",\"content\":\"%s\",\"data\":{\"type\":\"%s\",\"name\":\"%s\",\"path\":\"%s\",\"url\":\"%s\"}}",
-                    escape(fileName),
-                    escape(fileType),
-                    escape(fileName),
-                    escape(filePath),
-                    escape(fileUrl != null ? fileUrl : ""));
-            emitter.send(json);
-        } catch (Exception e) {
-            if (isCompletedEmitterError(e)) {
-                log.debug("SSE 已结束，忽略 file_created 事件: {}", e.getMessage());
-                return;
-            }
-            log.warn("发送 file_created 事件失败: {}", e.getMessage());
-        }
+        sseEventHelper.send(emitter, "file_created", fileName, Map.of(
+                "type", fileType,
+                "name", fileName != null ? fileName : "",
+                "path", filePath != null ? filePath : "",
+                "url", fileUrl != null ? fileUrl : ""
+        ));
     }
 
     private String escape(String text) {
