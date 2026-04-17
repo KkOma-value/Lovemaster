@@ -24,8 +24,13 @@ const ChatArea = ({
     const isWelcomeState = messages.length === 0;
 
     const chatConfig = {
-        title: '恋爱教练',
-        welcomeTitle: '我是你的恋爱助手，今天有什么可以帮忙的？',
+        title: 'Kiko · 追求策略参谋',
+        welcomeTitle: '我是 Kiko，把你和 TA 的聊天截图发给我，我帮你看看现在有多大胜算。',
+    };
+
+    const handleCopyAction = (text) => {
+        if (!text) return;
+        setInputValue(text);
     };
 
     const handleHomeClick = () => {
@@ -96,6 +101,7 @@ const ChatArea = ({
                             <ChatMessages
                                 messages={messages}
                                 streamingStatus={streamingStatus}
+                                onCopyAction={handleCopyAction}
                             />
                         </Motion.div>
                     )}

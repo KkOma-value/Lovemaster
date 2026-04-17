@@ -8,6 +8,7 @@ import ChatPage from './pages/Chat/ChatPage';
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
 import SetPasswordPage from './pages/Auth/SetPasswordPage';
+import ProbabilityPreview from './pages/Dev/ProbabilityPreview';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ChatRuntimeProvider } from './contexts/ChatRuntimeContext';
@@ -22,6 +23,7 @@ function AnimatedRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/dev/probability" element={<ProbabilityPreview />} />
         
         <Route element={<ProtectedRoute />}>
           <Route path="/chat" element={<ChatPage />} />

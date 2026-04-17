@@ -53,6 +53,8 @@ public class MultimodalIntakeService {
             INTENT: <用户此刻最想要的结果：是想理解对方心意？寻求回复建议？评估关系前景？还是情绪疏导？>
 
             TOOL_HINT: <yes 或 no - 如果用户需要搜索信息、制定计划、生成文档/图片、多步骤执行等，填yes；如果只是咨询建议，填no>
+
+            PROBABILITY_REQUESTED: <yes 或 no - 如果用户在问"有没有戏、胜算多少、能不能追到、还有机会吗、成功概率、有多大可能"这类评估成功概率的问题，填yes；如果只是询问对方意思或回复建议，填no>
             """;
 
     private static final String IMAGE_SYSTEM_PROMPT = """
@@ -82,6 +84,8 @@ public class MultimodalIntakeService {
             INTENT: <用户此刻最想要的结果：理解对方真实想法？寻求回复话术？判断关系走向？还是确认自己是否过度解读？>
 
             TOOL_HINT: <yes 或 no - 如果用户需要搜索约会地点、生成回复模板、整理聊天记录分析等，填yes；如果只是咨询建议，填no>
+
+            PROBABILITY_REQUESTED: <yes 或 no - 如果用户在问"有没有戏、胜算多少、能不能追到、还有机会吗、成功概率、有多大可能"这类评估成功概率的问题，填yes；如果只是询问对方意思或回复建议，填no>
             """;
 
     private final ChatModel rewriteModel;
@@ -163,6 +167,7 @@ public class MultimodalIntakeService {
             uncertainties.add("模型异常：" + abbreviate(errorMessage, 120));
         }
 
+        boolean probabilityRequested = detectProbabilityKeyword(context.userMessage());
         return new IntakeAnalysisResult(
                 context.hasImage(),
                 ocrText,
@@ -170,7 +175,8 @@ public class MultimodalIntakeService {
                 rewrittenQuestion,
                 uncertainties,
                 intent,
-                likelyNeedTools
+                likelyNeedTools,
+                probabilityRequested
         );
     }
 
@@ -198,6 +204,9 @@ public class MultimodalIntakeService {
             uncertainties = appendUncertainty(uncertainties, "截图文字摘录不完整，回答基于有限的图像理解。");
         }
 
+        boolean probabilityRequested =
+                "yes".equalsIgnoreCase(findValue(raw, "PROBABILITY_REQUESTED:"))
+                || detectProbabilityKeyword(context.userMessage());
         return new IntakeAnalysisResult(
                 context.hasImage(),
                 ocrText,
@@ -205,7 +214,8 @@ public class MultimodalIntakeService {
                 rewrittenQuestion,
                 uncertainties,
                 intent,
-                toolHint || heuristicToolNeed(context.userMessage())
+                toolHint || heuristicToolNeed(context.userMessage()),
+                probabilityRequested
         );
     }
 
@@ -372,6 +382,35 @@ public class MultimodalIntakeService {
                 || text.contains("生成")
                 || text.contains("pdf")
                 || text.contains("文档");
+    }
+
+    /**
+     * 关键字兜底：检测用户消息中是否包含概率分析相关意图词。
+     * 作为 AI 模型 PROBABILITY_REQUESTED 字段的兜底。
+     */
+    private boolean detectProbabilityKeyword(String userMessage) {
+        if (userMessage == null) {
+            return false;
+        }
+        String text = userMessage.toLowerCase();
+        return text.contains("有没有戏")
+                || text.contains("有戏吗")
+                || text.contains("有机会")
+                || text.contains("成功概率")
+                || text.contains("成功率")
+                || text.contains("胜算")
+                || text.contains("能追到")
+                || text.contains("追到吗")
+                || text.contains("追得到")
+                || text.contains("能不能在一起")
+                || text.contains("可能性多大")
+                || text.contains("可能在一起")
+                || text.contains("有多大可能")
+                || text.contains("几成把握")
+                || text.contains("概率")
+                || text.contains("有希望")
+                || text.contains("还有救")
+                || text.contains("分析一下");
     }
 
     private String safeText(String text) {

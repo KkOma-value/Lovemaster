@@ -9,6 +9,7 @@ public record IntakeAnalysisResult(
         String rewrittenQuestion,
         List<String> uncertainties,
         String suggestedIntent,
-        boolean likelyNeedTools
+        boolean likelyNeedTools,
+        boolean probabilityRequested
 ) {
 }

@@ -5,9 +5,10 @@ import MarkdownRenderer from './MarkdownRenderer';
 import ImageWithLightbox from './ImageWithLightbox';
 import StatusSteps from './StatusSteps';
 import StreamingStatus from './StreamingStatus';
+import ProbabilityCard from './ProbabilityCard';
 import styles from './ChatArea.module.css';
 
-const ChatMessages = ({ messages, streamingStatus, onRetry }) => {
+const ChatMessages = ({ messages, streamingStatus, onRetry, onCopyAction }) => {
     const scrollContainerRef = useRef(null);
     const messagesEndRef = useRef(null);
     const isUserScrollingRef = useRef(false);
@@ -80,6 +81,13 @@ const ChatMessages = ({ messages, streamingStatus, onRetry }) => {
                                             steps={message.statusSteps}
                                             isStreaming={message.isStreaming}
                                             hasContent={!!message.content}
+                                        />
+                                    )}
+                                    {/* Probability card — between status and content */}
+                                    {message.probability && (
+                                        <ProbabilityCard
+                                            {...message.probability}
+                                            onCopyAction={onCopyAction}
                                         />
                                     )}
                                     {/* Content */}

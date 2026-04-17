@@ -5,33 +5,33 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDateTime;
 
+/**
+ * 聊天运行事件记录表。
+ * 记录每个 chat_run 的详细事件流，用于调试、审计和事件回放。
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "messages")
-public class ChatMessage {
+@Table(name = "chat_run_events")
+public class ChatRunEvent {
+
     @Id
     @Column(length = 36)
     private String id;
 
-    @Column(name = "conversation_id", nullable = false, length = 36)
-    private String conversationId;
+    @Column(name = "run_id", nullable = false, length = 36)
+    private String runId;
 
-    @Column(nullable = false, length = 20)
-    private String role;
+    @Column(name = "event_type", nullable = false, length = 50)
+    private String eventType;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
-
-    @Column(name = "image_url", length = 500)
-    private String imageUrl;
-
-    @Column(name = "probability_json", columnDefinition = "TEXT")
-    private String probabilityJson;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

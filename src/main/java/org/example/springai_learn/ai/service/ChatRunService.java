@@ -1,11 +1,15 @@
 package org.example.springai_learn.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.ai.context.ConversationIds;
+import org.example.springai_learn.ai.context.ProbabilityAnalysis;
 import org.example.springai_learn.auth.entity.ChatRun;
+import org.example.springai_learn.auth.entity.ChatRunEvent;
 import org.example.springai_learn.auth.entity.ChatRunStatus;
+import org.example.springai_learn.auth.repository.ChatRunEventRepository;
 import org.example.springai_learn.auth.repository.ChatRunRepository;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -58,11 +62,15 @@ public class ChatRunService {
             "ocr_result",
             "rewrite_result",
             "rag_status",
+            "probability_status",
+            "probability_result",
             "tool_call"
     );
 
     private final ChatRunRepository chatRunRepository;
+    private final ChatRunEventRepository chatRunEventRepository;
     private final DatabaseChatMemory databaseChatMemory;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ChatRun createRun(String userId, String chatType, String chatId, String requestMessage, String imageUrl) {
@@ -111,6 +119,38 @@ public class ChatRunService {
                 run.setErrorMessage(content);
             }
         });
+    }
+
+    /**
+     * 记录概率分析完成事件。
+     * 将完整概率分析结果序列化为 JSON 写入 chat_run_events 表，
+     * 同时更新 chat_runs 表的 latestStatusText 和 lastEventType。
+     *
+     * @param runId 运行 ID
+     * @param prob  概率分析结构化结果
+     */
+    @Transactional
+    public void recordProbability(String runId, ProbabilityAnalysis prob) {
+        if (prob == null) {
+            return;
+        }
+        String summary = String.format("概率分析完成: %d%% (%s, %s置信度)",
+                prob.probability(), prob.tier(), prob.confidence());
+        // 1. 写入 chat_run_events 详细事件表
+        try {
+            String probJson = objectMapper.writeValueAsString(prob);
+            ChatRunEvent event = ChatRunEvent.builder()
+                    .runId(runId)
+                    .eventType("probability_result")
+                    .content(probJson)
+                    .build();
+            chatRunEventRepository.save(event);
+            log.debug("概率分析事件已持久化到 chat_run_events: runId={}, prob={}%", runId, prob.probability());
+        } catch (Exception e) {
+            log.warn("保存概率分析事件到 chat_run_events 失败: runId={}, error={}", runId, e.getMessage());
+        }
+        // 2. 更新 chat_runs 行内状态（保持原有行为兼容）
+        recordEvent(runId, "probability_result", summary);
     }
 
     /**

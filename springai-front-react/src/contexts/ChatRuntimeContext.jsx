@@ -112,6 +112,23 @@ const appendStreamingContent = (messages, chunk) => {
     ];
 };
 
+const attachProbabilityToLatestAssistant = (messages, probability) => {
+    if (!probability || typeof probability !== 'object') {
+        return messages;
+    }
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage?.role === 'assistant') {
+        return [
+            ...messages.slice(0, -1),
+            { ...lastMessage, probability }
+        ];
+    }
+    return [
+        ...messages,
+        { role: 'assistant', content: '', isStreaming: true, probability }
+    ];
+};
+
 const appendImageToStreamingMessage = (messages, imageData) => {
     const lastMessage = messages[messages.length - 1];
     if (lastMessage?.role === 'assistant') {
@@ -400,6 +417,7 @@ export function ChatRuntimeProvider({ children }) {
                 case 'ocr_result':
                 case 'rewrite_result':
                 case 'rag_status':
+                case 'probability_status':
                 case 'tool_call':
                     return {
                         ...current,
@@ -410,6 +428,18 @@ export function ChatRuntimeProvider({ children }) {
                         latestStatusText: parsed.content,
                         streamingStatus: { type: parsed.type, content: parsed.content }
                     };
+
+                case 'probability_result': {
+                    const prob = parsed.data?.probability;
+                    if (!prob) return current;
+                    return {
+                        ...current,
+                        messages: attachProbabilityToLatestAssistant(current.messages, prob),
+                        isLoading: true,
+                        runStatus: 'RUNNING',
+                        lastEventType: 'probability_result'
+                    };
+                }
 
                 case 'content':
                     return {

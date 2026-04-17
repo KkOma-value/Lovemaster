@@ -1,5 +1,6 @@
 package org.example.springai_learn.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
@@ -32,6 +33,7 @@ public class ChatSessionController {
     private final DatabaseChatMemory databaseChatMemory;
     private final ConversationImageRepository conversationImageRepository;
     private final ConversationRepository conversationRepository;
+    private final ObjectMapper objectMapper;
 
     private String getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -77,9 +79,10 @@ public class ChatSessionController {
 
     /**
      * 获取指定会话的消息历史
+     * assistant 消息会携带 probability 字段（JSON 对象，若有）
      */
     @GetMapping("/{chatId}/messages")
-    public List<Map<String, String>> getMessages(
+    public List<Map<String, Object>> getMessages(
             @PathVariable String chatId,
             @RequestParam(defaultValue = "100") int limit,
             @RequestParam(defaultValue = "loveapp") String chatType) {
@@ -89,11 +92,20 @@ public class ChatSessionController {
         List<ChatMessage> messages = databaseChatMemory.getAllMessages(chatId);
         return messages.stream()
                 .map(msg -> {
-                    Map<String, String> entry = new java.util.LinkedHashMap<>();
+                    Map<String, Object> entry = new java.util.LinkedHashMap<>();
                     entry.put("role", msg.getRole());
                     entry.put("content", msg.getContent());
                     if (msg.getImageUrl() != null && !msg.getImageUrl().isBlank()) {
                         entry.put("imageUrl", msg.getImageUrl());
+                    }
+                    // Return probability as parsed JSON object (not string) for frontend consumption
+                    if (msg.getProbabilityJson() != null && !msg.getProbabilityJson().isBlank()) {
+                        try {
+                            Object probObj = objectMapper.readValue(msg.getProbabilityJson(), Object.class);
+                            entry.put("probability", probObj);
+                        } catch (Exception e) {
+                            log.warn("解析 probabilityJson 失败: msgId={}, error={}", msg.getId(), e.getMessage());
+                        }
                     }
                     return entry;
                 })

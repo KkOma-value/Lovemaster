@@ -1,14 +1,17 @@
 package org.example.springai_learn.ai.orchestrator;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
+import org.example.springai_learn.ai.context.ProbabilityAnalysis;
 import org.example.springai_learn.ai.service.AiErrorMessageResolver;
 import org.example.springai_learn.ai.service.ChatRunService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
+import org.example.springai_learn.ai.service.ProbabilityAnalysisService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
 import org.example.springai_learn.app.LoveApp;
@@ -23,11 +26,13 @@ import java.util.Map;
 public class LoveChatOrchestrator {
 
     private final MultimodalIntakeService multimodalIntakeService;
+    private final ProbabilityAnalysisService probabilityAnalysisService;
     private final RagKnowledgeService ragKnowledgeService;
     private final SseEventHelper sseEventHelper;
     private final LoveApp loveApp;
     private final DatabaseChatMemory databaseChatMemory;
     private final ChatRunService chatRunService;
+    private final ObjectMapper objectMapper;
 
     public SseEmitter stream(ChatInputContext context, String runId) {
         SseEmitter emitter = new SseEmitter(300000L);
@@ -44,6 +49,7 @@ public class LoveChatOrchestrator {
         ));
 
         Thread.startVirtualThread(() -> {
+            ProbabilityAnalysis probResult = null;
             try {
                 // Step 1: Intake — OCR + structured rewrite
                 if (context.hasImage()) {
@@ -63,17 +69,39 @@ public class LoveChatOrchestrator {
                 publishStatus(emitter, runId, "rewrite_result",
                         "我已经把你的问题整理好了：" + shorten(analysis.rewrittenQuestion(), 96));
 
-                // Step 2: RAG — retrieve relevant knowledge using rewritten question
+                // Step 2 (NEW): Probability analysis — if intent detected
+                if (analysis.probabilityRequested()) {
+                    publishStatus(emitter, runId, "probability_status", "正在评估成功概率...");
+                    try {
+                        probResult = probabilityAnalysisService.analyze(context, analysis);
+                        if (probResult != null) {
+                            sseEventHelper.send(emitter, "probability_result", "", Map.of(
+                                    "runId", runId,
+                                    "chatId", context.chatId(),
+                                    "probability", probResult
+                            ));
+                            chatRunService.recordProbability(runId, probResult);
+                        }
+                    } catch (Exception e) {
+                        log.warn("概率分析失败，跳过: chatId={}, error={}", context.chatId(), e.getMessage());
+                        // 不抛出，继续走文字分析
+                    }
+                }
+
+                // Step 3: RAG — retrieve relevant knowledge using rewritten question
                 publishStatus(emitter, runId, "rag_status", "正在查阅恋爱知识库，补充参考资料...");
                 String ragKnowledge = ragKnowledgeService.retrieveKnowledge(analysis.rewrittenQuestion());
 
                 publishStatus(emitter, runId, "status", "正在生成对方意图分析和可直接发送的回复建议...");
 
-                // Step 3: Build system context — inject intake analysis + RAG knowledge
-                String systemContext = buildSystemContext(analysis, ragKnowledge);
+                // Step 4: Build system context — inject intake analysis + RAG knowledge
+                String systemContext = buildSystemContext(analysis, ragKnowledge, probResult);
                 String conversationId = ConversationIds.forMode(context.userId(), context.mode(), context.chatId());
 
-                // Step 4: Stream content chunks to client
+                // Capture probability for persistence in doOnComplete
+                final ProbabilityAnalysis finalProbResult = probResult;
+
+                // Step 5: Stream content chunks to client
                 loveApp.doChatWithRAGContextStream(
                         safe(context.userMessage()), systemContext, conversationId
                 ).doOnComplete(() -> {
@@ -82,6 +110,15 @@ public class LoveChatOrchestrator {
                             databaseChatMemory.setImageUrlOnLatestUserMessage(context.chatId(), context.imageUrl());
                         } catch (Exception e) {
                             log.warn("保存 imageUrl 失败: {}", e.getMessage());
+                        }
+                    }
+                    // Persist probability analysis on the latest assistant message
+                    if (finalProbResult != null) {
+                        try {
+                            String probJson = objectMapper.writeValueAsString(finalProbResult);
+                            databaseChatMemory.setProbabilityOnLatestAssistantMessage(context.chatId(), probJson);
+                        } catch (Exception e) {
+                            log.warn("保存概率分析数据失败: {}", e.getMessage());
                         }
                     }
                     chatRunService.markCompleted(runId, null);
@@ -112,7 +149,7 @@ public class LoveChatOrchestrator {
         return emitter;
     }
 
-    private String buildSystemContext(IntakeAnalysisResult analysis, String ragKnowledge) {
+    private String buildSystemContext(IntakeAnalysisResult analysis, String ragKnowledge, ProbabilityAnalysis prob) {
         StringBuilder sb = new StringBuilder();
         sb.append("# 当前请求分析\n");
         sb.append("对话摘要：").append(safe(analysis.conversationSummary())).append("\n");
@@ -124,6 +161,13 @@ public class LoveChatOrchestrator {
             sb.append("不确定项:").append(String.join("；", analysis.uncertainties())).append("\n");
         }
         sb.append("用户意图:").append(safe(analysis.suggestedIntent())).append("\n");
+
+        // If probability card was shown, instruct the model accordingly
+        if (prob != null) {
+            sb.append("\n# 概率分析已展示\n");
+            sb.append("前置概率分析服务已给出成功概率 ").append(prob.probability()).append("% (").append(prob.tier()).append(")。\n");
+            sb.append("请不要在回复中重复概率数字，只补充\"为什么\"和\"下一步怎么做\"。\n");
+        }
 
         if (ragKnowledge != null && !ragKnowledge.isBlank()) {
             sb.append("\n# 相关知识参考\n").append(ragKnowledge).append("\n");

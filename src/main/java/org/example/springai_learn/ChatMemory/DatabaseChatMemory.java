@@ -139,6 +139,29 @@ public class DatabaseChatMemory implements ChatMemory {
     }
 
     /**
+     * 更新指定会话中最近一条 assistant 消息的 probabilityJson 字段。
+     * 用于在消息已由 MessageChatMemoryAdvisor 保存后补充概率分析结果。
+     *
+     * @param chatId          会话 ID（纯 chatId，非 composite key）
+     * @param probabilityJson 概率分析的 JSON 字符串
+     */
+    @Transactional
+    public void setProbabilityOnLatestAssistantMessage(String chatId, String probabilityJson) {
+        if (probabilityJson == null || probabilityJson.isBlank()) {
+            return;
+        }
+        List<ChatMessage> recent = chatMessageRepository.findLatestMessages(chatId, PageRequest.of(0, 10));
+        recent.stream()
+                .filter(m -> "assistant".equals(m.getRole()))
+                .findFirst()
+                .ifPresentOrElse(m -> {
+                    m.setProbabilityJson(probabilityJson);
+                    chatMessageRepository.save(m);
+                    log.info("已更新 assistant 消息 probabilityJson: msgId={}, chatId={}", m.getId(), chatId);
+                }, () -> log.warn("未找到可更新的 assistant 消息: chatId={}", chatId));
+    }
+
+    /**
      * 创建一个新会话，返回会话 ID
      */
     @Transactional
