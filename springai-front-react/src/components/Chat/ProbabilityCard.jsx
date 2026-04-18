@@ -10,7 +10,8 @@ import {
     TrendingUp,
     ShieldAlert,
     Copy,
-    ArrowRight
+    ArrowRight,
+    BookmarkCheck
 } from 'lucide-react';
 import styles from './ProbabilityCard.module.css';
 
@@ -222,6 +223,25 @@ const ProbabilityCard = ({
                         ))}
                     </div>
                 </>
+            )}
+            
+            {/* Auto submission note when clamped >= 82 */}
+            {clamped >= 82 && (
+                <div style={{
+                    marginTop: '12px',
+                    padding: '8px 12px',
+                    background: '#f0fdf4',
+                    color: '#10b981',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontWeight: 500
+                }}>
+                    <BookmarkCheck size={14} />
+                    <span>该条回复已自动进入高质量知识蒸馏队列</span>
+                </div>
             )}
         </Motion.section>
     );

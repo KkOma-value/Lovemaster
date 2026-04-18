@@ -77,10 +77,10 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{
-                                    color: '#EC4899',
+                                    color: '#C47B5A',
                                     fontWeight: 500,
                                     textDecoration: 'none',
-                                    borderBottom: '1px solid #FBCFE8'
+                                    borderBottom: '1px solid rgba(196, 123, 90, 0.3)'
                                 }}
                                 {...props}
                             >
@@ -156,7 +156,7 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                     // Blockquotes
                     blockquote: ({ children }) => (
                         <blockquote style={{
-                            borderLeft: '3px solid #FDA4AF',
+                            borderLeft: '3px solid #C47B5A',
                             paddingLeft: '16px',
                             margin: '16px 0',
                             color: '#6B7280',

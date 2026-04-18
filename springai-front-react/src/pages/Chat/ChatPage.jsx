@@ -292,6 +292,7 @@ const ChatPage = () => {
                         isLoading={isLoading}
                         streamingStatus={streamingStatus}
                         chatType={chatType}
+                        chatId={currentChatId}
                         activeRunCount={activeRunCount}
                         onNavigateToRun={handleNavigateToRun}
                         recoveryStatus={recoveryStatus}

@@ -6,7 +6,7 @@
     border-radius: var(--radius-full);
     font-size: 13px;
     font-weight: 500;
-    background: linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(251, 113, 133, 0.1));
+    background: linear-gradient(135deg, rgba(196, 123, 90, 0.1), rgba(220, 160, 128, 0.1));
     color: var(--text-primary);
     backdrop-filter: blur(8px);
     animation: fadeIn 0.3s ease-out;
@@ -39,28 +39,28 @@
 
 /* Status type styles */
 .thinking {
-    background: linear-gradient(135deg, rgba(244, 114, 182, 0.15), rgba(251, 113, 133, 0.1));
-    border-color: rgba(244, 114, 182, 0.3);
+    background: linear-gradient(135deg, rgba(196, 123, 90, 0.15), rgba(220, 160, 128, 0.1));
+    border-color: rgba(196, 123, 90, 0.3);
 }
 
 .searching {
-    background: linear-gradient(135deg, rgba(251, 207, 232, 0.2), rgba(244, 114, 182, 0.1));
-    border-color: rgba(251, 207, 232, 0.4);
+    background: linear-gradient(135deg, rgba(232, 196, 160, 0.2), rgba(196, 123, 90, 0.1));
+    border-color: rgba(232, 196, 160, 0.4);
 }
 
 .analyzing {
-    background: linear-gradient(135deg, rgba(251, 113, 133, 0.15), rgba(244, 114, 182, 0.1));
-    border-color: rgba(251, 113, 133, 0.3);
+    background: linear-gradient(135deg, rgba(220, 160, 128, 0.15), rgba(196, 123, 90, 0.1));
+    border-color: rgba(220, 160, 128, 0.3);
 }
 
 .processing {
-    background: linear-gradient(135deg, rgba(249, 168, 212, 0.15), rgba(244, 114, 182, 0.1));
-    border-color: rgba(249, 168, 212, 0.3);
+    background: linear-gradient(135deg, rgba(201, 168, 124, 0.15), rgba(196, 123, 90, 0.1));
+    border-color: rgba(201, 168, 124, 0.3);
 }
 
 .tooling {
-    background: linear-gradient(135deg, rgba(233, 213, 255, 0.15), rgba(244, 114, 182, 0.1));
-    border-color: rgba(233, 213, 255, 0.3);
+    background: linear-gradient(135deg, rgba(220, 160, 128, 0.15), rgba(196, 123, 90, 0.1));
+    border-color: rgba(220, 160, 128, 0.3);
 }
 
 .done {
@@ -75,8 +75,8 @@
 }
 
 .default {
-    background: rgba(251, 207, 232, 0.1);
-    border-color: rgba(251, 207, 232, 0.2);
+    background: rgba(232, 196, 160, 0.1);
+    border-color: rgba(232, 196, 160, 0.2);
 }
 
 /* Animation Keyframes */

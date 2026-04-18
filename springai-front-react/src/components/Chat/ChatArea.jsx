@@ -15,6 +15,7 @@ const ChatArea = ({
     setInputValue,
     isLoading,
     streamingStatus,
+    chatId,
     activeRunCount = 0,
     onNavigateToRun,
     recoveryStatus = null,
@@ -97,6 +98,7 @@ const ChatArea = ({
                                 messages={messages}
                                 streamingStatus={streamingStatus}
                                 onCopyAction={handleCopyAction}
+                                chatId={chatId}
                             />
                         </Motion.div>
                     )}

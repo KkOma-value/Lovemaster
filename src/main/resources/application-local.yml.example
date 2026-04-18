@@ -67,3 +67,9 @@ supabase:
 # MCP 与工具共享文件目录（建议用绝对路径，便于主程序与 mcp-servers 一致读写）
 app:
   file-save-dir: ${APP_FILE_SAVE_DIR:}
+  knowledge:
+    wiki:
+      enabled: ${APP_KNOWLEDGE_WIKI_ENABLED:true}
+      root: ${APP_KNOWLEDGE_WIKI_ROOT:knowledge/wiki}
+    sink:
+      topic-schema-path: ${APP_KNOWLEDGE_SINK_TOPIC_SCHEMA_PATH:knowledge/wiki/topic-schema.yml}

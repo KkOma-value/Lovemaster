@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lovemaster RAG Pipeline — 实现状态总览</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --bg-card: #131a2e;
+    --bg-card-hover: #1a2340;
+    --bg-surface: #0f1525;
+    --border: #1e2a45;
+    --border-active: #3b82f6;
+    --text: #e2e8f0;
+    --text-muted: #8b95a8;
+    --text-dim: #5a6580;
+    --done: #10b981;
+    --done-bg: rgba(16,185,129,0.12);
+    --done-border: rgba(16,185,129,0.35);
+    --done-glow: rgba(16,185,129,0.25);
+    --partial: #f59e0b;
+    --partial-bg: rgba(245,158,11,0.12);
+    --partial-border: rgba(245,158,11,0.35);
+    --todo: #64748b;
+    --todo-bg: rgba(100,116,139,0.08);
+    --todo-border: rgba(100,116,139,0.25);
+    --blue: #3b82f6;
+    --blue-bg: rgba(59,130,246,0.12);
+    --blue-glow: rgba(59,130,246,0.25);
+    --cyan: #06b6d4;
+    --cyan-bg: rgba(6,182,212,0.12);
+    --amber: #f59e0b;
+    --amber-bg: rgba(245,158,11,0.12);
+    --rose: #f43f5e;
+    --rose-bg: rgba(244,63,94,0.12);
+    --purple: #8b5cf6;
+    --purple-bg: rgba(139,92,246,0.12);
+    --orange: #f97316;
+    --orange-bg: rgba(249,115,22,0.12);
+    --flow-line: #253050;
+    --flow-active: #3b82f6;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    background: linear-gradient(180deg, rgba(59,130,246,0.04) 0%, transparent 100%);
+  }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; }
+  .header h1 span { color: var(--blue); }
+  .header .subtitle { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+  .header-stats {
+    display: flex; gap: 20px;
+  }
+  .stat-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  }
+  .stat-done { background: var(--done-bg); color: var(--done); border: 1px solid var(--done-border); }
+  .stat-partial { background: var(--partial-bg); color: var(--partial); border: 1px solid var(--partial-border); }
+  .stat-todo { background: var(--todo-bg); color: var(--todo); border: 1px solid var(--todo-border); }
+
+  /* ===== TAB BAR ===== */
+  .tab-bar {
+    display: flex; gap: 2px; padding: 12px 32px; border-bottom: 1px solid var(--border);
+    background: var(--bg-surface);
+  }
+  .tab {
+    padding: 10px 22px; border-radius: 8px 8px 0 0; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1px solid transparent; border-bottom: none;
+    background: transparent; color: var(--text-muted); transition: all 0.2s;
+    position: relative;
+  }
+  .tab:hover { color: var(--text); background: var(--bg-card); }
+  .tab.active {
+    background: var(--bg-card); color: var(--text); border-color: var(--border);
+  }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 2px;
+    background: var(--blue);
+  }
+  .tab .badge-sm {
+    font-size: 10px; padding: 1px 7px; border-radius: 10px; margin-left: 6px; font-weight: 600;
+  }
+  .badge-done-sm { background: var(--done-bg); color: var(--done); }
+  .badge-partial-sm { background: var(--partial-bg); color: var(--partial); }
+
+  /* ===== LAYOUT ===== */
+  .main { display: flex; min-height: calc(100vh - 120px); }
+  .canvas { flex: 1; padding: 28px 36px; overflow-y: auto; }
+  .panel {
+    width: 380px; border-left: 1px solid var(--border); background: var(--bg-card);
+    padding: 24px; overflow-y: auto; position: sticky; top: 0; height: calc(100vh - 120px);
+  }
+
+  /* ===== SECTION ===== */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ===== PIPELINE ROW ===== */
+  .pipe-title {
+    font-size: 16px; font-weight: 700; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .pipe-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+  .badge { font-size:11px; padding:3px 10px; border-radius:20px; font-weight:600; }
+  .badge-done { background: var(--done-bg); color: var(--done); border:1px solid var(--done-border); }
+  .badge-wip { background: var(--partial-bg); color: var(--partial); border:1px solid var(--partial-border); }
+
+  /* ===== FLOW ===== */
+  .flow { display:flex; flex-direction:column; align-items:center; gap:0; padding-bottom:32px; }
+  .arrow { width:2px; height:32px; background:var(--flow-line); position:relative; }
+  .arrow::after {
+    content:''; position:absolute; bottom:-4px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:5px solid transparent; border-right:5px solid transparent;
+    border-top:6px solid var(--flow-line);
+  }
+  .arrow.done { background: var(--done); }
+  .arrow.done::after { border-top-color: var(--done); }
+
+  /* ===== NODE ===== */
+  .node {
+    width: 340px; padding: 16px 20px; border-radius: 14px;
+    border: 1.5px solid var(--border); background: var(--bg-card);
+    cursor: pointer; transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+  .node:hover { border-color: var(--blue); background: var(--bg-card-hover); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+  .node.selected { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+  .node.s-done { border-left: 3px solid var(--done); }
+  .node.s-partial { border-left: 3px solid var(--partial); }
+  .node.s-todo { border-left: 3px solid var(--todo); opacity: 0.7; }
+
+  .node-head { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+  .node-icon {
+    width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center;
+    font-size:15px; flex-shrink:0; font-weight:600; letter-spacing: -0.5px;
+  }
+  .ni-trigger { background: var(--blue-bg); color: var(--blue); }
+  .ni-topic { background: var(--cyan-bg); color: var(--cyan); }
+  .ni-abstract { background: var(--orange-bg); color: var(--orange); }
+  .ni-dedup { background: var(--amber-bg); color: var(--amber); }
+  .ni-batch { background: var(--purple-bg); color: var(--purple); }
+  .ni-review { background: var(--done-bg); color: var(--done); }
+  .ni-wiki { background: var(--done-bg); color: var(--done); }
+  .ni-fb { background: var(--cyan-bg); color: var(--cyan); }
+  .ni-score { background: var(--orange-bg); color: var(--orange); }
+  .ni-rank { background: var(--amber-bg); color: var(--amber); }
+  .ni-gray { background: var(--purple-bg); color: var(--purple); }
+  .ni-dash { background: var(--blue-bg); color: var(--blue); }
+
+  .node-name { font-size:14px; font-weight:600; }
+  .node-class { font-size:11px; color: var(--text-dim); font-family:'JetBrains Mono',monospace; margin-top:1px; }
+  .node-desc { font-size:12px; color:var(--text-muted); line-height:1.6; margin-left:44px; }
+  .node-tags { margin-top:8px; margin-left:44px; display:flex; gap:5px; flex-wrap:wrap; }
+  .tag {
+    font-size:10px; padding:2px 8px; border-radius:4px;
+    background:rgba(255,255,255,0.04); color:var(--text-dim); border:1px solid var(--border);
+  }
+  .tag-done { background: var(--done-bg); color: var(--done); border-color: var(--done-border); }
+  .tag-api { background: var(--blue-bg); color: var(--blue); border-color: rgba(59,130,246,0.3); }
+
+  .status-dot {
+    position:absolute; top:12px; right:14px; width:8px; height:8px; border-radius:50%;
+  }
+  .dot-done { background: var(--done); box-shadow: 0 0 8px var(--done-glow); }
+  .dot-partial { background: var(--partial); }
+  .dot-todo { background: var(--todo); }
+
+  /* ===== SIDE PANEL ===== */
+  .panel-title { font-size:15px; font-weight:700; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+  .detail-section { margin-bottom:20px; }
+  .detail-section h4 { font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; font-weight:600; }
+  .detail-row { display:flex; justify-content:space-between; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:12px; }
+  .detail-row:last-child { border-bottom:none; }
+  .detail-row .lbl { color:var(--text-muted); }
+  .detail-row .val { color:var(--text); font-weight:500; text-align:right; max-width:200px; }
+  .code-box {
+    background:rgba(0,0,0,0.35); border:1px solid var(--border); border-radius:10px;
+    padding:14px 16px; font-family:'JetBrains Mono',monospace; font-size:11px; line-height:1.7;
+    color:var(--text-muted); overflow-x:auto; margin-top:8px; white-space:pre-wrap;
+  }
+  .code-box .kw { color: var(--purple); }
+  .code-box .str { color: var(--done); }
+  .code-box .cmt { color: var(--text-dim); font-style: italic; }
+  .code-box .type { color: var(--cyan); }
+  .code-box .num { color: var(--orange); }
+
+  /* ===== FANOUT VISUAL ===== */
+  .fanout { display:flex; gap:24px; justify-content:center; align-items:flex-start; margin:8px 0; }
+  .fanout-branch { display:flex; flex-direction:column; align-items:center; }
+  .branch-label { font-size:10px; color:var(--text-dim); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px; }
+
+  /* ===== OVERVIEW GRID ===== */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 24px; }
+  .ov-card {
+    padding: 18px 20px; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .ov-card:hover { border-color: var(--blue); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+  .ov-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .ov-card .ov-class { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+  .ov-card .ov-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+  .ov-status {
+    display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 12px; margin-bottom: 10px;
+  }
+  .ov-done { background: var(--done-bg); color: var(--done); }
+  .ov-partial { background: var(--partial-bg); color: var(--partial); }
+
+  /* ===== API TABLE ===== */
+  .api-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 12px; }
+  .api-table th {
+    text-align: left; padding: 10px 14px; background: var(--bg-surface); color: var(--text-dim);
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; font-size: 11px;
+    border-bottom: 1px solid var(--border);
+  }
+  .api-table td {
+    padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: top;
+  }
+  .api-table tr:hover td { background: rgba(59,130,246,0.04); }
+  .method {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .method-get { background: var(--done-bg); color: var(--done); }
+  .method-post { background: var(--blue-bg); color: var(--blue); }
+  .api-path { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text); }
+  .api-desc { color: var(--text-muted); }
+
+  /* ===== SCORING FORMULA ===== */
+  .formula-box {
+    background: linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(139,92,246,0.08) 100%);
+    border: 1px solid rgba(59,130,246,0.2);
+    border-radius: 14px; padding: 20px 24px; margin: 20px 0;
+  }
+  .formula-box h4 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--blue); }
+  .formula {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--text);
+    letter-spacing: 0.5px; text-align: center; padding: 12px 0;
+  }
+  .formula .var { color: var(--cyan); }
+  .formula .op { color: var(--text-dim); }
+  .formula .num { color: var(--orange); }
+  .formula-desc { font-size: 12px; color: var(--text-muted); line-height: 1.7; margin-top: 12px; }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1024px) {
+    .main { flex-direction:column; }
+    .panel { width:100%; border-left:none; border-top:1px solid var(--border); height:auto; position:static; }
+    .node { width:280px; }
+  }
+
+  /* ===== SCROLLBAR ===== */
+  ::-webkit-scrollbar { width:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+  ::-webkit-scrollbar-thumb:hover { background:var(--text-dim); }
+
+  /* ===== ANIMATION ===== */
+  @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+  .section.active { animation: fadeIn 0.3s ease; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 var(--done-glow); } 50% { box-shadow: 0 0 0 6px transparent; } }
+  .dot-done { animation: pulse 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Lovemaster RAG Pipeline <span>Implementation Status</span></h1>
+    <div class="subtitle">Step 1 (双路检索) + Step 2 (经验蒸馏) + Step 3 (策略反馈闭环) — 后端实现映射</div>
+  </div>
+  <div class="header-stats">
+    <div class="stat-pill stat-done">16 Done</div>
+    <div class="stat-partial stat-pill">1 Partial</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tab-bar">
+  <div class="tab active" data-tab="overview">全景总览</div>
+  <div class="tab" data-tab="step2">Step 2 蒸馏管道 <span class="badge-sm badge-done-sm">Done</span></div>
+  <div class="tab" data-tab="step3">Step 3 反馈闭环 <span class="badge-sm badge-done-sm">Done</span></div>
+  <div class="tab" data-tab="api">API 端点</div>
+</div>
+
+<div class="main">
+  <div class="canvas">
+
+    <!-- ===== OVERVIEW ===== -->
+    <div class="section active" id="sec-overview">
+      <div class="pipe-title">全景总览 <span class="badge badge-done">Backend Complete</span></div>
+      <div class="pipe-sub">所有 HTML 可视化节点均有对应后端实现，以下是各模块状态映射。</div>
+
+      <div class="overview-grid">
+        <!-- Step 2 cards -->
+        <div class="ov-card" data-detail="trigger">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>触发筛选</h3>
+          <div class="ov-class">KnowledgeFeedbackService + KnowledgeSinkService</div>
+          <div class="ov-desc">多源触发：用户点赞、Kiko 高分(>=0.82)、人工标记。POST 到候选库 + 反馈事件表。</div>
+        </div>
+        <div class="ov-card" data-detail="topic">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>Topic 分类</h3>
+          <div class="ov-class">TopicSchemaService</div>
+          <div class="ov-desc">YAML schema 驱动的3维分类（阶段×意图×问题），LLM 从枚举中选取，未命中降级到 unknown。</div>
+        </div>
+        <div class="ov-card" data-detail="abstract">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>LLM 结构化抽象重写</h3>
+          <div class="ov-class">KnowledgeAbstractorService</div>
+          <div class="ov-desc">调用 DashScope ChatModel，输出 JSON {scenario, cause, strategy, taboo, summary}。JSON 解析失败时自动降级为截断摘要。</div>
+        </div>
+        <div class="ov-card" data-detail="dedup">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>Jaccard 去重</h3>
+          <div class="ov-class">KnowledgeSimilarityUtils</div>
+          <div class="ov-desc">CJK 双字切分 shingles + Jaccard 相似度计算。阈值 >= 0.85 时阻断写入，记日志 inbox-dedup hit。</div>
+        </div>
+        <div class="ov-card" data-detail="batch">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>离线批处理</h3>
+          <div class="ov-class">KnowledgeReinforcementJob</div>
+          <div class="ov-desc">@Scheduled cron 每6h，扫描高分反馈事件，Jaccard 去重后写 inbox/*.md。</div>
+        </div>
+        <div class="ov-card" data-detail="review">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>人工审核 Review API</h3>
+          <div class="ov-class">KnowledgeReviewService</div>
+          <div class="ov-desc">GET 分页列表 + POST approve/reject。approve 写入 wiki/topics/ 并触发热重载。</div>
+        </div>
+        <div class="ov-card" data-detail="wiki-update">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>Wiki 知识库更新</h3>
+          <div class="ov-class">WikiKnowledgeService (热重载)</div>
+          <div class="ov-desc">文件写入 topics/ 后，WatchService 自动触发 rebuildIndex，debounce 500ms。</div>
+        </div>
+        <!-- Step 3 cards -->
+        <div class="ov-card" data-detail="scoring">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>策略评分聚合</h3>
+          <div class="ov-class">StrategyScoringJob</div>
+          <div class="ov-desc">@Scheduled 每6.5h，聚合14天反馈事件，UPSERT 到 wiki_strategy_score 表。</div>
+        </div>
+        <div class="ov-card" data-detail="ranking">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>策略排序 + 灰度</h3>
+          <div class="ov-class">StrategyRankingService</div>
+          <div class="ov-desc">topStrategies(topicKey, topK) 按 rank_score desc 排序。shouldGrayEnable() 用 userId hash 判定。</div>
+        </div>
+        <div class="ov-card" data-detail="dashboard">
+          <div class="ov-status ov-done">DONE</div>
+          <h3>只读看板 API</h3>
+          <div class="ov-class">KnowledgeController /strategy-scores</div>
+          <div class="ov-desc">GET 策略排行榜，不注入检索路径，仅用于洞察看板。</div>
+        </div>
+        <div class="ov-card" data-detail="frontend">
+          <div class="ov-status ov-partial">PARTIAL</div>
+          <h3>前端页面</h3>
+          <div class="ov-class">KnowledgeReviewPage + StrategyDashboardPage</div>
+          <div class="ov-desc">审核页已有骨架(mock数据)，策略看板待建。后端 API 全部就绪，需前端接线。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STEP 2 FLOW ===== -->
+    <div class="section" id="sec-step2">
+      <div class="pipe-title">Step 2: 经验蒸馏管道 <span class="badge badge-done">已实现</span></div>
+      <div class="pipe-sub">从用户反馈到 Wiki 知识库自动进化的完整闭环</div>
+
+      <div class="flow">
+        <!-- 1. Trigger -->
+        <div class="node s-done" data-detail="trigger">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-trigger">S1</div>
+            <div><div class="node-name">触发筛选</div><div class="node-class">KnowledgeFeedbackService</div></div>
+          </div>
+          <div class="node-desc">点赞 / Kiko 高分(>=0.82) / 人工标记<br>POST /ai/knowledge/candidates + /feedback-events</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">实时</span><span class="tag tag-api">POST</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 2. Topic -->
+        <div class="node s-done" data-detail="topic">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-topic">S2</div>
+            <div><div class="node-name">Topic 分类</div><div class="node-class">TopicSchemaService.classify()</div></div>
+          </div>
+          <div class="node-desc">阶段×意图×问题 三维分类<br>YAML schema: knowledge/wiki/topic-schema.yml</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">YAML 驱动</span><span class="tag">unknown fallback</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 3. Abstract -->
+        <div class="node s-done" data-detail="abstract">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-abstract">S3</div>
+            <div><div class="node-name">LLM 结构化抽象重写</div><div class="node-class">KnowledgeAbstractorService.summarize()</div></div>
+          </div>
+          <div class="node-desc">DashScope ChatModel 蒸馏 → JSON<br>{scenario, cause, strategy, taboo, summary}<br>JSON 异常自动降级为截断摘要</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">LLM 提炼</span><span class="tag">降级保护</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 4. Dedup -->
+        <div class="node s-done" data-detail="dedup">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-dedup">S4</div>
+            <div><div class="node-name">Jaccard 去重阻断</div><div class="node-class">KnowledgeSimilarityUtils.isDuplicate()</div></div>
+          </div>
+          <div class="node-desc">CJK 双字切分 → Jaccard 相似度<br>阈值 >= 0.85 时跳过，log: inbox-dedup hit</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">阈值 0.85</span><span class="tag">CJK 切分</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 5. Batch -->
+        <div class="node s-done" data-detail="batch">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-batch">S5</div>
+            <div><div class="node-name">离线批处理</div><div class="node-class">KnowledgeReinforcementJob @Scheduled</div></div>
+          </div>
+          <div class="node-desc">cron: 0 0 */6 * * *<br>扫描 unprocessed 高分事件 → 去重 → 写 inbox/*.md</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">离线</span><span class="tag">每6h</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 6. Review -->
+        <div class="node s-done" data-detail="review">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-review">S6</div>
+            <div><div class="node-name">人工审核 + 写回</div><div class="node-class">KnowledgeReviewService.approve()</div></div>
+          </div>
+          <div class="node-desc">GET /candidates?status=pending_review<br>POST approve → 渲染 Markdown 写 wiki/topics/<br>POST reject → 记录 rejected_reason</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag tag-api">3 APIs</span><span class="tag">质量把关</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 7. Wiki Update -->
+        <div class="node s-done" data-detail="wiki-update">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-wiki">S7</div>
+            <div><div class="node-name">Wiki 知识库更新</div><div class="node-class">WikiKnowledgeService (WatchService)</div></div>
+          </div>
+          <div class="node-desc">文件写入 topics/ 后自动触发<br>WatchService → rebuildIndex → 即时生效</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">热重载</span><span class="tag">debounce 500ms</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STEP 3 FLOW ===== -->
+    <div class="section" id="sec-step3">
+      <div class="pipe-title">Step 3: 策略反馈闭环 <span class="badge badge-done">MVP 实现</span></div>
+      <div class="pipe-sub">从反馈数据到策略评分的闭环，只读洞察不影响线上检索</div>
+
+      <div class="flow">
+        <!-- 1. Read feedback -->
+        <div class="node s-done" data-detail="fb-read">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-fb">F1</div>
+            <div><div class="node-name">读取 Feedback</div><div class="node-class">WikiFeedbackEventRepository.aggregateByCandidateAndType()</div></div>
+          </div>
+          <div class="node-desc">读取近 N 天(默认14天)的反馈事件<br>按 candidateId × eventType 聚合</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">@Query JPQL</span><span class="tag">窗口聚合</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 2. Score -->
+        <div class="node s-done" data-detail="scoring">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-score">F2</div>
+            <div><div class="node-name">策略评分</div><div class="node-class">StrategyScoringJob.computeScores()</div></div>
+          </div>
+          <div class="node-desc">@Scheduled cron: 0 30 */6 * * *<br>计算 positive_rate / continue_rate / confidence<br>UPSERT 到 wiki_strategy_score</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">每6.5h</span><span class="tag">UPSERT</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- Formula -->
+        <div class="formula-box" style="width:340px;text-align:center;">
+          <h4>rank_score 公式</h4>
+          <div class="formula">
+            <span class="var">rank</span> <span class="op">=</span>
+            <span class="var">positive</span> <span class="op">&times;</span> <span class="num">0.6</span>
+            <span class="op">+</span> <span class="var">continue</span> <span class="op">&times;</span> <span class="num">0.3</span>
+            <span class="op">+</span> <span class="var">confidence</span> <span class="op">&times;</span> <span class="num">0.1</span>
+          </div>
+          <div class="formula-desc" style="text-align:left;">
+            <strong>positive_rate</strong> = helpful / (helpful + unhelpful)<br>
+            <strong>continue_rate</strong> = continue_chat / total <em>(暂估: positive × 0.8)</em><br>
+            <strong>confidence</strong> = min(sample_count / 30, 1.0)
+          </div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 3. Rank -->
+        <div class="node s-done" data-detail="ranking">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-rank">F3</div>
+            <div><div class="node-name">策略排序</div><div class="node-class">StrategyRankingService.topStrategies()</div></div>
+          </div>
+          <div class="node-desc">按 rank_score DESC 排序<br>top-K 限制（默认 20）</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">按 topicKey 筛选</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 4. Gray -->
+        <div class="node s-done" data-detail="gray">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-gray">F4</div>
+            <div><div class="node-name">灰度判定</div><div class="node-class">StrategyRankingService.shouldGrayEnable()</div></div>
+          </div>
+          <div class="node-desc">userId hashCode % 100 &lt; grayPercent<br>默认 10%，同用户结果稳定</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag">一致性 hash</span><span class="tag">默认10%</span></div>
+        </div>
+        <div class="arrow done"></div>
+
+        <!-- 5. Dashboard -->
+        <div class="node s-done" data-detail="dashboard">
+          <div class="status-dot dot-done"></div>
+          <div class="node-head">
+            <div class="node-icon ni-dash">F5</div>
+            <div><div class="node-name">管理看板 API</div><div class="node-class">GET /ai/knowledge/strategy-scores</div></div>
+          </div>
+          <div class="node-desc">只读看板用于策略洞察<br>不影响线上回答路径</div>
+          <div class="node-tags"><span class="tag tag-done">Done</span><span class="tag tag-api">GET</span><span class="tag">只读洞察</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== API ENDPOINTS ===== -->
+    <div class="section" id="sec-api">
+      <div class="pipe-title">API 端点清单 <span class="badge badge-done">7 Endpoints</span></div>
+      <div class="pipe-sub">KnowledgeController (/api/ai/knowledge) 下所有端点</div>
+
+      <table class="api-table">
+        <thead>
+          <tr><th>Method</th><th>Path</th><th>Description</th><th>Step</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td class="api-path">/candidates</td>
+            <td class="api-desc">提交知识候选 (触发筛选入口)</td>
+            <td><span class="tag">Step 1</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td class="api-path">/feedback-events</td>
+            <td class="api-desc">提交反馈事件 (helpful/unhelpful)</td>
+            <td><span class="tag">Step 1</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td class="api-path">/candidates?status=&page=&size=</td>
+            <td class="api-desc">分页查询候选列表 (审核页数据源)</td>
+            <td><span class="tag tag-done">Step 2</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td class="api-path">/candidates/{id}/approve</td>
+            <td class="api-desc">审核通过 → 写入 wiki/topics/ → 热重载</td>
+            <td><span class="tag tag-done">Step 2</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-post">POST</span></td>
+            <td class="api-path">/candidates/{id}/reject</td>
+            <td class="api-desc">审核拒绝 → 记录 rejected_reason</td>
+            <td><span class="tag tag-done">Step 2</span></td>
+          </tr>
+          <tr>
+            <td><span class="method method-get">GET</span></td>
+            <td class="api-path">/strategy-scores?topicKey=&limit=</td>
+            <td class="api-desc">策略评分看板 (只读洞察)</td>
+            <td><span class="tag tag-done">Step 3</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:32px;">
+        <div class="pipe-title" style="font-size:14px;">数据模型</div>
+        <div class="overview-grid" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); margin-top:12px;">
+          <div class="ov-card">
+            <h3>wiki_candidate</h3>
+            <div class="ov-class">WikiCandidate.java</div>
+            <div class="ov-desc">候选知识条目：raw Q/A, topic 三元组, abstract_summary, status (pending/approved/rejected), reviewer_id</div>
+          </div>
+          <div class="ov-card">
+            <h3>wiki_feedback_event</h3>
+            <div class="ov-class">WikiFeedbackEvent.java</div>
+            <div class="ov-desc">反馈事件：event_type (helpful/unhelpful/candidate_submitted), event_score, processed 标记</div>
+          </div>
+          <div class="ov-card">
+            <h3>wiki_strategy_score</h3>
+            <div class="ov-class">WikiStrategyScore.java (NEW)</div>
+            <div class="ov-desc">策略评分：topic_key, strategy_id, positive_rate, continue_rate, confidence, rank_score, gray_enabled</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;">
+        <div class="pipe-title" style="font-size:14px;">配置参数 (application.yml)</div>
+        <div class="code-box"><span class="kw">app.knowledge</span>:
+  <span class="kw">abstractor</span>:
+    <span class="cmt"># LLM 结构化抽象重写</span>
+    enabled: <span class="str">true</span>
+    max-input-chars: <span class="num">4000</span>
+    max-summary-chars: <span class="num">280</span>
+  <span class="kw">review</span>:
+    <span class="cmt"># 审核 + 去重</span>
+    topics-dir: <span class="str">knowledge/wiki/topics</span>
+    dedup-threshold: <span class="num">0.85</span>
+    list-page-size: <span class="num">20</span>
+  <span class="kw">strategy</span>:
+    <span class="cmt"># 策略评分闭环</span>
+    enabled: <span class="str">true</span>
+    cron: <span class="str">0 30 */6 * * *</span>
+    lookback-days: <span class="num">14</span>
+    min-samples: <span class="num">3</span>
+    top-k: <span class="num">20</span>
+    gray-percent: <span class="num">10</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div class="panel" id="panel">
+    <div class="panel-title">节点详情</div>
+    <div id="detail-out">
+      <div style="color:var(--text-dim);font-size:13px;line-height:1.8">
+        点击左侧流程图或总览卡片中的任意节点，查看详细的：
+        <ul style="margin:12px 0;padding-left:18px">
+          <li>实现类 + 方法名</li>
+          <li>关键参数与配置</li>
+          <li>核心代码片段</li>
+          <li>数据流走向</li>
+        </ul>
+        <br>
+        <strong style="color:var(--done)">绿色</strong> = 已实现&nbsp;&nbsp;
+        <strong style="color:var(--partial)">橙色</strong> = 部分完成
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const details = {
+  trigger: {
+    title: '触发筛选',
+    cls: 'KnowledgeFeedbackService + KnowledgeSinkService',
+    desc: '多源触发机制，将高价值对话送入蒸馏管道。创建 WikiCandidate 记录 + WikiFeedbackEvent 事件。',
+    items: [
+      { l: '触发源1', v: '用户点赞 (helpful)' },
+      { l: '触发源2', v: 'Kiko 高分 >= 0.82' },
+      { l: '触发源3', v: '同问法复用 >= 3次' },
+      { l: '触发源4', v: '人工标记 SaveToWiki' },
+      { l: 'API', v: 'POST /ai/knowledge/candidates' },
+      { l: 'API', v: 'POST /ai/knowledge/feedback-events' },
+    ],
+    code: `<span class="cmt">// KnowledgeSinkService.createCandidate()</span>
+WikiCandidate candidate = WikiCandidate.builder()
+    .userId(userId)
+    .triggerType(request.triggerType())
+    .triggerScore(request.triggerScore())
+    .rawQuestion(request.question())
+    .rawAnswer(request.answer())
+    .stage(classification.stage())
+    .intent(classification.intent())
+    .problem(classification.problem())
+    <span class="cmt">// Step2: 调用 LLM 蒸馏</span>
+    .abstractSummary(<span class="type">buildStructuredSummary</span>(...))
+    .status(<span class="str">"pending_review"</span>)
+    .build();`
+  },
+  topic: {
+    title: 'Topic 分类',
+    cls: 'TopicSchemaService',
+    desc: 'YAML 配置驱动的三维分类服务，将每条对话归类到 阶段×意图×问题 的有限空间。',
+    items: [
+      { l: 'Schema 文件', v: 'knowledge/wiki/topic-schema.yml' },
+      { l: '维度', v: 'stage × intent × problem' },
+      { l: 'LLM 约束', v: '只能从给定枚举选择' },
+      { l: 'Fallback', v: 'unknown + unknownTopic=true' },
+      { l: 'Schema 版本', v: '随文件内 version 字段' },
+    ],
+    code: `<span class="type">TopicClassification</span> classify(String q, String a) {
+    <span class="cmt">// LLM prompt 携带 schema 枚举</span>
+    <span class="cmt">// 输出不在列表中 -> unknown</span>
+    <span class="kw">return new</span> TopicClassification(
+        stage, intent, problem,
+        unknownTopic, schemaVersion
+    );
+}`
+  },
+  abstract: {
+    title: 'LLM 结构化抽象重写',
+    cls: 'KnowledgeAbstractorService',
+    desc: '复用 LoveApp 的 dashscopeChatModel，将原始问答对提炼为结构化经验块。JSON 解析失败时有完整降级路径。',
+    items: [
+      { l: 'LLM', v: 'DashScope ChatModel (复用)' },
+      { l: '输出格式', v: 'JSON: scenario/cause/strategy/taboo/summary' },
+      { l: 'Max Input', v: '4000 chars' },
+      { l: 'Max Summary', v: '280 chars' },
+      { l: '降级策略', v: 'JSON 异常 → 截断200字' },
+      { l: 'JSON清洗', v: '自动strip ```json``` 围栏' },
+    ],
+    code: `<span class="type">StructuredKnowledge</span> summarize(String q, String a) {
+    <span class="type">Prompt</span> prompt = <span class="kw">new</span> Prompt(List.of(
+        <span class="kw">new</span> SystemMessage(SYSTEM_PROMPT),
+        <span class="kw">new</span> UserMessage(userContent)
+    ));
+    String raw = chatModel.call(prompt)
+        .getResult().getOutput().getText();
+    String cleaned = <span class="type">stripJsonFence</span>(raw);
+    <span class="kw">return</span> objectMapper.readValue(
+        cleaned, StructuredKnowledge.<span class="kw">class</span>);
+}`
+  },
+  dedup: {
+    title: 'Jaccard 去重',
+    cls: 'KnowledgeSimilarityUtils',
+    desc: '纯工具类：CJK 双字切分生成 shingles 集合 → Jaccard 系数。集成在 KnowledgeReinforcementJob.writeInboxFile() 写文件前检查。',
+    items: [
+      { l: '切分方式', v: 'CJK 双字 bigram' },
+      { l: '算法', v: 'Jaccard = |A∩B| / |A∪B|' },
+      { l: '阈值', v: '>= 0.85 阻断写入' },
+      { l: '配置项', v: 'app.knowledge.review.dedup-threshold' },
+      { l: '日志', v: 'inbox-dedup hit' },
+      { l: '单测', v: '6 case 全覆盖' },
+    ],
+    code: `<span class="kw">public static</span> Set&lt;String&gt; shingles(String text) {
+    <span class="cmt">// CJK 双字切分</span>
+    <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; length - <span class="num">1</span>; i++) {
+        result.add(normalized.substring(i, i + <span class="num">2</span>));
+    }
+}
+<span class="kw">public static</span> <span class="type">double</span> jaccard(String a, String b) {
+    <span class="kw">return</span> (<span class="type">double</span>) intersection / union;
+}`
+  },
+  batch: {
+    title: '离线批处理',
+    cls: 'KnowledgeReinforcementJob',
+    desc: '定时扫描高分反馈事件，按 candidateId 分组，满足 minRepeat 后去重写入 inbox/*.md。已处理事件标记 processed=true。',
+    items: [
+      { l: 'Cron', v: '0 0 */6 * * * (每6h)' },
+      { l: 'Batch Size', v: '200' },
+      { l: 'Min Repeat', v: '2 次' },
+      { l: '阈值', v: 'event_score >= 0.8' },
+      { l: '去重', v: 'Jaccard 0.85 阻断' },
+      { l: '输出', v: 'knowledge/wiki/inbox/*.md' },
+      { l: '指标', v: 'KnowledgeMetrics (reinforced/skipped)' },
+    ],
+  },
+  review: {
+    title: '人工审核 + 写回',
+    cls: 'KnowledgeReviewService',
+    desc: '审核通过后将 abstractSummary 渲染为 Markdown，写入 wiki/topics/{stage}-{intent}-{problem}.md。文件已存在则追加新 section。',
+    items: [
+      { l: 'GET 列表', v: '/candidates?status=pending_review' },
+      { l: 'POST 通过', v: '/candidates/{id}/approve' },
+      { l: 'POST 拒绝', v: '/candidates/{id}/reject' },
+      { l: '写入目录', v: 'knowledge/wiki/topics/' },
+      { l: '文件策略', v: '已存在追加 section / 新建含 front matter' },
+      { l: '幂等', v: '已 approved 的重复调用不覆盖' },
+    ],
+    code: `<span class="cmt">// approve() → 写 wiki/topics/</span>
+<span class="kw">if</span> (Files.exists(target)) {
+    <span class="cmt">// 追加新 section</span>
+    Files.writeString(target, section,
+        StandardOpenOption.<span class="type">APPEND</span>);
+} <span class="kw">else</span> {
+    <span class="cmt">// 新建含 YAML front matter</span>
+    Files.writeString(target, full,
+        StandardOpenOption.<span class="type">CREATE_NEW</span>);
+}`
+  },
+  'wiki-update': {
+    title: 'Wiki 知识库更新',
+    cls: 'WikiKnowledgeService',
+    desc: '文件系统 WatchService 监听 wiki/ 目录，.md 文件变更后 debounce 重建倒排索引，无需重启即可检索到新知识。',
+    items: [
+      { l: '监听方式', v: 'Java WatchService' },
+      { l: '事件', v: 'CREATE / MODIFY / DELETE' },
+      { l: 'Debounce', v: '500ms' },
+      { l: '索引类型', v: '内存倒排 + TF-IDF' },
+      { l: '图扩展', v: '2-hop Wiki link 传播' },
+      { l: '中文分词', v: 'CJK 双字切分' },
+    ],
+  },
+  'fb-read': {
+    title: '读取 Feedback',
+    cls: 'WikiFeedbackEventRepository',
+    desc: '使用自定义 @Query 按 candidateId + eventType 聚合反馈事件，作为 StrategyScoringJob 的数据源。',
+    items: [
+      { l: '查询', v: 'aggregateByCandidateAndType()' },
+      { l: '窗口', v: '近 N 天 (默认 14)' },
+      { l: '返回', v: '[candidateId, eventType, count]' },
+      { l: '配置', v: 'app.knowledge.strategy.lookback-days' },
+    ],
+    code: `<span class="cmt">// @Query JPQL 聚合</span>
+SELECT e.candidateId, e.eventType, COUNT(e)
+FROM WikiFeedbackEvent e
+WHERE e.createdAt >= :<span class="type">since</span>
+  AND e.candidateId IS NOT NULL
+GROUP BY e.candidateId, e.eventType`
+  },
+  scoring: {
+    title: '策略评分聚合',
+    cls: 'StrategyScoringJob',
+    desc: '定时聚合反馈事件到 wiki_strategy_score 表。按 candidateId 分组计算 positive_rate、continue_rate、confidence 和 rank_score。',
+    items: [
+      { l: 'Cron', v: '0 30 */6 * * *' },
+      { l: '最小样本', v: '3 次' },
+      { l: 'continue_rate', v: '暂估: positive × 0.8 (TODO)' },
+      { l: 'confidence', v: 'min(samples / 30, 1.0)' },
+      { l: 'UPSERT', v: 'findByTopicKeyAndStrategyId' },
+      { l: '开关', v: 'app.knowledge.strategy.enabled' },
+    ],
+  },
+  ranking: {
+    title: '策略排序',
+    cls: 'StrategyRankingService',
+    desc: '按 rank_score 降序取 top-K 策略。支持按 topicKey 筛选或全局排序。不注入检索路径 — 只读洞察。',
+    items: [
+      { l: '方法', v: 'topStrategies(topicKey, topK)' },
+      { l: '默认 TopK', v: '20' },
+      { l: '排序', v: 'rank_score DESC' },
+      { l: '筛选', v: 'topicKey 为空时全局' },
+    ],
+  },
+  gray: {
+    title: '灰度判定',
+    cls: 'StrategyRankingService',
+    desc: '用 userId 一致性 hash 决定是否向该用户灰度开放策略推荐。同 userId 两次调用结果相同（确定性）。',
+    items: [
+      { l: '方法', v: 'shouldGrayEnable(topicKey, userId)' },
+      { l: '算法', v: 'abs(userId.hashCode()) % 100' },
+      { l: '默认比例', v: '10%' },
+      { l: '配置', v: 'app.knowledge.strategy.gray-percent' },
+      { l: '确定性', v: '同 userId 结果稳定' },
+    ],
+    code: `<span class="kw">public boolean</span> shouldGrayEnable(
+        String topicKey, String userId) {
+    <span class="kw">int</span> hash = Math.abs(userId.hashCode());
+    <span class="kw">return</span> (hash % <span class="num">100</span>) &lt; grayPercent;
+}`
+  },
+  dashboard: {
+    title: '管理看板 API',
+    cls: 'KnowledgeController',
+    desc: 'GET /ai/knowledge/strategy-scores 提供策略排行榜数据。只读洞察，不影响线上回答路径。',
+    items: [
+      { l: 'API', v: 'GET /ai/knowledge/strategy-scores' },
+      { l: '参数', v: 'topicKey (可选), limit (默认20)' },
+      { l: '返回', v: 'List<StrategyScoreResponse>' },
+      { l: '字段', v: 'topicKey, strategyId, sampleCount, positiveRate, continueRate, confidence, rankScore, grayEnabled' },
+    ],
+  },
+  frontend: {
+    title: '前端页面',
+    cls: 'KnowledgeReviewPage + StrategyDashboardPage',
+    desc: '审核页已有 React 骨架（使用 mock 数据），策页策略看板待建。后端 API 全部就绪。',
+    items: [
+      { l: '审核页', v: 'KnowledgeReviewPage.jsx (需接线)' },
+      { l: '策略看板', v: 'StrategyDashboardPage.jsx (待建)' },
+    ],
+  },
+};
+
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const sec = document.getElementById('sec-' + tab.dataset.tab);
+    if (sec) sec.classList.add('active');
+  });
+});
+
+// Node/card click → detail
+const detailOut = document.getElementById('detail-out');
+function showDetail(key) {
+  const d = details[key];
+  if (!d) { detailOut.innerHTML = '<div style="color:var(--text-dim);font-size:13px;">暂无该节点详细说明。</div>'; return; }
+  let h = '';
+  h += `<div style="font-size:16px;font-weight:700;margin-bottom:4px;">${d.title}</div>`;
+  h += `<div style="font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text-dim);margin-bottom:12px;">${d.cls}</div>`;
+  h += `<div style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px;">${d.desc}</div>`;
+  if (d.items) {
+    h += '<div class="detail-section"><h4>关键参数</h4>';
+    d.items.forEach(i => { h += `<div class="detail-row"><span class="lbl">${i.l}</span><span class="val">${i.v}</span></div>`; });
+    h += '</div>';
+  }
+  if (d.code) {
+    h += '<div class="detail-section"><h4>代码片段</h4>';
+    h += `<div class="code-box">${d.code}</div></div>`;
+  }
+  detailOut.innerHTML = h;
+}
+
+document.querySelectorAll('.node[data-detail], .ov-card[data-detail]').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.node.selected').forEach(n => n.classList.remove('selected'));
+    if (el.classList.contains('node')) el.classList.add('selected');
+    showDetail(el.dataset.detail);
+  });
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.key >= '1' && e.key <= '4') {
+    const tabs = document.querySelectorAll('.tab');
+    const idx = parseInt(e.key) - 1;
+    if (tabs[idx]) tabs[idx].click();
+  }
+});
+</script>
+</body>
+</html>

@@ -222,3 +222,44 @@ export async function getActiveRuns() {
 export async function getChatRun(runId) {
     return authFetch(`${API_BASE}/ai/runs/${encodeURIComponent(runId)}`);
 }
+
+/**
+ * Creates a knowledge candidate from chat messages
+ */
+export async function createKnowledgeCandidate(chatId, runId, question, answer, triggerType, triggerScore = 1.0) {
+    return authFetch(`${API_BASE}/ai/knowledge/candidates`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            chatId,
+            runId,
+            question,
+            answer,
+            triggerType,
+            triggerScore
+        })
+    });
+}
+
+/**
+ * Submits feedback on a candidate or general response
+ */
+export async function createFeedbackEvent(candidateId, chatId, runId, eventType, eventValue = null, eventScore = 1.0, meta = {}) {
+    return authFetch(`${API_BASE}/ai/knowledge/feedback-events`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            candidateId,
+            chatId,
+            runId,
+            eventType,
+            eventValue,
+            eventScore,
+            meta
+        })
+    });
+}

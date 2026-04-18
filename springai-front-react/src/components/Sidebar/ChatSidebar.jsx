@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Plus, ChevronLeft, ChevronRight, LogOut } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, LogOut, Heart } from 'lucide-react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import ChatSidebarItem from './ChatSidebarItem';
@@ -152,14 +152,11 @@ const ChatSidebar = ({
             ) : (
                 <div className={styles.footer}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                        <span>💕</span>
+                        <Heart size={16} color="#C47B5A" />
                         <span style={{
                             fontSize: '14px',
                             fontWeight: 600,
-                            background: 'linear-gradient(135deg, #F43F5E 0%, #EC4899 100%)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
+                            color: '#C47B5A'
                         }}>
                             Love Master
                         </span>

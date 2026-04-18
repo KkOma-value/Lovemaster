@@ -6,9 +6,10 @@ import ImageWithLightbox from './ImageWithLightbox';
 import StatusSteps from './StatusSteps';
 import StreamingStatus from './StreamingStatus';
 import ProbabilityCard from './ProbabilityCard';
+import ActionBar from './ActionBar';
 import styles from './ChatArea.module.css';
 
-const ChatMessages = ({ messages, streamingStatus, onRetry, onCopyAction }) => {
+const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction }) => {
     const scrollContainerRef = useRef(null);
     const messagesEndRef = useRef(null);
     const isUserScrollingRef = useRef(false);
@@ -135,6 +136,15 @@ const ChatMessages = ({ messages, streamingStatus, onRetry, onCopyAction }) => {
                                         <div className={styles.errorInline}>
                                             <span>{message.content}</span>
                                         </div>
+                                    )}
+                                    {!message.isStreaming && message.content && !message.isError && (
+                                        <ActionBar 
+                                            chatId={chatId} 
+                                            runId={message.runId || null} 
+                                            question={index > 0 && messages[index - 1].role === 'user' ? messages[index - 1].content : ''}
+                                            answer={message.content}
+                                            onCopyAction={onCopyAction}
+                                        />
                                     )}
                                 </>
                             ) : (

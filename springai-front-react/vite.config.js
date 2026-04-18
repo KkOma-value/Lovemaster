@@ -3,6 +3,29 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (!id.includes('node_modules')) {
+            return undefined;
+          }
+
+          if (id.includes('framer-motion')) {
+            return 'motion-vendor';
+          }
+          if (id.includes('@react-oauth/google') || id.includes('axios')) {
+            return 'network-vendor';
+          }
+          if (id.includes('/three/')) {
+            return 'three-vendor';
+          }
+
+          return undefined;
+        }
+      }
+    }
+  },
   server: {
     port: 5173,
     host: '0.0.0.0',

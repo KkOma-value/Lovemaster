@@ -24,7 +24,7 @@
 
 .primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(244, 114, 182, 0.4);
+    box-shadow: 0 8px 25px rgba(196, 123, 90, 0.4);
 }
 
 .primary:active {
@@ -40,7 +40,7 @@
 }
 
 .secondary:hover {
-    background: linear-gradient(135deg, rgba(244, 114, 182, 0.1), rgba(251, 113, 133, 0.1));
+    background: linear-gradient(135deg, rgba(196, 123, 90, 0.1), rgba(220, 160, 128, 0.1));
     border-color: var(--accent-primary);
 }
 

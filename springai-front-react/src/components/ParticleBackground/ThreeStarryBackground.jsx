@@ -55,7 +55,7 @@ const RomanticBackground = () => {
                     opacity: Math.random() * 0.15 + 0.05,
                     rotation: Math.random() * Math.PI * 2,
                     rotationSpeed: (Math.random() - 0.5) * 0.01,
-                    color: ['#F472B6', '#FB7185', '#FBCFE8', '#F9A8D4'][Math.floor(Math.random() * 4)]
+                    color: ['#C47B5A', '#DCA080', '#E8C4A0', '#C9A87C'][Math.floor(Math.random() * 4)]
                 });
             }
 
@@ -69,7 +69,7 @@ const RomanticBackground = () => {
                     opacity: Math.random() * 0.4 + 0.1,
                     twinkleSpeed: Math.random() * 0.02 + 0.01,
                     twinklePhase: Math.random() * Math.PI * 2,
-                    color: ['#FECDD3', '#FBCFE8', '#FCE7F3', '#FDF2F8'][Math.floor(Math.random() * 4)]
+                    color: ['#E8C4A0', '#F5E9DF', '#FAF7F2', '#F0E8DC'][Math.floor(Math.random() * 4)]
                 });
             }
         };
@@ -88,8 +88,8 @@ const RomanticBackground = () => {
                 canvas.width * 0.3, canvas.height * 0.2, 0,
                 canvas.width * 0.3, canvas.height * 0.2, canvas.width * 0.6
             );
-            auroraGradient.addColorStop(0, 'rgba(251, 207, 232, 0.3)');
-            auroraGradient.addColorStop(0.5, 'rgba(244, 114, 182, 0.1)');
+            auroraGradient.addColorStop(0, 'rgba(232, 196, 160, 0.3)');
+            auroraGradient.addColorStop(0.5, 'rgba(196, 123, 90, 0.1)');
             auroraGradient.addColorStop(1, 'transparent');
             ctx.fillStyle = auroraGradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -99,8 +99,8 @@ const RomanticBackground = () => {
                 canvas.width * 0.8, canvas.height * 0.7, 0,
                 canvas.width * 0.8, canvas.height * 0.7, canvas.width * 0.5
             );
-            aurora2.addColorStop(0, 'rgba(233, 213, 255, 0.25)');
-            aurora2.addColorStop(0.5, 'rgba(251, 113, 133, 0.08)');
+            aurora2.addColorStop(0, 'rgba(220, 160, 128, 0.25)');
+            aurora2.addColorStop(0.5, 'rgba(196, 123, 90, 0.08)');
             aurora2.addColorStop(1, 'transparent');
             ctx.fillStyle = aurora2;
             ctx.fillRect(0, 0, canvas.width, canvas.height);

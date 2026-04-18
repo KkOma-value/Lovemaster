@@ -58,3 +58,11 @@ nul
 
 # Graphify generated files
 graphify-out/
+
+# Host runtime artifacts
+artifacts/
+.agent/
+.claude/
+.codebuddy/
+.cursor/
+.gemini/

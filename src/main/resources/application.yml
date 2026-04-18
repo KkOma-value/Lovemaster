@@ -97,6 +97,80 @@ app:
     autostart: ${APP_MCP_AUTOSTART:true}
   google:
     client-id: ${GOOGLE_CLIENT_ID:59540883835-shhhvumlokiqd24eb2jnjq7o6dt9rohk.apps.googleusercontent.com}
+  knowledge:
+    fanout:
+      total-timeout-ms: ${APP_KNOWLEDGE_TOTAL_TIMEOUT_MS:800}
+    wiki:
+      enabled: ${APP_KNOWLEDGE_WIKI_ENABLED:true}
+      root: ${APP_KNOWLEDGE_WIKI_ROOT:knowledge/wiki}
+      hot-reload: ${APP_KNOWLEDGE_WIKI_HOT_RELOAD:true}
+      hot-reload-debounce-ms: ${APP_KNOWLEDGE_WIKI_HOT_RELOAD_DEBOUNCE_MS:500}
+      retrieval:
+        top-n: ${APP_KNOWLEDGE_WIKI_TOP_N:3}
+        title-boost: ${APP_KNOWLEDGE_WIKI_TITLE_BOOST:2.0}
+        score-threshold: ${APP_KNOWLEDGE_WIKI_SCORE_THRESHOLD:0.6}
+        max-chars-per-page: ${APP_KNOWLEDGE_WIKI_MAX_CHARS_PER_PAGE:400}
+        total-budget-chars: ${APP_KNOWLEDGE_WIKI_TOTAL_BUDGET_CHARS:2000}
+        timeout-ms: ${APP_KNOWLEDGE_WIKI_TIMEOUT_MS:200}
+      graph:
+        expand-hops: ${APP_KNOWLEDGE_WIKI_EXPAND_HOPS:1}
+        expansion-weight: ${APP_KNOWLEDGE_WIKI_EXPANSION_WEIGHT:0.5}
+    sink:
+      candidate-kiko-threshold: ${APP_KNOWLEDGE_SINK_CANDIDATE_KIKO_THRESHOLD:0.82}
+    cache:
+      enabled: ${APP_KNOWLEDGE_CACHE_ENABLED:true}
+      ttl-seconds: ${APP_KNOWLEDGE_CACHE_TTL_SECONDS:300}
+      maximum-size: ${APP_KNOWLEDGE_CACHE_MAX_SIZE:2000}
+    rerank:
+      enabled: ${APP_KNOWLEDGE_RERANK_ENABLED:true}
+      dedup-threshold: ${APP_KNOWLEDGE_RERANK_DEDUP_THRESHOLD:0.92}
+      top-k: ${APP_KNOWLEDGE_RERANK_TOP_K:4}
+      timeout-ms: ${APP_KNOWLEDGE_RERANK_TIMEOUT_MS:300}
+      max-segments: ${APP_KNOWLEDGE_RERANK_MAX_SEGMENTS:12}
+    sanitizer:
+      enabled: ${APP_KNOWLEDGE_SANITIZER_ENABLED:true}
+      max-content-chars: ${APP_KNOWLEDGE_SANITIZER_MAX_CHARS:4000}
+    feedback:
+      enabled: ${APP_KNOWLEDGE_FEEDBACK_ENABLED:true}
+      helpful-threshold: ${APP_KNOWLEDGE_FEEDBACK_HELPFUL_THRESHOLD:0.8}
+      min-repeat: ${APP_KNOWLEDGE_FEEDBACK_MIN_REPEAT:2}
+      inbox-dir: ${APP_KNOWLEDGE_FEEDBACK_INBOX_DIR:knowledge/wiki/inbox}
+      cron: ${APP_KNOWLEDGE_FEEDBACK_CRON:0 0 */6 * * *}
+      batch-size: ${APP_KNOWLEDGE_FEEDBACK_BATCH_SIZE:200}
+    abstractor:
+      enabled: ${APP_KNOWLEDGE_ABSTRACTOR_ENABLED:true}
+      max-input-chars: ${APP_KNOWLEDGE_ABSTRACTOR_MAX_INPUT_CHARS:4000}
+      max-summary-chars: ${APP_KNOWLEDGE_ABSTRACTOR_MAX_SUMMARY_CHARS:280}
+    review:
+      topics-dir: ${APP_KNOWLEDGE_REVIEW_TOPICS_DIR:knowledge/wiki/topics}
+      dedup-threshold: ${APP_KNOWLEDGE_REVIEW_DEDUP_THRESHOLD:0.85}
+      list-page-size: ${APP_KNOWLEDGE_REVIEW_PAGE_SIZE:20}
+    strategy:
+      enabled: ${APP_KNOWLEDGE_STRATEGY_ENABLED:true}
+      cron: ${APP_KNOWLEDGE_STRATEGY_CRON:0 30 */6 * * *}
+      lookback-days: ${APP_KNOWLEDGE_STRATEGY_LOOKBACK_DAYS:14}
+      min-samples: ${APP_KNOWLEDGE_STRATEGY_MIN_SAMPLES:3}
+      top-k: ${APP_KNOWLEDGE_STRATEGY_TOP_K:20}
+      gray-percent: ${APP_KNOWLEDGE_STRATEGY_GRAY_PERCENT:10}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${APP_MANAGEMENT_ENDPOINTS:health,info,prometheus}
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never
+    prometheus:
+      access: ${APP_MANAGEMENT_PROMETHEUS_ACCESS:read_only}
+  prometheus:
+    metrics:
+      export:
+        enabled: ${APP_MANAGEMENT_PROMETHEUS_EXPORT_ENABLED:true}
+      repeat-hit-threshold: ${APP_KNOWLEDGE_SINK_REPEAT_HIT_THRESHOLD:3}
+      topic-schema-path: ${APP_KNOWLEDGE_SINK_TOPIC_SCHEMA_PATH:knowledge/wiki/topic-schema.yml}
+      unknown-label: ${APP_KNOWLEDGE_SINK_UNKNOWN_LABEL:unknown}
 
 dify:
   api:

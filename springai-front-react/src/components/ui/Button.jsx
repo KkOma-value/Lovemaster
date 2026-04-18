@@ -34,16 +34,16 @@ export const Button = ({
                     color: isHovered ? '#fff' : '#DC2626',
                     border: 'none'
                 };
-            default: // primary - pink gradient style
+            default: // primary - warm brand gradient
                 return {
                     background: isHovered
-                        ? 'linear-gradient(135deg, #F472B6 0%, #FDA4AF 100%)'
-                        : 'linear-gradient(135deg, #FDA4AF 0%, #FECDD3 100%)',
+                        ? 'linear-gradient(135deg, #C47B5A 0%, #DCA080 100%)'
+                        : 'linear-gradient(135deg, #DCA080 0%, #E8C4A0 100%)',
                     color: '#fff',
                     border: 'none',
                     boxShadow: isHovered
-                        ? '0 8px 24px rgba(253, 164, 175, 0.4)'
-                        : '0 4px 16px rgba(253, 164, 175, 0.3)'
+                        ? '0 8px 24px rgba(196, 123, 90, 0.4)'
+                        : '0 4px 16px rgba(196, 123, 90, 0.3)'
                 };
         }
     };
