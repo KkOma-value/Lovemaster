@@ -1,49 +1,53 @@
 /* ============================================
    ProbabilityCard — 成功概率分析卡片
-   无 emoji、无紫粉渐变、lucide-react 图标
+   对齐主聊天区：焦糖棕玻璃拟态、暖色文字、衬线标题
    ============================================ */
 
 .card {
-    background: #FFFFFF;
-    border: 1px solid #E5E7EB;
-    border-radius: 16px;
-    padding: 20px 24px;
-    margin: 12px 0 16px 0;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-    font-family: "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", -apple-system, BlinkMacSystemFont, sans-serif;
-    color: #111827;
+    background: var(--glass-ai-bubble);
+    backdrop-filter: blur(var(--glass-ai-blur));
+    -webkit-backdrop-filter: blur(var(--glass-ai-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    padding: 20px 22px;
+    margin: 10px 0 14px 0;
+    box-shadow: 0 4px 16px rgba(100, 60, 30, 0.06);
+    color: var(--text-primary);
+    font-family: inherit;
 }
 
 /* ── Header: 圆环 + 文本 ──────────────────── */
 .header {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding-bottom: 16px;
+    gap: 22px;
+    padding-bottom: 14px;
 }
 
 .ringWrapper {
     position: relative;
-    width: 120px;
-    height: 120px;
+    width: 108px;
+    height: 108px;
     flex-shrink: 0;
+    filter: drop-shadow(0 4px 10px rgba(196, 123, 90, 0.12));
 }
 
 .ringWrapper svg {
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);
+    overflow: visible;
 }
 
 .ringTrack {
     fill: none;
-    stroke: #E5E7EB;
-    stroke-width: 10;
+    stroke: rgba(196, 123, 90, 0.12);
+    stroke-width: 5;
 }
 
 .ringProgress {
     fill: none;
-    stroke-width: 10;
+    stroke-width: 5;
     stroke-linecap: round;
     transition: stroke 0.3s ease;
 }
@@ -55,29 +59,22 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: "SF Pro Display", "Inter", "PingFang SC", sans-serif;
 }
 
 .ringNumber {
-    font-size: 40px;
-    font-weight: 700;
+    font-size: 34px;
+    font-weight: 600;
     line-height: 1;
     letter-spacing: -0.02em;
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
 }
 
 .ringUnit {
-    font-size: 18px;
-    font-weight: 600;
-    margin-left: 2px;
-}
-
-.ringLowConfidenceHint {
-    font-size: 10px;
-    color: #9CA3AF;
-    margin-top: 4px;
-    text-align: center;
-    max-width: 100px;
-    line-height: 1.2;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 3px;
+    opacity: 0.85;
 }
 
 .headerText {
@@ -86,36 +83,41 @@
 }
 
 .headerLabel {
-    font-size: 13px;
-    color: #9CA3AF;
+    font-size: 12px;
+    color: var(--text-muted);
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 
 .headerTier {
-    font-size: 18px;
+    font-size: 17px;
     font-weight: 600;
-    color: #111827;
-    margin-top: 2px;
+    color: var(--text-primary);
+    margin-top: 4px;
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
 }
 
 .headerTierDivider {
-    color: #D1D5DB;
+    color: var(--text-muted);
     margin: 0 8px;
     font-weight: 400;
+    opacity: 0.5;
 }
 
 .headerConfidence {
-    font-size: 14px;
-    color: #6B7280;
+    font-size: 13px;
+    color: var(--text-secondary);
     font-weight: 500;
+    font-family: inherit;
 }
 
 .headerSummary {
-    font-size: 14px;
-    color: #4B5563;
-    line-height: 1.6;
-    margin-top: 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.65;
+    margin-top: 8px;
 }
 
 /* ── Section title with lines ─────────────── */
@@ -123,12 +125,13 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    color: #111827;
-    margin-top: 20px;
-    margin-bottom: 12px;
-    letter-spacing: 0.02em;
+    color: var(--text-secondary);
+    margin-top: 18px;
+    margin-bottom: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
 .sectionTitle::before,
@@ -136,28 +139,29 @@
     content: "";
     flex: 1;
     height: 1px;
-    background: #E5E7EB;
+    background: linear-gradient(90deg, transparent, rgba(196, 123, 90, 0.18), transparent);
 }
 
 .sectionCount {
-    color: #9CA3AF;
+    color: var(--text-muted);
     font-weight: 500;
-    margin-left: 4px;
+    margin-left: 6px;
 }
 
 /* ── Flag item ──────────────────────────── */
 .flagList {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .flagItem {
     display: flex;
     gap: 10px;
     padding: 10px 12px;
-    background: #F9FAFB;
-    border-radius: 10px;
+    background: rgba(255, 250, 245, 0.55);
+    border: 1px solid rgba(196, 123, 90, 0.08);
+    border-radius: 12px;
     align-items: flex-start;
 }
 
@@ -166,12 +170,27 @@
     margin-top: 2px;
 }
 
+.flagGreen {
+    border-color: rgba(16, 185, 129, 0.18);
+    background: rgba(236, 253, 245, 0.55);
+}
+
 .flagGreen .flagIcon {
-    color: #10B981;
+    color: #059669;
+}
+
+.flagRed {
+    border-color: rgba(245, 158, 11, 0.22);
+    background: rgba(255, 250, 235, 0.6);
 }
 
 .flagRed .flagIcon {
-    color: #F59E0B;
+    color: #D97706;
+}
+
+.flagRedHigh {
+    border-color: rgba(220, 38, 38, 0.25);
+    background: rgba(254, 242, 242, 0.6);
 }
 
 .flagRedHigh .flagIcon {
@@ -191,17 +210,17 @@
 }
 
 .flagTitle {
-    font-size: 14px;
-    font-weight: 500;
-    color: #111827;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
     line-height: 1.4;
 }
 
 .flagEvidence {
     font-size: 12px;
-    color: #6B7280;
+    color: var(--text-secondary);
     margin-top: 4px;
-    line-height: 1.5;
+    line-height: 1.55;
 }
 
 .weightBadge {
@@ -213,12 +232,12 @@
 }
 
 .weightMedium {
-    background: #FEF3C7;
+    background: rgba(245, 158, 11, 0.14);
     color: #92400E;
 }
 
 .weightHigh {
-    background: #FEE2E2;
+    background: rgba(220, 38, 38, 0.14);
     color: #991B1B;
 }
 
@@ -233,11 +252,11 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 14px;
-    border: 1px solid #E5E7EB;
-    border-radius: 12px;
-    background: #FFFFFF;
-    transition: border-color 0.2s ease, background 0.2s ease;
+    padding: 11px 14px;
+    border: 1px solid rgba(196, 123, 90, 0.14);
+    border-radius: 14px;
+    background: rgba(255, 253, 249, 0.7);
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
     text-align: left;
     width: 100%;
     font-family: inherit;
@@ -245,12 +264,13 @@
 }
 
 .actionItem:hover {
-    border-color: #C47B5A;
-    background: #FFF8F4;
+    border-color: var(--color-primary);
+    background: rgba(255, 248, 244, 0.95);
+    box-shadow: 0 4px 14px rgba(196, 123, 90, 0.12);
 }
 
 .actionItem:focus-visible {
-    outline: 2px solid #C47B5A;
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
 
@@ -259,20 +279,21 @@
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: #F3F4F6;
-    color: #374151;
+    background: rgba(196, 123, 90, 0.14);
+    color: var(--color-primary-dark);
     font-weight: 600;
     font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-family: var(--font-display);
 }
 
 .actionText {
     flex: 1;
     min-width: 0;
-    font-size: 14px;
-    color: #111827;
+    font-size: 13.5px;
+    color: var(--text-primary);
     line-height: 1.5;
 }
 
@@ -285,20 +306,20 @@
     letter-spacing: 0.02em;
 }
 
-.tone主动 { background: #DBEAFE; color: #1D4ED8; }
-.tone温和 { background: #D1FAE5; color: #047857; }
-.tone稳健 { background: #E5E7EB; color: #374151; }
-.tone克制 { background: #FEE2E2; color: #991B1B; }
-.tone有趣 { background: #FCE7F3; color: #BE185D; }
+.tone主动 { background: rgba(196, 123, 90, 0.16); color: var(--color-primary-dark); }
+.tone温和 { background: rgba(16, 185, 129, 0.14); color: #047857; }
+.tone稳健 { background: rgba(122, 92, 71, 0.14); color: var(--text-secondary); }
+.tone克制 { background: rgba(220, 38, 38, 0.12); color: #991B1B; }
+.tone有趣 { background: rgba(232, 122, 93, 0.16); color: #B8482E; }
 
 .actionCopyIcon {
     flex-shrink: 0;
-    color: #9CA3AF;
+    color: var(--text-muted);
     transition: color 0.2s ease;
 }
 
 .actionItem:hover .actionCopyIcon {
-    color: #C47B5A;
+    color: var(--color-primary);
 }
 
 /* ── Responsive ──────────────────────────── */
@@ -319,16 +340,16 @@
     }
 
     .ringWrapper {
-        width: 96px;
-        height: 96px;
+        width: 92px;
+        height: 92px;
     }
 
     .ringNumber {
-        font-size: 32px;
+        font-size: 28px;
     }
 
     .ringUnit {
-        font-size: 14px;
+        font-size: 13px;
     }
 }
 
@@ -339,5 +360,15 @@
 
     .actionTone {
         padding: 2px 6px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ringProgress {
+        transition: none;
+    }
+
+    .actionItem {
+        transition: none;
     }
 }

@@ -60,7 +60,7 @@ class CoachChatOrchestratorTest {
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 false, "", "对方态度模糊",
                 "请分析对方的态度并给出应对策略",
-                List.of(), "判断对方意图", false);
+                List.of(), "判断对方意图", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge("请分析对方的态度并给出应对策略"))
@@ -89,7 +89,7 @@ class CoachChatOrchestratorTest {
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 true, "截图文字内容", "截图摘要", "分析截图中的对话",
-                List.of(), "获取建议", false);
+                List.of(), "获取建议", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
@@ -111,7 +111,7 @@ class CoachChatOrchestratorTest {
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 false, "", "想约对方", "如何主动约对方出来",
-                List.of(), "获取约会建议", false);
+                List.of(), "获取约会建议", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
@@ -142,7 +142,7 @@ class CoachChatOrchestratorTest {
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 false, "", "需要查资料", "异地恋如何维系",
-                List.of(), "搜索并整理", true);
+                List.of(), "搜索并整理", true, false);
 
         BrainDecision toolDecision = BrainDecision.useTools(
                 "搜索异地恋见面安排攻略并整理成计划",

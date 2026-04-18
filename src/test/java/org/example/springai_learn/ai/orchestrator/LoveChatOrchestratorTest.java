@@ -5,7 +5,9 @@ import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ChatMode;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
 import org.example.springai_learn.ai.service.ChatRunService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
+import org.example.springai_learn.ai.service.ProbabilityAnalysisService;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
 import org.example.springai_learn.app.LoveApp;
@@ -25,23 +27,27 @@ class LoveChatOrchestratorTest {
     private static final int ASYNC_TIMEOUT_MS = 3000;
 
     private MultimodalIntakeService intakeService;
+    private ProbabilityAnalysisService probabilityAnalysisService;
     private RagKnowledgeService ragKnowledgeService;
     private SseEventHelper sseEventHelper;
     private LoveApp loveApp;
     private DatabaseChatMemory databaseChatMemory;
     private ChatRunService chatRunService;
+    private ObjectMapper objectMapper;
     private LoveChatOrchestrator orchestrator;
 
     @BeforeEach
     void setUp() {
         intakeService = mock(MultimodalIntakeService.class);
+        probabilityAnalysisService = mock(ProbabilityAnalysisService.class);
         ragKnowledgeService = mock(RagKnowledgeService.class);
         sseEventHelper = mock(SseEventHelper.class);
         loveApp = mock(LoveApp.class);
         databaseChatMemory = mock(DatabaseChatMemory.class);
         chatRunService = mock(ChatRunService.class);
-        orchestrator = new LoveChatOrchestrator(intakeService, ragKnowledgeService,
-                sseEventHelper, loveApp, databaseChatMemory, chatRunService);
+        objectMapper = new ObjectMapper();
+        orchestrator = new LoveChatOrchestrator(intakeService, probabilityAnalysisService,
+                ragKnowledgeService, sseEventHelper, loveApp, databaseChatMemory, chatRunService, objectMapper);
     }
 
     // --- 文本输入流程 ---
@@ -53,7 +59,7 @@ class LoveChatOrchestratorTest {
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 false, "", "对方回复变慢，用户焦虑",
-                "对方为什么突然不回消息了", List.of(), "理解对方意图", false);
+                "对方为什么突然不回消息了", List.of(), "理解对方意图", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge("对方为什么突然不回消息了"))
@@ -83,7 +89,7 @@ class LoveChatOrchestratorTest {
                 "user-1", "chat-1", ChatMode.LOVE, "测试消息", null);
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
-                false, "", "摘要", "重写问题", List.of(), "意图", false);
+                false, "", "摘要", "重写问题", List.of(), "意图", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");
@@ -107,7 +113,7 @@ class LoveChatOrchestratorTest {
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
                 true, "对方：明天不用等我了", "截图显示对方想分开",
                 "截图中的消息是什么意思，对方是否要分手",
-                List.of(), "理解对方意图", false);
+                List.of(), "理解对方意图", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("分手信号解读知识。");
@@ -133,7 +139,7 @@ class LoveChatOrchestratorTest {
                 "user-1", "chat-3", ChatMode.LOVE, "不相关问题", null);
 
         IntakeAnalysisResult analysis = new IntakeAnalysisResult(
-                false, "", "摘要", "重写问题", List.of(), "意图", false);
+                false, "", "摘要", "重写问题", List.of(), "意图", false, false);
 
         when(intakeService.analyze(context)).thenReturn(analysis);
         when(ragKnowledgeService.retrieveKnowledge(any())).thenReturn("");

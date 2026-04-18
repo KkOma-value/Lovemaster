@@ -1,8 +1,10 @@
 package org.example.springai_learn.ai.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
 import org.example.springai_learn.auth.entity.ChatRun;
 import org.example.springai_learn.auth.entity.ChatRunStatus;
+import org.example.springai_learn.auth.repository.ChatRunEventRepository;
 import org.example.springai_learn.auth.repository.ChatRunRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,14 +21,18 @@ import static org.mockito.Mockito.when;
 class ChatRunServiceTest {
 
     private ChatRunRepository chatRunRepository;
+    private ChatRunEventRepository chatRunEventRepository;
     private DatabaseChatMemory databaseChatMemory;
+    private ObjectMapper objectMapper;
     private ChatRunService chatRunService;
 
     @BeforeEach
     void setUp() {
         chatRunRepository = mock(ChatRunRepository.class);
+        chatRunEventRepository = mock(ChatRunEventRepository.class);
         databaseChatMemory = mock(DatabaseChatMemory.class);
-        chatRunService = new ChatRunService(chatRunRepository, databaseChatMemory);
+        objectMapper = new ObjectMapper();
+        chatRunService = new ChatRunService(chatRunRepository, chatRunEventRepository, databaseChatMemory, objectMapper);
     }
 
     @Test

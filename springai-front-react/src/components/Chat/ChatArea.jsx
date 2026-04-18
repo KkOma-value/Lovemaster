@@ -24,8 +24,7 @@ const ChatArea = ({
     const isWelcomeState = messages.length === 0;
 
     const chatConfig = {
-        title: 'Kiko · 追求策略参谋',
-        welcomeTitle: '我是 Kiko，把你和 TA 的聊天截图发给我，我帮你看看现在有多大胜算。',
+        welcomeTitle: '今天，我有什么能帮到你的吗？',
     };
 
     const handleCopyAction = (text) => {
@@ -42,10 +41,6 @@ const ChatArea = ({
             {/* Header */}
             <header className={styles.header}>
                 <div className={styles.headerLeft}>
-                    <div className={styles.titleBadge}>
-                        <Heart size={14} className={styles.titleIcon} />
-                        <span className={styles.headerTitle}>{chatConfig.title}</span>
-                    </div>
                     <BackgroundRunsPill
                         activeCount={activeRunCount}
                         onNavigate={onNavigateToRun}

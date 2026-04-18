@@ -15,11 +15,11 @@ import {
 import styles from './ProbabilityCard.module.css';
 
 const TIER_COLORS = {
-    极低: '#DC2626',
-    偏低: '#F59E0B',
-    一般: '#6366F1',
-    较高: '#10B981',
-    很高: '#059669'
+    极低: '#B8482E',
+    偏低: '#D88B4A',
+    一般: '#C47B5A',
+    较高: '#8FA776',
+    很高: '#6E8A5A'
 };
 
 const CONFIDENCE_LABELS = {
@@ -68,7 +68,6 @@ const ProbabilityCard = ({
     const clamped = clampProbability(probability);
     const color = tierColor(tier);
     const confidenceLabel = CONFIDENCE_LABELS[confidence] || CONFIDENCE_LABELS.medium;
-    const isLowConfidence = confidence === 'low';
     const dashOffset = RING_CIRCUMFERENCE * (1 - clamped / 100);
 
     const handleCopy = (actionText) => {
@@ -102,12 +101,7 @@ const ProbabilityCard = ({
                             style={{ stroke: color }}
                             strokeDasharray={RING_CIRCUMFERENCE}
                             initial={{ strokeDashoffset: RING_CIRCUMFERENCE }}
-                            animate={{
-                                strokeDashoffset: dashOffset,
-                                strokeDasharray: isLowConfidence
-                                    ? `${RING_CIRCUMFERENCE / 60} ${RING_CIRCUMFERENCE / 60}`
-                                    : RING_CIRCUMFERENCE
-                            }}
+                            animate={{ strokeDashoffset: dashOffset }}
                             transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
                         />
                     </svg>
@@ -118,11 +112,6 @@ const ProbabilityCard = ({
                             </span>
                             <span className={styles.ringUnit}>%</span>
                         </div>
-                        {isLowConfidence && (
-                            <span className={styles.ringLowConfidenceHint}>
-                                上传截图可获更准确评估
-                            </span>
-                        )}
                     </div>
                 </div>
 
