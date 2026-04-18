@@ -52,3 +52,12 @@ output/
 .codeartsdoer
 nul
 2026-03-26-182413-local-command-caveatcaveat-the-messages-below-w.txt
+
+# Obsidian
+.obsidian/
+
+# Graphify generated files
+graphify-out/obsidian/
+graphify-out/graph.html
+graphify-out/graph.json
+graphify-out/GRAPH_REPORT.md
