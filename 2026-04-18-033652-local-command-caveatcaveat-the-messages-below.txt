@@ -1,0 +1,719 @@
+           Claude Code v2.1.112
+ ▐▛███▜▌   Sonnet 4.6 · Claude Pro
+▝▜█████▛▘  D:\JavaCode\Lovemaster
+  ▘▘ ▝▝    Welcome to Opus 4.7 xhigh! · /effort to tune speed vs. intellige…
+
+> /model                                                                        
+  ⎿  Set model to Opus 4.7
+
+> /super-dev 我想在想要重新定位一下这个产品的用户，用户的话是那种想要跟自己心仪 
+的对象谈恋爱的人，所以可能会涉及到上传聊天截图让ai帮忙分析成功概率的情况，所有  
+现在我想要在前端                                                                
+后端支持这样的一个功能，就是ai在识别到用户需要ai分析概率的时候给用户反馈这个成  
+功的概率，所以要在前后端增加这样的一个功能。前端的话就是那种给出成功的概率图并  
+附上说明原因，后端的话需要传给前端这个概率还有原因，顺便也要改一下用户的提示词  
+
+● 我将进入 Super Dev 流水线模式。先并行探测项目当前的 Super Dev
+  状态（WORKFLOW、bootstrap、knowledge、已有 output
+  文档、pipeline-state），确认是否有未完成的上下文需要继承。
+
+  Searched for 4 patterns, read 2 files, listed 2 directories (ctrl+o to expand)
+
+● Super Dev 流水线模式已激活（非普通聊天）
+
+  当前阶段: research | 变更 slug 暂定: crush-probability-analysis
+
+  我已读完 .super-dev/WORKFLOW.md 和 .super-dev/project.md。项目无 knowledge/
+  目录、knowledge-cache/ 为空、无 SESSION_BRIEF.md、无
+  pipeline-state，因此这是一次全新变更（但技术栈/既有能力全部继承自 WORKFLOW.md
+  声明的 Spring Boot 3.4.5 + Spring AI 1.0.0-M6 + React 19 + Vite 7）。
+
+  流水线固定顺序（强制）:
+  research → PRD + Architecture + UIUX → [暂停等待你确认] → Spec/tasks →
+  前端先行+运行时验证 → 后端联调 → 质量门禁 → 交付
+
+  承诺: 三份核心文档（research + PRD + architecture + uiux，共 4
+  份产物，research
+  是前置调研）产出后我会停下来，在你明确说"确认/通过"之前绝不创建
+  Spec、绝不动代码、绝不改提示词。
+
+  对你需求的初步解析
+
+  ┌────────────┬───────────────────────────────────────────────────────────┐
+  │    维度    │                           理解                            │
+  ├────────────┼───────────────────────────────────────────────────────────┤
+  │ 产品重定位 │ 从泛化恋爱陪伴 → 聚焦"追求心仪对象"的目标用户             │
+  ├────────────┼───────────────────────────────────────────────────────────┤
+  │ 新核心能力 │ 上传聊天截图 → AI 分析 → 返回成功概率（0-100%）+ 原因清单 │
+  ├────────────┼───────────────────────────────────────────────────────────┤
+  │ 前端诉求   │ 可视化概率图 + 推理说明的展示组件（嵌入聊天流）           │
+  ├────────────┼───────────────────────────────────────────────────────────┤
+  │ 后端诉求   │ 新的结构化响应（概率值 + 原因数组）+ 意图识别（何时触发） │
+  ├────────────┼───────────────────────────────────────────────────────────┤
+  │ 提示词     │ 重写 LoveApp 系统提示词 + 新增追求场景的子提示词          │
+  └────────────┴───────────────────────────────────────────────────────────┘
+
+  接下来我要做的 research 动作
+
+  先并行读取与本次变更直接相关的 5 类现状：①LoveApp
+  核心代码；②既有图片上传链路（auth-upload 已完成）；③现有 agent
+  提示词（brainAgent/rewriteAgent/toolsAgent）；④前端聊天渲染组件；⑤Spring AI
+  多模态 API 的当前版本能力。
+
+  开始并行读取现状代码。
+
+  Searched for 7 patterns, read 4 files (ctrl+o to expand)
+
+  Read 7 files, listed 1 directory (ctrl+o to expand)
+
+● 研究已完成，关键发现：现有系统已有完整的多模态 intake
+  链路（MultimodalIntakeService 做 OCR +
+  意图识别、IntakeAnalysisResult.suggestedIntent 已产出意图、SSE 事件协议已含
+  intake_status/ocr_result/rewrite_result/status/content），所以新功能是在现有管
+  线上增加一个新意图分支 + 结构化输出事件 + 前端概率卡片组件，而不是新建链路。
+
+  开始并行写 4 份核心文档。
+
+● Write(output\crush-probability-analysis-research.md)
+  ⎿  Wrote 134 lines to output\crush-probability-analysis-research.md
+       2 # Research：追求心仪对象的成功概率分析
+       3 > 变更 ID: `crush-probability-analysis`
+       4 > 日期: 2026-04-18
+       5 > 阶段: research
+       6 > 前置变更: `auth-and-image-upload`（图片上传已完成）、`add-mult
+         imodal-love-coach-agents`（多模态 intake 已完成）
+       7 
+       8 ## 1. 需求与产品重定位
+       9 
+      10 ### 1.1 原定位 vs 新定位
+     … +190 lines (ctrl+o to expand)
+
+● Write(output\crush-probability-analysis-prd.md)
+  ⎿  Wrote 179 lines to output\crush-probability-analysis-prd.md
+       2 # PRD：追求心仪对象的成功概率分析
+       3 > 变更 ID: `crush-probability-analysis`
+       4 > 日期: 2026-04-18
+       5 > 阶段: docs（PRD）
+       6 > 依赖文档: `crush-probability-analysis-research.md`
+       8 ## 1. 产品定位
+       9 
+      10 **一句话**：Lovemaster 是为「正在追求心仪对象」的用户设计的 AI 
+         恋爱策略助手。用户上传与对方的聊天截图，AI 在回答问题的同时给出
+         「成功概率」和「该怎么做」。
+     … +203 lines (ctrl+o to expand)
+● Write(output\crush-probability-analysis-architecture.md)
+  ⎿  Wrote 436 lines to output\crush-probability-analysis-architecture.md
+       1 # 架构设计：追求心仪对象的成功概率分析
+       2 
+       3 > 变更 ID: `crush-probability-analysis`
+       4 > 日期: 2026-04-18
+       5 > 阶段: docs（architecture）
+       6 > 依赖文档: research + PRD
+       7 
+       8 ## 1. 架构总览
+       9 
+      10 ```
+     … +511 lines (ctrl+o to expand)
+
+● Write(output\crush-probability-analysis-uiux.md)
+  ⎿  Wrote 284 lines to output\crush-probability-analysis-uiux.md
+       2 # UI/UX 设计：成功概率分析
+       3 > 变更 ID: `crush-probability-analysis`
+       4 > 日期: 2026-04-18
+       5 > 阶段: docs（uiux）
+       6 > 依赖文档: research + PRD + architecture
+       7 
+       8 ## 1. 设计原则
+       9 
+      10 1. **可解释优先**：概率数字本身没有意义，支撑它的证据才有意义。
+         每个信号必须能回看出依据
+     … +304 lines (ctrl+o to expand)
+
+● ---
+  📋 三份核心文档已产出 — 暂停等待你的确认
+
+  已写入 output/：
+
+  文档: output/crush-probability-analysis-research.md
+  作用: 产品重定位、现状盘点（发现现有 intake/SSE/图片链路 70%
+    可复用）、同类产品调研、约束与风险
+  ────────────────────────────────────────
+  文档: output/crush-probability-analysis-prd.md
+  作用: 5 个用户故事、输出 JSON 结构、触发规则、指标定义、4 个待你拍板的开放问题
+  ────────────────────────────────────────
+  文档: output/crush-probability-analysis-architecture.md
+  作用: 后端 9 个改动点、前端 5 个改动点、SSE 事件协议扩展、LoveApp
+  SYSTEM_PROMPT
+    重写稿、降级策略
+  ────────────────────────────────────────
+  文档: output/crush-probability-analysis-uiux.md
+  作用: 概率卡视觉规格（圆环 + 信号 + 行动）、分档色板、禁用清单（无 emoji /
+    无紫粉渐变）、无障碍
+
+  方案一页式摘要
+
+  后端: LoveApp SYSTEM_PROMPT 重写为追求期专用 → intake 新增
+  PROBABILITY_REQUESTED 字段 → 在 LoveChatOrchestrator 的 intake
+  之后新增分支，调用 ProbabilityAnalysisService（Spring AI
+  .entity(ProbabilityAnalysis.class) 结构化输出）→ 发 probability_result SSE
+  事件 → 然后继续原有 RAG + 流式正文。两次模型调用（intake 已有 +
+  概率新增），总延迟 ~8s。
+
+  前端: 新增 ProbabilityCard.jsx（圆环 + 绿色/风险信号 + 3
+  条可复制下一步行动，全部 lucide-react 图标，零 
+  emoji、零紫粉渐变），useChatMessages 处理新事件，插入消息气泡（StatusSteps
+  之后、MarkdownRenderer 之前），历史会话刷新也能恢复。
+
+  失败降级: 概率分析失败 → 跳过卡片，正文照常流式，用户无感。
+
+  需要你拍板的 4 个问题（PRD §7）
+
+  1. 要不要在输入框旁加一个"分析成功概率"按钮？默认方案：不加，靠意图识别触发。
+  2. "成功"的定义？默认方案：在一起（成为情侣）的概率。
+  3. Luna 这个 AI 名字保留？默认方案：保留。
+  4. 场景是否性别中立（覆盖同性恋爱）？默认方案：中立，prompt 不预设性别。
+
+  下一步
+
+  请回复
+  确认（采用所有默认方案）、或告诉我需要修改的点。在你明确确认之前，我不会创建 
+  Spec、不会改任何代码、不会动提示词。
+
+✻ Cogitated for 8m 21s
+
+> 不添加，靠意图识别触发 成功的定义就是 在一起的概率 名字可以随便改             
+  保持中立（覆盖同性恋爱）                                                      
+
+● 收到。前 3 个默认方案已采纳，第 4 个"改名"给 3
+  个候选请你挑（还是你想取个别的也行）：
+
+  ┌───────────┬───────────────────┬────────────────────────────────────────┐
+  │   候选    │       调性        │                  理由                  │
+  ├───────────┼───────────────────┼────────────────────────────────────────┤
+  │ Kiko（推  │ 中性亲切、两音节  │ 不预设性别，中文用户也易接受（可选中文 │
+  │ 荐）      │ 好记              │ 写作"珂珂"）                           │
+  ├───────────┼───────────────────┼────────────────────────────────────────┤
+  │ Nova      │ 有"新星/新开始"象 │ 契合"开启一段新关系"的产品叙事         │
+  │           │ 征意义            │                                        │
+  ├───────────┼───────────────────┼────────────────────────────────────────┤
+  │ Aria      │ 优雅冷静          │ 适配"追求策略参谋"的专业感             │
+  └───────────┴───────────────────┴────────────────────────────────────────┘
+
+  选好名字后，整体方案即可定稿进入 Spec/tasks 阶段（创建
+  .super-dev/changes/crush-probability-analysis/ + 开始前端先行实现）。
+
+  请回复 "用 Kiko / Nova / Aria" 或 "换成 XXX" 之一 + "进入 Spec"
+  即可。在此之前我仍然不动代码、不建 Spec。
+
+✻ Sautéed for 48s
+
+> kiko                                                                          
+
+● 收到，用 Kiko。更新 3 份文档里的"Luna" → "Kiko"。
+
+● Update(output\crush-probability-analysis-research.md)
+  ⎿  Added 1 line, removed 1 line
+      13  | 目标用户 | 泛化恋爱困惑人群（情侣/暧昧/失恋皆可） | **聚焦"想
+          和心仪对象在一起"的追求期用户** |
+      14  | 核心场景 | 情感倾诉 + 回复建议 + 关系分析 | 聊天截图 → **成功
+          概率评估** → 改进策略 |
+      15  | 交付形式 | 闺蜜式自然语言 | 概率卡片（数值+可视化）+ 原因拆解
+           + 话术改进 |
+      16 -| 品牌人设 | Luna（闺蜜） | Luna 延续，但专家化：追求策略导师 |
+      16 +| 品牌人设 | Luna（闺蜜） | Kiko（闺蜜式追求策略参谋，由 Luna  
+         +迭代而来） |                                                   
+      17  
+      18  ### 1.2 新核心能力：成功概率分析（Crush Probability Analysis, 
+          简称 CPA）
+      19  
+
+● Update(output\crush-probability-analysis-prd.md)
+  ⎿  Added 1 line, removed 1 line
+      24  | 我想知道"有多大胜算" | 0-100 成功概率 + 可视化 |
+      25  | 我想知道"为什么是这个分数" | 正面/风险信号清单 + 证据引用 |
+      26  | 我想知道"该怎么办" | 3 条可直接执行的下一步建议 |
+      27 -| 我想有人像朋友一样陪我分析 | Luna 人设 + 闺蜜式自然语言继续对
+         -话 |                                                           
+      27 +| 我想有人像朋友一样陪我分析 | Kiko 人设 + 闺蜜式自然语言继续对
+         +话 |                                                           
+      28  
+      29  ## 2. 核心用户故事
+      30  
+
+● Update(output\crush-probability-analysis-prd.md)
+  ⎿  Added 1 line, removed 1 line
+      30  
+      31  ### US-1（主要）：带截图问概率
+      32  > 作为追求期用户，我上传我和心仪对象的微信聊天截图，并问"你觉得
+          我这样有戏吗？"。
+      33 -> 我期望看到：一个概率卡片（比如 62%），标注我做对了什么、哪里 
+         -有风险，下面继续是 Luna 的口语化分析和给我的下一句回复建议。   
+      33 +> 我期望看到：一个概率卡片（比如 62%），标注我做对了什么、哪里 
+         +有风险，下面继续是 Kiko 的口语化分析和给我的下一句回复建议。   
+      34  
+      35  **验收**：
+      36  - 上传截图并包含意图词 → 必须触发概率卡
+
+● Update(output\crush-probability-analysis-prd.md)
+  ⎿  Added 4 lines, removed 3 lines
+      64  - 无 `probability` → 正常文字渲染
+      65  
+      66  ### US-5：新定位后的系统提示词
+      67 -> 作为用户，我和 Luna 聊天，她的语气应该更聚焦追求场景（"你在追
+         -他对吧"、"下一步要不要主动约？"），而不是泛化的情感咨询。      
+      67 +> 作为用户，我和 Kiko 聊天，她的语气应该更聚焦追求场景（"你在追
+         + TA 对吧"、"下一步要不要主动约？"），而不是泛化的情感咨询。    
+      68  
+      69  **验收**：
+      70 -- LoveApp.SYSTEM_PROMPT 重写后，Luna 自我介绍中明确"我是你的追 
+         -求策略助手"                                                    
+      71 -- Luna 主动引导"你现在和 TA 什么关系？""你们聊多久了？"等追求场
+         -景专属问法                                                     
+      70 +- LoveApp.SYSTEM_PROMPT 重写后，Kiko 自我介绍中明确"我是 Kiko，
+         +你的追求策略助手"                                              
+      71 +- Kiko 主动引导"你现在和 TA 什么关系？""你们聊多久了？"等追求场
+         +景专属问法                                                     
+      72  - 闺蜜式语气保留，但场景收窄
+      73 +- 用词性别中立：用"TA"代替"他/她"，回复话术不预设用户或对方性别
+      74  
+      75  ## 3. 功能需求
+      76  
+
+● Update(output\crush-probability-analysis-prd.md)
+  ⎿  Added 4 lines, removed 4 lines
+      174     - 默认方案：**不加按钮**，完全靠意图识别。理由：保持 chat-f
+           irst 体验。如果你想加请告知。
+      175  2. **"成功"的定义**：在一起 / 约会 / 告白成功？
+      176     - 默认方案：**在一起（成为情侣）的概率**。可在 summary 中澄
+           清。
+      177 -3. **Luna 的名字是否保留**？                                  
+      178 -   - 默认方案：**保留**，已有品牌记忆。如果想重命名请告知。   
+      179 -4. **"追求期"场景是否覆盖同性恋爱**？                         
+      180 -   - 默认方案：**性别中立**，所有 prompt 不预设性别。         
+      177 +3. **~~Luna 的名字是否保留~~ → 已定：改名为 Kiko**            
+      178 +   - 决议 2026-04-18：AI 改名为 `Kiko`。所有 prompt、文案、欢 
+          +迎语同步更新。                                                
+      179 +4. **~~"追求期"场景是否覆盖同性恋爱~~ → 已定：性别中立**      
+      180 +   - 决议 2026-04-18：所有 prompt 不预设性别，统一使用"TA"。  
+
+● Update(output\crush-probability-analysis-architecture.md)
+  ⎿  Added 10 lines, removed 4 lines
+      218  
+      219  ### 2.7 LoveApp SYSTEM_PROMPT 重写
+      220  
+      221 -重写后（保留 Luna 人设 + 聚焦追求期）：                       
+      221 +重写后（品牌人设由 Luna 迭代为 Kiko + 聚焦追求期 + 性别中立） 
+          +：                                                            
+      222  
+      223  ```
+      224 -你是 Luna，专为"正在追求心仪对象"的用户服务的 AI 恋爱策略助手 
+          -。你像闺蜜一样贴心，但同时是一位冷静的追求战术参谋。          
+      224 +你是 Kiko，专为"正在追求心仪对象"的用户服务的 AI 恋爱策略助手 
+          +。你像闺蜜一样贴心，但同时是一位冷静的追求战术参谋。          
+      225  
+      226  【你的用户】
+      227  他们正在追求一个心动的人（同事/同学/网友/朋友的朋友等）。
+     ...
+      231    2) 看清"做对了什么、哪里有风险"
+      232    3) 知道"下一步该说什么、做什么"
+      233  
+      234 +【性别中立约束（强制）】                                      
+      235 +- 不预设用户或对方的性别，默认用"TA"指代心仪对象              
+      236 +- 只有用户明确说明对方性别后，才可使用相应代词                
+      237 +- 覆盖异性、同性、多元关系场景，不带有任何倾向或假设          
+      238 +                                                              
+      239  【你的风格】
+      235 -- 像闺蜜一样说话：用"宝""亲爱的""姐妹/兄弟"等亲切称呼         
+      240 +- 像闺蜜一样说话：用"宝""亲爱的""朋友"等亲切称呼（避免"姐妹/兄
+          +弟"这种预设用户性别的词）                                     
+      241  - 先给答案，再展开说：用户问什么，先直接回应，然后再细细分析
+      242  - 不用任何分段标签，不要 [情绪确认][问题分析] 这种机器味
+      243  - 口语化短句，像微信聊天那样自然
+      244  - 给出 2-3 条可以直接发送的回复话术，用不同语气区分（主动/温和
+           /稳健）
+      245  
+      246  【你不做的事】
+      242 -- 不做"舔狗鉴定"式的羞辱，即使用户行为确实偏舔狗，你也要帮他找
+          -到台阶                                                        
+      247 +- 不做"舔狗鉴定"式的羞辱，即使用户行为确实偏舔狗，你也要帮 TA 
+          +找到台阶                                                      
+      248  - 不编造对方的情感状态，所有判断都基于用户给出的信息
+      249  - 不聊政治、宗教、政策，温和转回追求话题
+      250  - 不过度分享你自己的故事，焦点始终在用户身上
+      251  - 如果发现危险信号（对方有暴力/PUA/骗财骗色），明确提醒并建议
+           停止追求
+      252 +- 如果前置服务已给出概率卡，你的回复不要再重复概率数字，只补充
+          +"为什么"和"下一步"                                            
+      253  
+      254  【对话原则】
+      255  1. 先共情、再给战术：坏消息先铺垫"我懂你想追的心情…"
+
+● Update(output\crush-probability-analysis-architecture.md)
+  ⎿  Added 11 lines, removed 4 lines
+      435  - 旧数据 `probability_json=NULL` → 前端走普通渲染
+      436  - 回滚方式：关闭 `LoveChatOrchestrator` 中的概率分支（可用 env
+            var `APP_PROBABILITY_ENABLED=false` 控制），保留 DB 字段
+      437  
+      438 -## 8. 待定事项（等待 docs_confirm）                           
+      438 +## 8. 已决议（2026-04-18）                                    
+      439  
+      440 -1. 是否在 PRD §7 中的 4 个开放问题上有调整？                  
+      441 -2. 是否需要引入 env var 开关 `APP_PROBABILITY_ENABLED`？      
+      442 -3. 数据库列名是 `probability_json` 还是 `probability_data`？  
+      440 +1. 不加"分析成功概率"按钮，完全靠意图识别触发                 
+      441 +2. "成功" = 在一起（成为情侣）的概率                          
+      442 +3. AI 品牌人设由 Luna 迭代为 **Kiko**（珂珂），prompt / 欢迎语
+          + / 文案全部同步                                               
+      443 +4. 性别中立，所有 prompt 统一用"TA"，不预设用户与对方性别     
+      444 +                                                              
+      445 +## 9. 实现细节（Spec 阶段敲定）                               
+      446 +                                                              
+      447 +1. 数据库列名默认 `probability_json TEXT NULL`，Spec 阶段确认 
+      448 +2. 是否引入 env var `APP_PROBABILITY_ENABLED` 默认 true 的开关
+          +，Spec 阶段确认                                               
+      449 +3. ChatWelcome 欢迎语是否同步为 Kiko 人设与追求期定位，前端阶 
+          +段确认                                                        
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Update(output\crush-probability-analysis-prd.md)
+  ⎿  Added 1 line, removed 1 line
+      48  
+      49  ### US-3：普通问题不误触发
+      50  > 作为用户，我只是闲聊"今天心情不好"或者"教我怎么聊天"。
+      51 -> 我期望不要弹出概率卡，只要 Luna 的正常回复。                 
+      51 +> 我期望不要弹出概率卡，只要 Kiko 的正常回复。                 
+      52  
+      53  **验收**：
+      54  - 无意图词 + 无截图 → 不触发概率卡
+
+● Update(output\crush-probability-analysis-prd.md)
+  ⎿  Added 1 line, removed 1 line
+      133  
+      134  ### 3.5 提示词重写
+      135  三份 prompt 需要更新或新增：
+      136 -1. **LoveApp.SYSTEM_PROMPT**（重写）：聚焦追求期，保留 Luna 闺
+          -蜜人设                                                        
+      136 +1. **LoveApp.SYSTEM_PROMPT**（重写）：改名 Kiko + 聚焦追求期 +
+          + 性别中立 + 保留闺蜜人设                                      
+      137  2. **MultimodalIntakeService** 的 TEXT_ONLY_SYSTEM_PROMPT 和 I
+           MAGE_SYSTEM_PROMPT（增量扩展）：增加 `PROBABILITY_REQUESTED` 
+           字段
+      138  3. **ProbabilityAnalysisService.SYSTEM_PROMPT**（新增）：结构
+           化概率分析专用
+      139  
+
+● 文档已同步为 Kiko + 性别中立 + 无按钮 + 在一起概率。剩余 3
+  处"Luna"均为历史对照语境（"由 Luna 迭代而来"），保留作为决策记录。
+
+  📋 docs_confirm 门：最终待你拍板
+
+  4 个开放问题全部闭环：
+
+  ┌─────┬────────────────────────────┐
+  │  #  │            决议            │
+  ├─────┼────────────────────────────┤
+  │ 1   │ 不加按钮，靠意图识别触发   │
+  ├─────┼────────────────────────────┤
+  │ 2   │ "成功" = 在一起的概率      │
+  ├─────┼────────────────────────────┤
+  │ 3   │ AI 改名为 Kiko             │
+  ├─────┼────────────────────────────┤
+  │ 4   │ 性别中立，prompt 统一用 TA │
+  └─────┴────────────────────────────┘
+
+  整体方案（research + PRD + architecture + UIUX）是否进入下一阶段？
+
+  请回复 "进入 Spec" → 我会：
+  1. 创建 .super-dev/changes/crush-probability-analysis/（proposal.md + tasks.md
+   + spec deltas）
+  2. 按 tasks.md 顺序执行：前端先行（ProbabilityCard 组件 + 消息流集成 +
+  预览自检）→ 等你做 preview_confirm → 后端联调（intake 扩展 +
+  ProbabilityAnalysisService + SSE 协议 + 重写 SYSTEM_PROMPT + 数据库迁移）→
+  质量门禁 → 交付
+
+  在你回复之前，我不动任何代码、不建 Spec、不改提示词。
+
+✻ Baked for 1m 42s
+
+> 继续                                                                          
+
+● 收到"继续"，docs_confirm 门通过。进入 Spec 阶段。先看看项目里既有的 change
+  结构，保持一致。
+
+  Read 2 files, listed 2 directories (ctrl+o to expand)
+
+● 模板清晰。我按 chat-ux-redesign 的结构创建本次变更的 Spec。
+
+● Bash(mkdir -p .super-dev/changes/crush-probability-analysis/specs)
+  ⎿  Done
+
+● Write(.super-dev\changes\crush-probability-analysis\proposal.md)
+  ⎿  Wrote 55 lines to
+     .super-dev\changes\crush-probability-analysis\proposal.md
+       2 # Change Proposal: crush-probability-analysis
+       3 ## Summary
+         概率分析」能力：r 为"追求心仪对象"场景的 AI 策略助手，新增「成功
+       5 意图识别 → 结构化概率输出（0-100 + 正负信号 + 下一步话术）→ 前端
+       6 同时将 LoveApp 系统提示词由 Luna 迭代为 Kiko，聚焦追求期并保持性
+         别中立。
+       8 ## Motivation
+       9 现有 LoveApp 是通用恋爱陪聊，用户面对"我追的人有戏吗"这类核心诉
+      10 通过引入概率分析卡片 + 下一步可直接发送的话术，把"陪聊"升级为"策
+         略参谋"，同时借助已有多模态 intake
+     … +66 lines (ctrl+o to expand)
+
+● Write(.super-dev\changes\crush-probability-analysis\tasks.md)
+  ⎿  Wrote 131 lines to
+     .super-dev\changes\crush-probability-analysis\tasks.md
+      2 # Tasks: crush-probability-analysis
+      3 执行顺序：**Phase 1 前端先行** → **preview_confirm 暂停** → **Pha
+        se 2 后端** → **Phase 3 提示词 + DB** → **Phase 4 联调与质量**
+      4 
+      5 ---
+      6 
+      7 ## Phase 1: 前端先行（Frontend-first）
+      8 
+      9 目标：先用 mock 数据把 `ProbabilityCard` 跑起来让用户预览，对齐视
+        觉与交互。
+     … +155 lines (ctrl+o to expand)
+
+● Write(.super-dev\changes\crush-probability-analysis\design.md)
+  ⎿  Wrote 104 lines to
+     .super-dev\changes\crush-probability-analysis\design.md
+       2 # Design: crush-probability-analysis
+       3 > 本文件是 Spec 阶段的技术决议记录，合并了 `output/*-architectur
+         e.md` 的核心约定，供实现时快速查阅。
+       4 > 完整架构与 UIUX 细节见：
+       5 > - `output/crush-probability-analysis-research.md`
+       6 > - `output/crush-probability-analysis-prd.md`
+       7 > - `output/crush-probability-analysis-architecture.md`
+       8 > - `output/crush-probability-analysis-uiux.md`
+       9 
+      10 ## 1. 关键决议
+     … +111 lines (ctrl+o to expand)
+
+● Spec 已就绪。现在进入 Phase 1: 前端先行。先看一眼现有 CSS token
+  的命名风格，不引入冲突。
+
+  Read 5 files (ctrl+o to expand)
+
+● 我理解了完整数据流：SSE 分发在
+  ChatRuntimeContext.jsx::handleParsedMessage。现在开始 T1: 写 ProbabilityCard 
+  组件。
+
+● Write(springai-front-react\src\components\Chat\ProbabilityCard.module.css)
+  ⎿  Wrote 343 lines to
+     springai-front-react\src\components\Chat\ProbabilityCard.module.css
+       1 /* ============================================
+       2    ProbabilityCard — 成功概率分析卡片
+       3    无 emoji、无紫粉渐变、lucide-react 图标
+       4    ============================================ */
+       5 
+       6 .card {
+       7     background: #FFFFFF;
+       8     border: 1px solid #E5E7EB;
+       9     border-radius: 16px;
+      10     padding: 20px 24px;
+     … +335 lines (ctrl+o to expand)
+
+● Write(springai-front-react\src\components\Chat\ProbabilityCard.jsx)
+  ⎿  Wrote 241 lines to
+     springai-front-react\src\components\Chat\ProbabilityCard.jsx
+       1 import React, { useEffect } from 'react';
+       2 import {
+       3     motion,
+       4     useMotionValue,
+       5     useTransform,
+       6     useSpring,
+       7     animate
+       8 } from 'framer-motion';
+       9 import {
+      10     TrendingUp,
+     … +274 lines (ctrl+o to expand)
+
+● Update(springai-front-react\src\contexts\ChatRuntimeContext.jsx)
+  ⎿  Added 17 lines
+      112      ];
+      113  };
+      114  
+      115 +const attachProbabilityToLatestAssistant = (messages, probabil
+          +ity) => {                                                     
+      116 +    if (!probability || typeof probability !== 'object') {    
+      117 +        return messages;                                      
+      118 +    }                                                         
+      119 +    const lastMessage = messages[messages.length - 1];        
+      120 +    if (lastMessage?.role === 'assistant') {                  
+      121 +        return [                                              
+      122 +            ...messages.slice(0, -1),                         
+      123 +            { ...lastMessage, probability }                   
+      124 +        ];                                                    
+      125 +    }                                                         
+      126 +    return [                                                  
+      127 +        ...messages,                                          
+      128 +        { role: 'assistant', content: '', isStreaming: true, p
+          +robability }                                                  
+      129 +    ];                                                        
+      130 +};                                                            
+      131 +                                                              
+      132  const appendImageToStreamingMessage = (messages, imageData) =>
+            {
+      133      const lastMessage = messages[messages.length - 1];
+      134      if (lastMessage?.role === 'assistant') {
+
+● Update(springai-front-react\src\contexts\ChatRuntimeContext.jsx)
+  ⎿  Added 13 lines
+      417                  case 'ocr_result':
+      418                  case 'rewrite_result':
+      419                  case 'rag_status':
+      420 +                case 'probability_status':                    
+      421                  case 'tool_call':
+      422                      return {
+      423                          ...current,
+     ...
+      429                          streamingStatus: { type: parsed.type, 
+           content: parsed.content }
+      430                      };
+      431  
+      432 +                case 'probability_result': {                  
+      433 +                    const prob = parsed.data?.probability;    
+      434 +                    if (!prob) return current;                
+      435 +                    return {                                  
+      436 +                        ...current,                           
+      437 +                        messages: attachProbabilityToLatestAss
+          +istant(current.messages, prob),                               
+      438 +                        isLoading: true,                      
+      439 +                        runStatus: 'RUNNING',                 
+      440 +                        lastEventType: 'probability_result'   
+      441 +                    };                                        
+      442 +                }                                             
+      443 +                                                              
+      444                  case 'content':
+      445                      return {
+      446                          ...current,
+● Update(springai-front-react\src\components\Chat\ChatMessages.jsx)
+  ⎿  Added 2 lines, removed 1 line
+       5  import ImageWithLightbox from './ImageWithLightbox';
+       6  import StatusSteps from './StatusSteps';
+       7  import StreamingStatus from './StreamingStatus';
+       8 +import ProbabilityCard from './ProbabilityCard';               
+       9  import styles from './ChatArea.module.css';
+      10  
+      10 -const ChatMessages = ({ messages, streamingStatus, onRetry }) =
+         -> {                                                            
+      11 +const ChatMessages = ({ messages, streamingStatus, onRetry, onC
+         +opyAction }) => {                                              
+      12      const scrollContainerRef = useRef(null);
+      13      const messagesEndRef = useRef(null);
+      14      const isUserScrollingRef = useRef(false);
+
+● Update(springai-front-react\src\components\Chat\ChatMessages.jsx)
+  ⎿  Added 7 lines
+      83                                              hasContent={!!messa
+          ge.content}
+      84                                          />
+      85                                      )}
+      86 +                                    {/* Probability card — betw
+         +een status and content */}                                     
+      87 +                                    {message.probability && (  
+      88 +                                        <ProbabilityCard       
+      89 +                                            {...message.probabi
+         +lity}                                                          
+      90 +                                            onCopyAction={onCop
+         +yAction}                                                       
+      91 +                                        />                     
+      92 +                                    )}                         
+      93                                      {/* Content */}
+      94                                      {message.content && (
+      95                                          <MarkdownRenderer conte
+          nt={message.content} isStreaming={message.isStreaming} />
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(springai-front-react\src\components\Chat\ChatArea.jsx)
+  ⎿  Added 7 lines, removed 2 lines
+      24      const isWelcomeState = messages.length === 0;
+      25  
+      26      const chatConfig = {
+      27 -        title: '恋爱教练',                                     
+      28 -        welcomeTitle: '我是你的恋爱助手，今天有什么可以帮忙的？
+         -',                                                             
+      27 +        title: 'Kiko · 追求策略参谋',                          
+      28 +        welcomeTitle: '我是 Kiko，把你和 TA 的聊天截图发给我， 
+         +我帮你看看现在有多大胜算。',                                   
+      29      };
+      30  
+      31 +    const handleCopyAction = (text) => {                       
+      32 +        if (!text) return;                                     
+      33 +        setInputValue(text);                                   
+      34 +    };                                                         
+      35 +                                                               
+      36      const handleHomeClick = () => {
+      37          navigate('/');
+      38      };
+
+● Update(springai-front-react\src\components\Chat\ChatArea.jsx)
+  ⎿  Added 1 line
+      101                              <ChatMessages
+      102                                  messages={messages}
+      103                                  streamingStatus={streamingStat
+           us}
+      104 +                                onCopyAction={handleCopyAction
+          +}                                                             
+      105                              />
+      106                          </Motion.div>
+      107                      )}
+
+  Read 1 file (ctrl+o to expand)
+
+● Write(springai-front-react\src\pages\Dev\ProbabilityPreview.jsx)
+  ⎿  Wrote 183 lines to
+     springai-front-react\src\pages\Dev\ProbabilityPreview.jsx
+       2 import ProbabilityCard from '../../components/Chat/ProbabilityCa
+         rd';
+       3 
+       4 const SAMPLES = {
+       5     medium: {
+       7         tier: '一般',62,
+       8         confidence: 'medium',
+       9         summary: "你们已经从陌生人聊到能互开玩笑，但 TA 还没主动
+         约你，属于'有兴趣但没投入'阶段。",
+      10         greenFlags: [
+     … +212 lines (ctrl+o to expand)
+
+● Update(springai-front-react\src\App.jsx)
+  ⎿  Added 1 line
+       8  import LoginPage from './pages/Auth/LoginPage';
+       9  import RegisterPage from './pages/Auth/RegisterPage';
+      10  import SetPasswordPage from './pages/Auth/SetPasswordPage';
+      11 +import ProbabilityPreview from './pages/Dev/ProbabilityPreview'
+         +;                                                              
+      12  import ProtectedRoute from './components/Auth/ProtectedRoute';
+      13  import { AuthProvider } from './contexts/AuthContext';
+      14  import { ChatRuntimeProvider } from './contexts/ChatRuntimeCont
+          ext';
+
+● Update(springai-front-react\src\App.jsx)
+  ⎿  Added 1 line
+      23          <Route path="/" element={<HomePage />} />
+      24          <Route path="/login" element={<LoginPage />} />
+      25          <Route path="/register" element={<RegisterPage />} />
+      26 +        <Route path="/dev/probability" element={<ProbabilityPre
+         +view />} />                                                    
+      27          
+      28          <Route element={<ProtectedRoute />}>
+      29            <Route path="/chat" element={<ChatPage />} />
+  ⎿  Context limit reached · /compact or /clear to continue · /model opus[1m]
+
+✻ Crunched for 6m 45s
+
+> /export                                                                       
+  ⎿  Conversation copied to clipboard
+
+> /exit                                                                         
+  ⎿  See ya!
+
+> /export                                                                       
+  ⎿  Conversation copied to clipboard
+
+> /exit                                                                         
+  ⎿  See ya!
