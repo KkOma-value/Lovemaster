@@ -13,7 +13,6 @@ import {
     ArrowRight,
     BookmarkCheck
 } from 'lucide-react';
-import styles from './ProbabilityCard.module.css';
 
 const TIER_COLORS = {
     极低: '#B8482E',
@@ -79,77 +78,78 @@ const ProbabilityCard = ({
 
     return (
         <Motion.section
-            className={styles.card}
+            className="soft-card my-3"
+            style={{ padding: '20px 22px' }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             aria-label={`成功概率 ${clamped}%，${tier || ''}，${confidenceLabel}`}
         >
-            <div className={styles.header}>
-                <div className={styles.ringWrapper}>
-                    <svg viewBox="0 0 120 120" role="img" aria-hidden="true">
+            <div className="flex flex-col md:flex-row items-center md:items-center text-center md:text-left gap-3.5 md:gap-5.5 pb-3.5">
+                <div className="relative shrink-0 w-[92px] h-[92px] md:w-[108px] md:h-[108px] drop-shadow-[0_4px_10px_rgba(196,123,90,0.12)]">
+                    <svg viewBox="0 0 120 120" role="img" aria-hidden="true" className="w-full h-full -rotate-90 overflow-visible">
                         <circle
-                            className={styles.ringTrack}
-                            cx="60"
-                            cy="60"
-                            r={RING_RADIUS}
+                            className="fill-none stroke-[rgba(196,123,90,0.12)] stroke-[5px]"
+                            cx="60" cy="60" r={RING_RADIUS}
                         />
                         <Motion.circle
-                            className={styles.ringProgress}
-                            cx="60"
-                            cy="60"
-                            r={RING_RADIUS}
-                            style={{ stroke: color }}
+                            className="fill-none stroke-[5px] transition-colors duration-300 ease-in-out"
+                            style={{ stroke: color, strokeLinecap: 'round' }}
+                            cx="60" cy="60" r={RING_RADIUS}
                             strokeDasharray={RING_CIRCUMFERENCE}
                             initial={{ strokeDashoffset: RING_CIRCUMFERENCE }}
                             animate={{ strokeDashoffset: dashOffset }}
                             transition={{ duration: 1.2, ease: [0.34, 1.56, 0.64, 1] }}
                         />
                     </svg>
-                    <div className={styles.ringCenter}>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
                         <div style={{ color, display: 'flex', alignItems: 'baseline' }}>
-                            <span className={styles.ringNumber}>
+                            <span className="display text-[28px] md:text-[34px] font-semibold tracking-tight tabular-nums leading-none">
                                 <AnimatedNumber value={clamped} />
                             </span>
-                            <span className={styles.ringUnit}>%</span>
+                            <span className="text-[13px] md:text-[14px] font-medium ml-1 opacity-85">%</span>
                         </div>
                     </div>
                 </div>
 
-                <div className={styles.headerText}>
-                    <div className={styles.headerLabel}>成功概率（在一起的可能性）</div>
-                    <div className={styles.headerTier}>
+                <div className="flex-1 min-w-0 w-full">
+                    <div className="text-[12px] font-medium tracking-wider uppercase" style={{ color: 'var(--text-muted)' }}>
+                        成功概率（在一起的可能性）
+                    </div>
+                    <div className="display text-[17px] font-semibold mt-1 tracking-tight" style={{ color: 'var(--text-primary)' }}>
                         <span style={{ color }}>{tier || '一般'}</span>
-                        <span className={styles.headerTierDivider}>·</span>
-                        <span className={styles.headerConfidence}>{confidenceLabel}</span>
+                        <span className="mx-2 font-normal opacity-50" style={{ color: 'var(--text-muted)' }}>·</span>
+                        <span className="text-[13px] font-medium" style={{ color: 'var(--text-secondary)', fontFamily: 'inherit' }}>{confidenceLabel}</span>
                     </div>
                     {summary && (
-                        <p className={styles.headerSummary}>{summary}</p>
+                        <p className="text-[13.5px] leading-relaxed mt-2" style={{ color: 'var(--text-secondary)' }}>{summary}</p>
                     )}
                 </div>
             </div>
 
             {greenFlags.length > 0 && (
                 <>
-                    <div className={styles.sectionTitle}>
-                        <span>正面信号<span className={styles.sectionCount}>{greenFlags.length}</span></span>
+                    <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider mt-4 mb-2.5" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <span>正面信号<span className="ml-[6px] font-medium" style={{ color: 'var(--text-muted)' }}>{greenFlags.length}</span></span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
                     </div>
-                    <div className={styles.flagList}>
+                    <div className="flex flex-col gap-2">
                         {greenFlags.map((flag, idx) => (
-                            <div key={`g-${idx}`} className={`${styles.flagItem} ${styles.flagGreen}`}>
-                                <TrendingUp size={18} className={styles.flagIcon} aria-hidden="true" />
-                                <div className={styles.flagBody}>
-                                    <div className={styles.flagTitleRow}>
-                                        <span className={styles.flagTitle}>{flag.title}</span>
+                            <div key={`g-${idx}`} className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-[rgba(16,185,129,0.18)] bg-[rgba(236,253,245,0.55)]">
+                                <TrendingUp size={18} className="shrink-0 mt-[2px] text-[#059669]" aria-hidden="true" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[13.5px] font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>{flag.title}</span>
                                         {flag.weight === 'high' && (
-                                            <span className={`${styles.weightBadge} ${styles.weightHigh}`}>高</span>
+                                            <span className="hidden sm:inline-block px-2 py-[2px] text-[10px] font-semibold tracking-wider rounded-full bg-[rgba(220,38,38,0.14)] text-[#991B1B]">高</span>
                                         )}
                                         {flag.weight === 'medium' && (
-                                            <span className={`${styles.weightBadge} ${styles.weightMedium}`}>中</span>
+                                            <span className="hidden sm:inline-block px-2 py-[2px] text-[10px] font-semibold tracking-wider rounded-full bg-[rgba(245,158,11,0.14)] text-[#92400E]">中</span>
                                         )}
                                     </div>
                                     {flag.evidence && (
-                                        <div className={styles.flagEvidence}>证据：{flag.evidence}</div>
+                                        <div className="text-[12px] leading-relaxed mt-1" style={{ color: 'var(--text-secondary)' }}>证据：{flag.evidence}</div>
                                     )}
                                 </div>
                             </div>
@@ -160,30 +160,32 @@ const ProbabilityCard = ({
 
             {redFlags.length > 0 && (
                 <>
-                    <div className={styles.sectionTitle}>
-                        <span>风险信号<span className={styles.sectionCount}>{redFlags.length}</span></span>
+                    <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider mt-4 mb-2.5" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <span>风险信号<span className="ml-[6px] font-medium" style={{ color: 'var(--text-muted)' }}>{redFlags.length}</span></span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
                     </div>
-                    <div className={styles.flagList}>
+                    <div className="flex flex-col gap-2">
                         {redFlags.map((flag, idx) => {
                             const isHigh = flag.weight === 'high';
                             return (
                                 <div
                                     key={`r-${idx}`}
-                                    className={`${styles.flagItem} ${isHigh ? styles.flagRedHigh : styles.flagRed}`}
+                                    className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl border ${isHigh ? 'border-[rgba(220,38,38,0.25)] bg-[rgba(254,242,242,0.6)]' : 'border-[rgba(245,158,11,0.22)] bg-[rgba(255,250,235,0.6)]'}`}
                                 >
-                                    <ShieldAlert size={18} className={styles.flagIcon} aria-hidden="true" />
-                                    <div className={styles.flagBody}>
-                                        <div className={styles.flagTitleRow}>
-                                            <span className={styles.flagTitle}>{flag.title}</span>
+                                    <ShieldAlert size={18} className={`shrink-0 mt-[2px] ${isHigh ? 'text-[#DC2626]' : 'text-[#D97706]'}`} aria-hidden="true" />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <span className="text-[13.5px] font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>{flag.title}</span>
                                             {isHigh && (
-                                                <span className={`${styles.weightBadge} ${styles.weightHigh}`}>高</span>
+                                                <span className="hidden sm:inline-block px-2 py-[2px] text-[10px] font-semibold tracking-wider rounded-full bg-[rgba(220,38,38,0.14)] text-[#991B1B]">高</span>
                                             )}
                                             {flag.weight === 'medium' && (
-                                                <span className={`${styles.weightBadge} ${styles.weightMedium}`}>中</span>
+                                                <span className="hidden sm:inline-block px-2 py-[2px] text-[10px] font-semibold tracking-wider rounded-full bg-[rgba(245,158,11,0.14)] text-[#92400E]">中</span>
                                             )}
                                         </div>
                                         {flag.evidence && (
-                                            <div className={styles.flagEvidence}>证据：{flag.evidence}</div>
+                                            <div className="text-[12px] leading-relaxed mt-1" style={{ color: 'var(--text-secondary)' }}>证据：{flag.evidence}</div>
                                         )}
                                     </div>
                                 </div>
@@ -195,50 +197,55 @@ const ProbabilityCard = ({
 
             {nextActions.length > 0 && (
                 <>
-                    <div className={styles.sectionTitle}>
+                    <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider mt-4 mb-2.5" style={{ color: 'var(--text-secondary)' }}>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
                         <span>下一步怎么做</span>
+                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
                     </div>
-                    <div className={styles.actionList}>
-                        {nextActions.map((action, idx) => (
-                            <button
-                                key={`a-${idx}`}
-                                type="button"
-                                className={styles.actionItem}
-                                onClick={() => handleCopy(action.action)}
-                                aria-label={`复制话术到输入框：${action.action}`}
-                            >
-                                <span className={styles.actionIndex}>{idx + 1}</span>
-                                <span className={styles.actionText}>{action.action}</span>
-                                {action.tone && (
-                                    <span className={`${styles.actionTone} ${styles[`tone${action.tone}`] || ''}`}>
-                                        {action.tone}
+                    <div className="flex flex-col gap-2">
+                        {nextActions.map((action, idx) => {
+                            let toneColor = '', toneBg = '';
+                            switch(action.tone) {
+                                case '主动': toneBg = 'rgba(196,123,90,0.16)'; toneColor = 'var(--primary-dark)'; break;
+                                case '温和': toneBg = 'rgba(16,185,129,0.14)'; toneColor = '#047857'; break;
+                                case '稳健': toneBg = 'rgba(122,92,71,0.14)'; toneColor = 'var(--text-secondary)'; break;
+                                case '克制': toneBg = 'rgba(220,38,38,0.12)'; toneColor = '#991B1B'; break;
+                                case '有趣': toneBg = 'rgba(232,122,93,0.16)'; toneColor = '#B8482E'; break;
+                                default: break;
+                            }
+                            return (
+                                <button
+                                    key={`a-${idx}`}
+                                    type="button"
+                                    className="flex items-center gap-2.5 px-3.5 py-3 w-full text-left rounded-xl border border-[rgba(196,123,90,0.14)] bg-[rgba(255,253,249,0.7)] hover:border-[var(--primary)] hover:bg-[rgba(255,248,244,0.95)] hover:shadow-[0_4px_14px_rgba(196,123,90,0.12)] transition-all duration-200 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] group"
+                                    onClick={() => handleCopy(action.action)}
+                                    aria-label={`复制话术到输入框：${action.action}`}
+                                >
+                                    <span className="shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-semibold bg-[rgba(196,123,90,0.14)] text-[var(--primary-dark)] display">
+                                        {idx + 1}
                                     </span>
-                                )}
-                                {typeof onCopyAction === 'function' ? (
-                                    <Copy size={14} className={styles.actionCopyIcon} aria-hidden="true" />
-                                ) : (
-                                    <ArrowRight size={14} className={styles.actionCopyIcon} aria-hidden="true" />
-                                )}
-                            </button>
-                        ))}
+                                    <span className="flex-1 min-w-0 text-[13.5px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>
+                                        {action.action}
+                                    </span>
+                                    {action.tone && (
+                                        <span className="shrink-0 text-[10px] sm:px-2 sm:py-[2px] px-1.5 py-0.5 rounded-full font-semibold tracking-wider" style={{ background: toneBg, color: toneColor }}>
+                                            {action.tone}
+                                        </span>
+                                    )}
+                                    {typeof onCopyAction === 'function' ? (
+                                        <Copy size={14} className="shrink-0 text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors duration-200" aria-hidden="true" />
+                                    ) : (
+                                        <ArrowRight size={14} className="shrink-0 text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors duration-200" aria-hidden="true" />
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
                 </>
             )}
             
-            {/* Auto submission note when clamped >= 82 */}
             {clamped >= 82 && (
-                <div style={{
-                    marginTop: '12px',
-                    padding: '8px 12px',
-                    background: '#f0fdf4',
-                    color: '#10b981',
-                    borderRadius: '8px',
-                    fontSize: '12px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontWeight: 500
-                }}>
+                <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg text-[12px] font-medium bg-[#f0fdf4] text-[#10b981]">
                     <BookmarkCheck size={14} />
                     <span>该条回复已自动进入高质量知识蒸馏队列</span>
                 </div>

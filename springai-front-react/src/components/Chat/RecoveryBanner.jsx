@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, AlertCircle, Loader } from 'lucide-react';
-import styles from './RecoveryBanner.module.css';
 
 /**
  * @param {'generating'|'completed'|'failed'} status
@@ -23,19 +22,19 @@ const RecoveryBanner = ({ status, onDismiss }) => {
 
     const config = {
         generating: {
-            icon: <Loader size={14} className={styles.spinIcon} />,
+            icon: <Loader size={14} className="animate-spin" />,
             text: '这条回复正在后台继续生成中',
-            className: styles.generating
+            className: 'bg-[rgba(232,122,93,0.1)] text-[#B0624A] border-[rgba(232,122,93,0.2)]'
         },
         completed: {
             icon: <Check size={14} />,
             text: '该回复已在你离开期间生成完成',
-            className: styles.completed
+            className: 'bg-[rgba(74,160,98,0.1)] text-[#3A7D4F] border-[rgba(74,160,98,0.2)]'
         },
         failed: {
             icon: <AlertCircle size={14} />,
             text: '后台生成失败，请尝试重新发送',
-            className: styles.failed
+            className: 'bg-[rgba(220,80,60,0.1)] text-[#B84A3A] border-[rgba(220,80,60,0.2)]'
         }
     };
 
@@ -46,7 +45,7 @@ const RecoveryBanner = ({ status, onDismiss }) => {
         <AnimatePresence>
             {visible && (
                 <motion.div
-                    className={`${styles.banner} ${c.className}`}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-medium my-2 mx-auto max-w-[400px] w-fit pointer-events-none border ${c.className}`}
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
@@ -55,7 +54,7 @@ const RecoveryBanner = ({ status, onDismiss }) => {
                     aria-live="polite"
                 >
                     {c.icon}
-                    <span className={styles.text}>{c.text}</span>
+                    <span className="leading-[1.2]">{c.text}</span>
                 </motion.div>
             )}
         </AnimatePresence>

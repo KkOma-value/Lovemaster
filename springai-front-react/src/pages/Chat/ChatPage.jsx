@@ -8,7 +8,6 @@ import { getChatImages, getChatMessages } from '../../services/chatApi';
 import { useChatSessions } from '../../hooks/useChatSessions';
 import { useChatRuntime } from '../../contexts/ChatRuntimeContext';
 import { useBackgroundRuns } from '../../hooks/useBackgroundRuns';
-import styles from './ChatPage.module.css';
 
 const noop = () => {};
 
@@ -113,7 +112,7 @@ const ChatPage = () => {
                                 msgs[lastAssistantIdx] = {
                                     ...msgs[lastAssistantIdx],
                                     images
-                                };
+                                }
                             }
                         }
                     } catch (error) {
@@ -267,9 +266,35 @@ const ChatPage = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
             transition={{ duration: 0.3 }}
-            className={styles.page}
+            className="w-screen h-screen flex relative overflow-hidden text-[var(--text-ink)] isolate z-[1]"
         >
-            <div className={`${styles.sidebarSlot} ${!isSidebarOpen ? styles.sidebarCollapsed : ''}`}>
+            {/* Warm blurred background image layer */}
+            <div className="absolute inset-0 z-0">
+                <img
+                    src="/1.png"
+                    alt=""
+                    className="w-full h-full object-cover"
+                    style={{
+                        filter: 'blur(16px) brightness(0.88) sepia(0.2) saturate(1.1)',
+                        transform: 'scale(1.08)',
+                    }}
+                />
+                {/* Warm tint overlay — matches design system peach/cream tones */}
+                <div
+                    className="absolute inset-0"
+                    style={{
+                        background: `
+                            radial-gradient(ellipse at 20% 20%, rgba(252,231,213,0.45) 0%, transparent 55%),
+                            radial-gradient(ellipse at 80% 80%, rgba(245,228,209,0.4) 0%, transparent 50%),
+                            radial-gradient(ellipse at 50% 50%, rgba(251,244,236,0.35) 0%, rgba(251,244,236,0.15) 100%)
+                        `,
+                    }}
+                />
+            </div>
+
+            <div
+                className={`relative z-40 transition-all duration-250 ease-in-out shrink-0 ${!isSidebarOpen || window.innerWidth <= 768 ? 'w-0' : 'w-[276px]'}`}
+            >
                 <ChatSidebar
                     isOpen={isSidebarOpen}
                     onToggle={handleToggleSidebar}
@@ -282,8 +307,8 @@ const ChatPage = () => {
                 />
             </div>
 
-            <main className={styles.main}>
-                <div className={styles.chatColumn}>
+            <main className="flex-1 min-w-0 flex relative z-10">
+                <div className="flex-1 min-w-0 h-screen flex flex-col relative">
                     <ChatArea
                         messages={messages}
                         inputValue={inputValue}

@@ -10,8 +10,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ChatRuntimeProvider } from './contexts/ChatRuntimeContext';
 
 const ChatPage = lazy(() => import('./pages/Chat/ChatPage'));
-const LoginPage = lazy(() => import('./pages/Auth/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/Auth/RegisterPage'));
+const AuthPage = lazy(() => import('./pages/Auth/AuthPage'));
 const SetPasswordPage = lazy(() => import('./pages/Auth/SetPasswordPage'));
 const KnowledgeReviewPage = lazy(() => import('./pages/Admin/KnowledgeReviewPage'));
 const ProbabilityPreview = lazy(() => import('./pages/Dev/ProbabilityPreview'));
@@ -33,8 +32,8 @@ function AnimatedRoutes() {
       <Suspense fallback={<RouteFallback />}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
           <Route path="/dev/probability" element={<ProbabilityPreview />} />
 
           <Route element={<ProtectedRoute />}>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import styles from './ChatArea.module.css';
 
 const STEP_LABELS = {
     thinking: '思考中',
@@ -27,7 +26,6 @@ const TOOL_NAMES = {
 
 const getToolFriendlyName = (content) => {
     if (!content) return '';
-    // Match patterns like "已执行 webSearch..." or "Calling tool: webSearch"
     const toolMatch = content.match(/(?:已执行|Calling tool:|调用)\s*(\w+)/);
     if (toolMatch) {
         const toolKey = toolMatch[1];
@@ -37,7 +35,6 @@ const getToolFriendlyName = (content) => {
 };
 
 const getStepDisplayText = (step) => {
-    // Don't show rewrite content to user — only show the label
     if (step.type === 'rewrite_result') {
         return STEP_LABELS[step.type];
     }
@@ -55,54 +52,81 @@ const StatusSteps = ({ steps, isStreaming, hasContent }) => {
 
     const isActive = isStreaming && !hasContent;
 
-    // Active state: only show the current (latest) step — clean single-line indicator
     if (isActive) {
         const currentStep = steps[steps.length - 1];
         return (
-            <div className={styles.statusStepsContainer}>
-                <div className={`${styles.statusStep} ${styles.statusStepActive}`}>
-                    <span className={styles.thinkingDot} />
-                    <span className={styles.statusStepText}>
+            <div className="flex flex-col gap-2.5 mb-2 mt-1">
+                <div className="flex items-center gap-2">
+                    <span 
+                        className="inline-block rounded-full" 
+                        style={{
+                            width: 6,
+                            height: 6,
+                            background: 'var(--primary)',
+                            boxShadow: '0 0 0 2px rgba(232,155,122,0.2)',
+                            animation: 'pulseDot 1.4s ease-in-out infinite'
+                        }} 
+                    />
+                    <span className="text-[13px] font-medium" style={{ color: 'var(--primary-dark)' }}>
                         {getStepDisplayText(currentStep)}
                     </span>
                 </div>
-                <div className={styles.shimmerBar} />
+                <div 
+                    className="h-[2px] rounded-full overflow-hidden" 
+                    style={{ background: 'rgba(232,155,122,0.15)', width: '60%' }}
+                >
+                    <div 
+                        className="h-full bg-[var(--primary)]" 
+                        style={{ width: '40%', animation: 'shimmer 2s ease-in-out infinite' }}
+                    />
+                </div>
             </div>
         );
     }
 
-    // Collapsed summary after content starts (only expand on user click)
     const summaryText = steps
         .map(s => STEP_LABELS[s.type] || s.type)
         .join(' · ');
 
     return (
-        <div className={styles.statusStepsContainer}>
+        <div className="flex flex-col gap-2 mb-3">
             <button
-                className={styles.statusSummary}
+                className="inline-flex items-center gap-1.5 self-start px-2 py-1 rounded-md transition-colors"
+                style={{ 
+                    color: 'var(--text-muted)',
+                    background: userExpanded ? 'var(--bg-peach)' : 'transparent',
+                    cursor: 'pointer',
+                    border: 'none',
+                    fontSize: 12
+                }}
                 onClick={() => setUserExpanded(prev => !prev)}
                 type="button"
+                title={userExpanded ? "收起思考过程" : "展开思考过程"}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--primary-dark)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
             >
-                <Check size={12} className={styles.statusCheckIcon} />
-                <span>{summaryText}</span>
+                <Check size={12} />
+                <span className="truncate max-w-[200px]" style={{ opacity: 0.8 }}>{summaryText}</span>
                 <ChevronDown
                     size={12}
-                    className={`${styles.statusChevron} ${userExpanded ? styles.statusChevronOpen : ''}`}
+                    style={{ 
+                        transform: userExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                        transition: 'transform 0.2s',
+                        opacity: 0.6
+                    }}
                 />
             </button>
             {userExpanded && (
-                <div className={styles.statusStepsExpanded}>
+                <div className="flex flex-col gap-1.5 pl-1 mb-2">
                     {steps.map((step, idx) => (
-                        <div key={idx} className={`${styles.statusStep} ${styles.statusStepDone}`}>
-                            <Check size={12} className={styles.statusCheckIcon} />
-                            <span className={styles.statusStepText}>
-                                {getStepDisplayText(step)}
-                            </span>
+                        <div key={idx} className="flex items-center gap-2 text-[12px]" style={{ color: 'var(--text-body)' }}>
+                            <Check size={12} style={{ color: 'var(--sage)' }} />
+                            <span>{getStepDisplayText(step)}</span>
                         </div>
                     ))}
                 </div>
             )}
-            <div className={styles.statusDivider} />
+            <div className="dot-divider mb-1 opacity-60" />
         </div>
     );
 };

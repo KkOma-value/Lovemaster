@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown, BookmarkPlus, BookmarkCheck, Copy, Check } from 'lucide-react';
 import { createKnowledgeCandidate, createFeedbackEvent } from '../../services/chatApi';
-import styles from './ActionBar.module.css';
 
 const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
     const [copied, setCopied] = useState(false);
@@ -58,13 +57,22 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
     };
 
     return (
-        <div className={styles.actionBar}>
-            <button type="button" className={styles.actionBtn} onClick={handleCopy} aria-label="复制回复到输入框">
+        <div className="flex items-center gap-1.5 mt-2 pt-2">
+            <button 
+                type="button" 
+                className="flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent cursor-pointer" 
+                onClick={handleCopy} 
+                aria-label="复制回复到输入框"
+            >
                 {copied ? <Check size={16} /> : <Copy size={16} />}
             </button>
             <button
                 type="button"
-                className={`${styles.actionBtn} ${thumbsStatus === 'up' ? styles.active : ''}`}
+                className={`flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer ${
+                    thumbsStatus === 'up' 
+                        ? 'text-[var(--primary-dark)] bg-[#FCE7D5]' 
+                        : 'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
                 onClick={handleThumbsUp}
                 aria-label="点赞"
                 disabled={!chatId}
@@ -73,7 +81,11 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
             </button>
             <button
                 type="button"
-                className={`${styles.actionBtn} ${thumbsStatus === 'down' ? styles.active : ''}`}
+                className={`flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer ${
+                    thumbsStatus === 'down' 
+                        ? 'text-[#A55F5F] bg-[#F8E0E0]' 
+                        : 'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }`}
                 onClick={handleThumbsDown}
                 aria-label="点踩"
                 disabled={!chatId}
@@ -83,19 +95,24 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
 
             <button
                 type="button"
-                className={`${styles.actionBtn} ${styles.wikiBtn} ${wikiStatus === 'candidate' ? styles.candidate : ''} ${wikiStatus === 'rejected' ? styles.rejected : ''} ${wikiStatus === 'unknown_topic' ? styles.unknownTopic : ''}`}
+                className={`flex items-center justify-center h-[32px] w-auto px-2 gap-1.5 rounded-md transition-colors disabled:opacity-[0.7] border-none cursor-pointer ${
+                    wikiStatus === 'candidate' ? 'text-[#10b981] bg-[#ecfdf5]' : 
+                    wikiStatus === 'rejected' ? 'text-[#ef4444] bg-[#fef2f2]' : 
+                    wikiStatus === 'unknown_topic' ? 'text-[#b45309] bg-[#fffbeb]' : 
+                    'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                } ${wikiStatus === 'submitting' || wikiStatus === 'candidate' || !chatId ? 'cursor-not-allowed' : ''}`}
                 onClick={handleSaveToWiki}
                 disabled={wikiStatus === 'submitting' || wikiStatus === 'candidate' || !chatId}
                 aria-label="提交到知识蒸馏"
             >
                 {wikiStatus === 'candidate' || wikiStatus === 'unknown_topic' ? <BookmarkCheck size={16} /> : <BookmarkPlus size={16} />}
-                {wikiStatus === 'candidate' && <span className={styles.wikiText}>已提交蒸馏队列</span>}
-                {wikiStatus === 'unknown_topic' && <span className={styles.wikiText}>待人工归类</span>}
-                {wikiStatus === 'rejected' && <span className={styles.wikiText}>提交失败</span>}
-                {wikiStatus === 'submitting' && <span className={styles.wikiText}>提交中...</span>}
+                {wikiStatus === 'candidate' && <span className="text-[12px] font-medium">已提交蒸馏队列</span>}
+                {wikiStatus === 'unknown_topic' && <span className="text-[12px] font-medium">待人工归类</span>}
+                {wikiStatus === 'rejected' && <span className="text-[12px] font-medium">提交失败</span>}
+                {wikiStatus === 'submitting' && <span className="text-[12px] font-medium">提交中...</span>}
             </button>
         </div>
     );
 };
 
-export default ActionBar;
+export default ActionBar;

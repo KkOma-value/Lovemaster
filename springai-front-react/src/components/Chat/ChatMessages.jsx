@@ -1,190 +1,251 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { User, ChevronDown } from 'lucide-react';
-import aiAvatarUrl from '../../assets/illustrations/ai-avatar.svg';
+import { ChevronDown } from 'lucide-react';
+import { BrandMark, Avatar } from '../ui/brand';
 import MarkdownRenderer from './MarkdownRenderer';
 import ImageWithLightbox from './ImageWithLightbox';
 import StatusSteps from './StatusSteps';
 import StreamingStatus from './StreamingStatus';
 import ProbabilityCard from './ProbabilityCard';
 import ActionBar from './ActionBar';
-import styles from './ChatArea.module.css';
+
+const BUBBLE_RADIUS = 20;
+
+const USER_BUBBLE_STYLE = {
+  background: 'linear-gradient(135deg, #F2A987 0%, #E89B7A 100%)',
+  color: '#FFFAF5',
+  padding: '12px 16px',
+  borderRadius: `${BUBBLE_RADIUS}px ${BUBBLE_RADIUS}px 6px ${BUBBLE_RADIUS}px`,
+  boxShadow: '0 6px 16px rgba(232,155,122,0.2)',
+  fontSize: 15,
+  lineHeight: 1.65,
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+};
+
+const AI_BUBBLE_STYLE = {
+  background: '#FFFDF9',
+  border: '1px solid var(--border-soft)',
+  padding: '14px 18px',
+  borderRadius: `6px ${BUBBLE_RADIUS}px ${BUBBLE_RADIUS}px ${BUBBLE_RADIUS}px`,
+  boxShadow: '0 4px 14px rgba(196,123,90,0.06)',
+  fontSize: 15,
+  lineHeight: 1.75,
+  color: 'var(--text-ink)',
+  wordBreak: 'break-word',
+};
 
 const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction }) => {
-    const scrollContainerRef = useRef(null);
-    const messagesEndRef = useRef(null);
-    const isUserScrollingRef = useRef(false);
-    const [showScrollBtn, setShowScrollBtn] = useState(false);
+  const scrollContainerRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const isUserScrollingRef = useRef(false);
+  const [showScrollBtn, setShowScrollBtn] = useState(false);
 
-    // Detect user scroll
-    const handleScroll = useCallback(() => {
-        const el = scrollContainerRef.current;
-        if (!el) return;
-        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
-        isUserScrollingRef.current = !atBottom;
-        setShowScrollBtn(!atBottom);
-    }, []);
+  const handleScroll = useCallback(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60;
+    isUserScrollingRef.current = !atBottom;
+    setShowScrollBtn(!atBottom);
+  }, []);
 
-    // Auto-scroll to bottom
-    const scrollToBottom = useCallback((smooth = true) => {
-        messagesEndRef.current?.scrollIntoView({
-            behavior: smooth ? 'smooth' : 'instant',
-            block: 'end'
-        });
-    }, []);
+  const scrollToBottom = useCallback((smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'instant',
+      block: 'end',
+    });
+  }, []);
 
-    // Auto-scroll when new content arrives (unless user is scrolling up)
-    useEffect(() => {
-        if (!isUserScrollingRef.current) {
-            scrollToBottom();
-        }
-    }, [messages, scrollToBottom]);
+  useEffect(() => {
+    if (!isUserScrollingRef.current) scrollToBottom();
+  }, [messages, scrollToBottom]);
 
-    // Also scroll when streamingStatus changes (thinking indicator)
-    useEffect(() => {
-        if (!isUserScrollingRef.current && streamingStatus) {
-            scrollToBottom();
-        }
-    }, [streamingStatus, scrollToBottom]);
+  useEffect(() => {
+    if (!isUserScrollingRef.current && streamingStatus) scrollToBottom();
+  }, [streamingStatus, scrollToBottom]);
 
-    const handleScrollToBottom = () => {
-        isUserScrollingRef.current = false;
-        setShowScrollBtn(false);
-        scrollToBottom();
-    };
+  const handleScrollToBottom = () => {
+    isUserScrollingRef.current = false;
+    setShowScrollBtn(false);
+    scrollToBottom();
+  };
 
-    if (messages.length === 0 && !streamingStatus) {
-        return null;
-    }
+  if (messages.length === 0 && !streamingStatus) return null;
 
-    return (
-        <div
-            ref={scrollContainerRef}
-            className={styles.messagesArea}
-            onScroll={handleScroll}
-        >
-            <div className={styles.messages}>
-                {messages.map((message, index) => (
-                    <div
-                        key={index}
-                        className={`${styles.messageRow} ${message.role === 'user' ? styles.userRow : ''}`}
-                    >
-                        {message.role === 'assistant' && (
-                            <div className={styles.aiIcon}>
-                                <img src={aiAvatarUrl} alt="AI助手" width="30" height="30" style={{ borderRadius: '50%' }} />
-                            </div>
-                        )}
-                        <div className={`${styles.bubble} ${message.role === 'user' ? styles.userBubble : styles.aiBubble}`}>
-                            {message.role === 'assistant' ? (
-                                <>
-                                    {/* Status steps — always above content */}
-                                    {message.statusSteps?.length > 0 && (
-                                        <StatusSteps
-                                            steps={message.statusSteps}
-                                            isStreaming={message.isStreaming}
-                                            hasContent={!!message.content}
-                                        />
-                                    )}
-                                    {/* Probability card — between status and content */}
-                                    {message.probability && (
-                                        <ProbabilityCard
-                                            {...message.probability}
-                                            onCopyAction={onCopyAction}
-                                        />
-                                    )}
-                                    {/* Content */}
-                                    {message.content && (
-                                        <MarkdownRenderer content={message.content} isStreaming={message.isStreaming} />
-                                    )}
-                                    {message.isStreaming && message.content && (
-                                        <span className={styles.cursor} />
-                                    )}
-                                    {/* Fallback: streaming status when no status steps exist yet */}
-                                    {message.isStreaming && !message.content && !message.statusSteps?.length && streamingStatus && (
-                                        <StreamingStatus
-                                            type={streamingStatus.type}
-                                            content={streamingStatus.content}
-                                            isVisible={true}
-                                            onRetry={onRetry}
-                                        />
-                                    )}
-                                    {/* Fallback images — only show images NOT already in markdown content */}
-                                    {(() => {
-                                        const fallbackImages = (message.images || []).filter(img =>
-                                            !message.content || !img.url || !message.content.includes(img.url)
-                                        );
-                                        if (fallbackImages.length === 0) return null;
-                                        return (
-                                            <div style={{
-                                                marginTop: '12px',
-                                                paddingTop: '12px',
-                                                borderTop: '1px solid #E5E7EB',
-                                                display: 'grid',
-                                                gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-                                                gap: '8px',
-                                            }}>
-                                                {fallbackImages.map((img, i) => (
-                                                    <ImageWithLightbox
-                                                        key={img.url || i}
-                                                        src={img.url}
-                                                        alt={img.name || '图片'}
-                                                    />
-                                                ))}
-                                            </div>
-                                        );
-                                    })()}
-                                    {message.isError && (
-                                        <div className={styles.errorInline}>
-                                            <span>{message.content}</span>
-                                        </div>
-                                    )}
-                                    {!message.isStreaming && message.content && !message.isError && (
-                                        <ActionBar 
-                                            chatId={chatId} 
-                                            runId={message.runId || null} 
-                                            question={index > 0 && messages[index - 1].role === 'user' ? messages[index - 1].content : ''}
-                                            answer={message.content}
-                                            onCopyAction={onCopyAction}
-                                        />
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {message.imageUrl && (
-                                        <div style={{ marginBottom: '8px' }}>
-                                            <img
-                                                src={message.imageUrl}
-                                                alt="Uploaded"
-                                                style={{ maxWidth: '280px', maxHeight: '280px', borderRadius: '16px', objectFit: 'cover' }}
-                                            />
-                                        </div>
-                                    )}
-                                    {message.content}
-                                </>
-                            )}
-                        </div>
-                        {message.role === 'user' && (
-                            <div className={styles.aiIcon}>
-                                <User size={16} />
-                            </div>
-                        )}
-                    </div>
-                ))}
+  return (
+    <div
+      ref={scrollContainerRef}
+      className="flex-1 overflow-y-auto hide-scroll relative"
+      onScroll={handleScroll}
+    >
+      <div className="px-6 py-6">
+        <div className="max-w-[760px] mx-auto flex flex-col gap-4">
+          {messages.map((message, index) => {
+            const isUser = message.role === 'user';
 
-                <div ref={messagesEndRef} />
-            </div>
+            if (isUser) {
+              return (
+                <div key={index} className="flex justify-end gap-2 bubble-in">
+                  <div
+                    className="flex flex-col items-end gap-1"
+                    style={{ maxWidth: '78%' }}
+                  >
+                    {message.imageUrl && (
+                      <img
+                        src={message.imageUrl}
+                        alt="Uploaded"
+                        style={{
+                          maxWidth: 280,
+                          maxHeight: 280,
+                          borderRadius: 16,
+                          objectFit: 'cover',
+                          boxShadow: '0 6px 16px rgba(196,123,90,0.14)',
+                        }}
+                      />
+                    )}
+                    {message.content && (
+                      <div style={USER_BUBBLE_STYLE}>{message.content}</div>
+                    )}
+                  </div>
+                  <Avatar name="我" tone="peach" size={32} />
+                </div>
+              );
+            }
 
-            {/* Scroll to bottom button */}
-            {showScrollBtn && (
-                <button
-                    className={styles.scrollBottomBtn}
-                    onClick={handleScrollToBottom}
-                    aria-label="滚动到底部"
+            // Assistant message
+            const fallbackImages = (message.images || []).filter(
+              (img) => !message.content || !img.url || !message.content.includes(img.url)
+            );
+
+            return (
+              <div key={index} className="flex gap-2 bubble-in">
+                <div style={{ flexShrink: 0 }}>
+                  <BrandMark size={32} />
+                </div>
+                <div
+                  className="flex flex-col gap-1.5"
+                  style={{ maxWidth: '80%', minWidth: 0, flex: 1 }}
                 >
-                    <ChevronDown size={18} />
-                </button>
-            )}
+                  <div style={AI_BUBBLE_STYLE}>
+                    {message.statusSteps?.length > 0 && (
+                      <StatusSteps
+                        steps={message.statusSteps}
+                        isStreaming={message.isStreaming}
+                        hasContent={!!message.content}
+                      />
+                    )}
+                    {message.probability && (
+                      <ProbabilityCard
+                        {...message.probability}
+                        onCopyAction={onCopyAction}
+                      />
+                    )}
+                    {message.content && (
+                      <MarkdownRenderer
+                        content={message.content}
+                        isStreaming={message.isStreaming}
+                      />
+                    )}
+                    {message.isStreaming && message.content && (
+                      <span
+                        style={{
+                          display: 'inline-block',
+                          width: 2,
+                          height: '1em',
+                          background: 'var(--primary)',
+                          marginLeft: 2,
+                          verticalAlign: 'middle',
+                          animation: 'pulse 1s ease-in-out infinite',
+                        }}
+                      />
+                    )}
+                    {message.isStreaming &&
+                      !message.content &&
+                      !message.statusSteps?.length &&
+                      streamingStatus && (
+                        <StreamingStatus
+                          type={streamingStatus.type}
+                          content={streamingStatus.content}
+                          isVisible={true}
+                          onRetry={onRetry}
+                        />
+                      )}
+                    {fallbackImages.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: 12,
+                          paddingTop: 12,
+                          borderTop: '1px dashed var(--border-soft)',
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+                          gap: 8,
+                        }}
+                      >
+                        {fallbackImages.map((img, i) => (
+                          <ImageWithLightbox
+                            key={img.url || i}
+                            src={img.url}
+                            alt={img.name || '图片'}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {message.isError && (
+                      <div
+                        style={{
+                          marginTop: 8,
+                          color: '#A55F5F',
+                          fontSize: 13,
+                        }}
+                      >
+                        {message.content}
+                      </div>
+                    )}
+                  </div>
+                  {!message.isStreaming && message.content && !message.isError && (
+                    <ActionBar
+                      chatId={chatId}
+                      runId={message.runId || null}
+                      question={
+                        index > 0 && messages[index - 1].role === 'user'
+                          ? messages[index - 1].content
+                          : ''
+                      }
+                      answer={message.content}
+                      onCopyAction={onCopyAction}
+                    />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+          <div ref={messagesEndRef} />
         </div>
-    );
+      </div>
+
+      {showScrollBtn && (
+        <button
+          onClick={handleScrollToBottom}
+          aria-label="滚动到底部"
+          className="grid place-items-center"
+          style={{
+            position: 'absolute',
+            bottom: 20,
+            right: 20,
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            background: '#FFFDF9',
+            border: '1px solid var(--border-soft)',
+            color: 'var(--primary-dark)',
+            boxShadow: '0 6px 18px rgba(196,123,90,0.2)',
+            cursor: 'pointer',
+          }}
+        >
+          <ChevronDown size={18} />
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default ChatMessages;
