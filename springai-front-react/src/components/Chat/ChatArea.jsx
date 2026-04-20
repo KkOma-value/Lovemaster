@@ -166,6 +166,7 @@ const ChatArea = ({
                 messages={messages}
                 streamingStatus={streamingStatus}
                 onCopyAction={handleCopyAction}
+                chatType={chatType}
                 chatId={chatId}
               />
             </Motion.div>

@@ -1,11 +1,32 @@
 import React, { useState } from 'react';
 import { ThumbsUp, ThumbsDown, BookmarkPlus, BookmarkCheck, Copy, Check } from 'lucide-react';
 import { createKnowledgeCandidate, createFeedbackEvent } from '../../services/chatApi';
+import { useChatRuntime } from '../../contexts/ChatRuntimeContext';
 
-const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
+const PERSISTED_WIKI_STATES = new Set(['candidate', 'unknown_topic']);
+
+const ActionBar = ({
+    chatType,
+    chatId,
+    messageId,
+    runId,
+    question,
+    answer,
+    thumbsStatus = null,
+    wikiStatus = 'idle',
+    onCopyAction
+}) => {
+    const { updateMessage } = useChatRuntime();
     const [copied, setCopied] = useState(false);
-    const [wikiStatus, setWikiStatus] = useState('idle'); // idle, submitting, candidate, rejected, unknown_topic
-    const [thumbsStatus, setThumbsStatus] = useState(null); // up, down, null
+    const [localWikiStatus, setLocalWikiStatus] = useState(null); // transient: submitting / rejected
+
+    const effectiveWikiStatus = localWikiStatus || wikiStatus;
+
+    const persistMessage = (patch) => {
+        if (messageId) {
+            updateMessage(chatType, chatId, messageId, patch);
+        }
+    };
 
     const handleCopy = () => {
         if (onCopyAction) onCopyAction(answer);
@@ -16,52 +37,50 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
     const handleThumbsUp = async () => {
         if (!chatId || thumbsStatus === 'up') return;
         const previous = thumbsStatus;
-        setThumbsStatus('up');
+        persistMessage({ thumbs: 'up' });
         try {
             await createFeedbackEvent(null, chatId, runId, 'thumbs_up', '', 1.0, {});
         } catch {
-            setThumbsStatus(previous);
+            persistMessage({ thumbs: previous });
         }
     };
 
     const handleThumbsDown = async () => {
         if (!chatId || thumbsStatus === 'down') return;
         const previous = thumbsStatus;
-        setThumbsStatus('down');
+        persistMessage({ thumbs: 'down' });
         try {
             await createFeedbackEvent(null, chatId, runId, 'thumbs_down', '', -1.0, {});
         } catch {
-            setThumbsStatus(previous);
+            persistMessage({ thumbs: previous });
         }
     };
 
     const handleSaveToWiki = async () => {
-        if (wikiStatus === 'submitting') return;
+        if (effectiveWikiStatus === 'submitting' || PERSISTED_WIKI_STATES.has(effectiveWikiStatus)) return;
         if (!chatId || !answer?.trim()) {
-            setWikiStatus('rejected');
+            setLocalWikiStatus('rejected');
             return;
         }
 
-        setWikiStatus('submitting');
+        setLocalWikiStatus('submitting');
         try {
             const resp = await createKnowledgeCandidate(chatId, runId, question, answer, 'manual', 1.0);
             const unknownTopic = Boolean(resp?.unknownTopic) || resp?.status === 'unknown_topic';
-            if (unknownTopic) {
-                setWikiStatus('unknown_topic');
-            } else {
-                setWikiStatus('candidate');
-            }
+            const finalStatus = unknownTopic ? 'unknown_topic' : 'candidate';
+            setLocalWikiStatus(null);
+            persistMessage({ wikiStatus: finalStatus });
         } catch {
-            setWikiStatus('rejected');
+            setLocalWikiStatus('rejected');
         }
     };
 
     return (
         <div className="flex items-center gap-1.5 mt-2 pt-2">
-            <button 
-                type="button" 
-                className="flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent cursor-pointer" 
-                onClick={handleCopy} 
+            <button
+                type="button"
+                className="flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors text-gray-500 hover:bg-gray-100 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed border-none bg-transparent cursor-pointer"
+                onClick={handleCopy}
                 aria-label="复制回复到输入框"
             >
                 {copied ? <Check size={16} /> : <Copy size={16} />}
@@ -69,8 +88,8 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
             <button
                 type="button"
                 className={`flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer ${
-                    thumbsStatus === 'up' 
-                        ? 'text-[var(--primary-dark)] bg-[#FCE7D5]' 
+                    thumbsStatus === 'up'
+                        ? 'text-[var(--primary-dark)] bg-[#FCE7D5]'
                         : 'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
                 onClick={handleThumbsUp}
@@ -82,8 +101,8 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
             <button
                 type="button"
                 className={`flex items-center justify-center min-w-[32px] h-[32px] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed border-none cursor-pointer ${
-                    thumbsStatus === 'down' 
-                        ? 'text-[#A55F5F] bg-[#F8E0E0]' 
+                    thumbsStatus === 'down'
+                        ? 'text-[#A55F5F] bg-[#F8E0E0]'
                         : 'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
                 onClick={handleThumbsDown}
@@ -96,20 +115,20 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
             <button
                 type="button"
                 className={`flex items-center justify-center h-[32px] w-auto px-2 gap-1.5 rounded-md transition-colors disabled:opacity-[0.7] border-none cursor-pointer ${
-                    wikiStatus === 'candidate' ? 'text-[var(--sage)] bg-[rgba(143,176,159,0.16)]' : 
-                    wikiStatus === 'rejected' ? 'text-[#ef4444] bg-[#fef2f2]' : 
-                    wikiStatus === 'unknown_topic' ? 'text-[#b45309] bg-[#fffbeb]' : 
+                    effectiveWikiStatus === 'candidate' ? 'text-[var(--sage)] bg-[rgba(143,176,159,0.16)]' :
+                    effectiveWikiStatus === 'rejected' ? 'text-[#ef4444] bg-[#fef2f2]' :
+                    effectiveWikiStatus === 'unknown_topic' ? 'text-[#b45309] bg-[#fffbeb]' :
                     'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                } ${wikiStatus === 'submitting' || wikiStatus === 'candidate' || !chatId ? 'cursor-not-allowed' : ''}`}
+                } ${effectiveWikiStatus === 'submitting' || effectiveWikiStatus === 'candidate' || !chatId ? 'cursor-not-allowed' : ''}`}
                 onClick={handleSaveToWiki}
-                disabled={wikiStatus === 'submitting' || wikiStatus === 'candidate' || !chatId}
+                disabled={effectiveWikiStatus === 'submitting' || effectiveWikiStatus === 'candidate' || !chatId}
                 aria-label="提交到知识蒸馏"
             >
-                {wikiStatus === 'candidate' || wikiStatus === 'unknown_topic' ? <BookmarkCheck size={16} /> : <BookmarkPlus size={16} />}
-                {wikiStatus === 'candidate' && <span className="text-[12px] font-medium">已提交蒸馏队列</span>}
-                {wikiStatus === 'unknown_topic' && <span className="text-[12px] font-medium">待人工归类</span>}
-                {wikiStatus === 'rejected' && <span className="text-[12px] font-medium">提交失败</span>}
-                {wikiStatus === 'submitting' && <span className="text-[12px] font-medium">提交中...</span>}
+                {effectiveWikiStatus === 'candidate' || effectiveWikiStatus === 'unknown_topic' ? <BookmarkCheck size={16} /> : <BookmarkPlus size={16} />}
+                {effectiveWikiStatus === 'candidate' && <span className="text-[12px] font-medium">已提交蒸馏队列</span>}
+                {effectiveWikiStatus === 'unknown_topic' && <span className="text-[12px] font-medium">待人工归类</span>}
+                {effectiveWikiStatus === 'rejected' && <span className="text-[12px] font-medium">提交失败</span>}
+                {effectiveWikiStatus === 'submitting' && <span className="text-[12px] font-medium">提交中...</span>}
             </button>
         </div>
     );

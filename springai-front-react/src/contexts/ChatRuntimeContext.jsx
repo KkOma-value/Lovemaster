@@ -69,6 +69,20 @@ const clearCachedSnapshot = () => {
     }
 };
 
+let messageIdCounter = 0;
+const generateMessageId = () => `msg_${Date.now().toString(36)}_${++messageIdCounter}`;
+
+const ensureMessageIds = (messages) => {
+    if (!Array.isArray(messages)) return messages;
+    let mutated = false;
+    const result = messages.map(msg => {
+        if (!msg || typeof msg !== 'object' || msg.id) return msg;
+        mutated = true;
+        return { ...msg, id: generateMessageId() };
+    });
+    return mutated ? result : messages;
+};
+
 const sanitizeMessagesForCache = (messages) => {
     if (!Array.isArray(messages)) return [];
     return messages
@@ -348,14 +362,35 @@ export function ChatRuntimeProvider({ children }) {
         setRuntimes(prev => {
             const current = prev[chatKey] || createEmptyRuntime(chatType, chatId);
             const next = typeof updater === 'function' ? updater(current) : updater;
+            const normalizedMessages = ensureMessageIds(next.messages);
             return {
                 ...prev,
                 [chatKey]: {
                     ...createEmptyRuntime(chatType, chatId),
                     ...next,
+                    messages: normalizedMessages,
                     chatType,
                     chatId
                 }
+            };
+        });
+    }, []);
+
+    const updateMessage = useCallback((chatType, chatId, messageId, patch) => {
+        if (!messageId) return;
+        setRuntimes(prev => {
+            const chatKey = buildChatKey(chatType, chatId);
+            if (!chatKey) return prev;
+            const current = prev[chatKey];
+            if (!current) return prev;
+            const nextMessages = current.messages.map(msg =>
+                msg.id === messageId
+                    ? { ...msg, ...(typeof patch === 'function' ? patch(msg) : patch) }
+                    : msg
+            );
+            return {
+                ...prev,
+                [chatKey]: { ...current, messages: nextMessages }
             };
         });
     }, []);
@@ -1006,6 +1041,7 @@ export function ChatRuntimeProvider({ children }) {
         removeChat,
         hydrateMessages,
         refreshChatMessages,
+        updateMessage,
         clearChatRuntime,
         registerParsedMessageListener,
         sendMessage,

@@ -34,7 +34,7 @@ const AI_BUBBLE_STYLE = {
   wordBreak: 'break-word',
 };
 
-const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction }) => {
+const ChatMessages = ({ messages, streamingStatus, chatType, chatId, onRetry, onCopyAction }) => {
   const scrollContainerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const isUserScrollingRef = useRef(false);
@@ -81,10 +81,11 @@ const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction
         <div className="max-w-[760px] mx-auto flex flex-col gap-4">
           {messages.map((message, index) => {
             const isUser = message.role === 'user';
+            const messageKey = message.id || `idx_${index}`;
 
             if (isUser) {
               return (
-                <div key={index} className="flex justify-end gap-2 bubble-in">
+                <div key={messageKey} className="flex justify-end gap-2 bubble-in">
                   <div
                     className="flex flex-col items-end gap-1"
                     style={{ maxWidth: '78%' }}
@@ -117,7 +118,7 @@ const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction
             );
 
             return (
-              <div key={index} className="flex gap-2 bubble-in">
+              <div key={messageKey} className="flex gap-2 bubble-in">
                 <div style={{ flexShrink: 0 }}>
                   <BrandMark size={32} />
                 </div>
@@ -203,7 +204,9 @@ const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction
                   </div>
                   {!message.isStreaming && message.content && !message.isError && (
                     <ActionBar
+                      chatType={chatType}
                       chatId={chatId}
+                      messageId={message.id}
                       runId={message.runId || null}
                       question={
                         index > 0 && messages[index - 1].role === 'user'
@@ -211,6 +214,8 @@ const ChatMessages = ({ messages, streamingStatus, chatId, onRetry, onCopyAction
                           : ''
                       }
                       answer={message.content}
+                      thumbsStatus={message.thumbs || null}
+                      wikiStatus={message.wikiStatus || 'idle'}
                       onCopyAction={onCopyAction}
                     />
                   )}
