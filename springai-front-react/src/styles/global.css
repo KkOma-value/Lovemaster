@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
 /* ============================================================
    Lovemaster — Warm Peach + Cream + Sage Design System
@@ -37,9 +36,9 @@
   --r-lg: 28px;
   --r-xl: 36px;
 
-  --font-display: 'Manrope', 'Source Sans 3', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-body:    'Source Sans 3', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  --font-en:      'Manrope', 'Source Sans 3', sans-serif;
+  --font-display: 'ZCOOL KuaiLe', 'Ma Shan Zheng', system-ui, sans-serif;
+  --font-body:    'ZCOOL KuaiLe', 'Ma Shan Zheng', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-en:      'Inter', system-ui, sans-serif;
 
   /* Legacy aliases so older module.css still render without breaking */
   --color-primary:        var(--primary);
@@ -76,13 +75,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: auto;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: 0.01em;
-  line-height: 1.2;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
 }
 
 /* ── Grain overlay ── */

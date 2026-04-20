@@ -1,20 +1,16 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
-import { getChatImages, getChatMessages } from '../../services/chatApi';
 import { useChatSessions } from '../../hooks/useChatSessions';
 import { useChatRuntime } from '../../contexts/ChatRuntimeContext';
 import { useBackgroundRuns } from '../../hooks/useBackgroundRuns';
 
-const noop = () => {};
-
 const ChatPage = () => {
     const { type } = useParams();
     const chatType = type || 'loveapp';
-    const isCoach = chatType === 'coach';
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [inputValue, setInputValue] = useState('');
 
@@ -29,17 +25,11 @@ const ChatPage = () => {
 
     const {
         getChatState,
-        hydrateMessages,
-        clearChatRuntime,
+        ensureMessagesLoaded,
         sendMessage,
         runtimeEntries
     } = useChatRuntime();
 
-    const stopChatRuntime = useCallback((chatId) => {
-        clearChatRuntime(chatType, chatId);
-    }, [chatType, clearChatRuntime]);
-
-    // Chat sessions
     const {
         chatList,
         currentChatId,
@@ -48,10 +38,9 @@ const ChatPage = () => {
         autoCreateChat,
         deleteChat,
         updateChatTitle
-    } = useChatSessions(chatType, stopChatRuntime, noop);
+    } = useChatSessions(chatType);
 
     const runtime = getChatState(chatType, currentChatId);
-    const runtimeRef = useRef(runtime);
     const messages = runtime.messages;
     const isLoading = runtime.isLoading;
     const streamingStatus = runtime.streamingStatus;
@@ -74,66 +63,9 @@ const ChatPage = () => {
     })();
 
     useEffect(() => {
-        runtimeRef.current = runtime;
-    }, [runtime]);
-
-    // Load messages (and fallback images for coach) when currentChatId changes
-    useEffect(() => {
         if (!currentChatId) return;
-
-        let cancelled = false;
-        const activeChatId = currentChatId;
-
-        const loadMessages = async () => {
-            const runtimeAtLoadStart = runtimeRef.current;
-
-            if (runtimeAtLoadStart.messages.length > 0) {
-                return;
-            }
-
-            if (runtimeAtLoadStart.isLoading && runtimeAtLoadStart.messages.length > 0) {
-                return;
-            }
-
-            try {
-                let msgs = await getChatMessages(activeChatId, chatType);
-                if (cancelled) return;
-
-                // For coach mode, load conversation images and attach to the last assistant message
-                // as fallback (in case markdown content doesn't already include images)
-                if (isCoach && msgs.length > 0) {
-                    try {
-                        const images = await getChatImages(activeChatId, chatType);
-                        if (!cancelled && Array.isArray(images) && images.length > 0) {
-                            // Find the last assistant message and attach images
-                            const lastAssistantIdx = msgs.findLastIndex(m => m.role === 'assistant');
-                            if (lastAssistantIdx >= 0) {
-                                msgs = [...msgs];
-                                msgs[lastAssistantIdx] = {
-                                    ...msgs[lastAssistantIdx],
-                                    images
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Failed to load images:', error);
-                    }
-                }
-
-                hydrateMessages(chatType, activeChatId, msgs.length > 0 ? msgs : []);
-            } catch (error) {
-                console.error('Failed to load messages:', error);
-                if (!cancelled) {
-                    hydrateMessages(chatType, activeChatId, []);
-                }
-            }
-        };
-
-        loadMessages();
-        return () => {
-            cancelled = true;
-        };
-    }, [currentChatId, chatType, isCoach, hydrateMessages]);
+        ensureMessagesLoaded(chatType, currentChatId);
+    }, [currentChatId, chatType, ensureMessagesLoaded]);
 
     // Send message handler
     const handleSendMessage = useCallback(async (msgText = inputValue, imageUrl = null) => {
@@ -182,9 +114,8 @@ const ChatPage = () => {
         setInputValue('');
     }, [createNewChat]);
 
-    // Delete chat handler
     const handleDeleteChat = useCallback(async (chatId) => {
-        await deleteChat(chatId, noop);
+        await deleteChat(chatId);
     }, [deleteChat]);
 
     const handleToggleSidebar = useCallback(() => {
