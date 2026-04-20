@@ -4,16 +4,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.springai_learn.ChatMemory.DatabaseChatMemory;
+import org.example.springai_learn.ai.config.RewriteProperties;
 import org.example.springai_learn.ai.context.ChatInputContext;
 import org.example.springai_learn.ai.context.ConversationIds;
 import org.example.springai_learn.ai.context.IntakeAnalysisResult;
+import org.example.springai_learn.ai.context.OcrExtractionResult;
 import org.example.springai_learn.ai.context.ProbabilityAnalysis;
 import org.example.springai_learn.ai.service.AiErrorMessageResolver;
 import org.example.springai_learn.ai.service.ChatRunService;
 import org.example.springai_learn.ai.service.MultimodalIntakeService;
+import org.example.springai_learn.ai.service.OcrAgentService;
 import org.example.springai_learn.ai.service.ProbabilityAnalysisService;
+import org.example.springai_learn.ai.service.ProbabilityKeywordDetector;
 import org.example.springai_learn.ai.service.RagKnowledgeService;
 import org.example.springai_learn.ai.service.SseEventHelper;
+import org.example.springai_learn.ai.service.ToolHintDetector;
 import org.example.springai_learn.app.LoveApp;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -26,6 +31,10 @@ import java.util.Map;
 public class LoveChatOrchestrator {
 
     private final MultimodalIntakeService multimodalIntakeService;
+    private final OcrAgentService ocrAgentService;
+    private final ProbabilityKeywordDetector probabilityKeywordDetector;
+    private final ToolHintDetector toolHintDetector;
+    private final RewriteProperties rewriteProperties;
     private final ProbabilityAnalysisService probabilityAnalysisService;
     private final RagKnowledgeService ragKnowledgeService;
     private final SseEventHelper sseEventHelper;
@@ -51,13 +60,14 @@ public class LoveChatOrchestrator {
         Thread.startVirtualThread(() -> {
             ProbabilityAnalysis probResult = null;
             try {
-                // Step 1: Intake — OCR + structured rewrite
                 if (context.hasImage()) {
                     publishStatus(emitter, runId, "intake_status", "正在识别聊天截图，整理双方对话...");
                 } else {
                     publishStatus(emitter, runId, "thinking", "正在分析你的问题，准备回复建议...");
                 }
-                IntakeAnalysisResult analysis = multimodalIntakeService.analyze(context);
+
+                // Step 1: Intake — 新链路 OCR-only（legacy-mode=true 时回退旧 MultimodalIntakeService）
+                IntakeAnalysisResult analysis = buildIntake(context);
 
                 if (analysis.hasImage()) {
                     String ocrHint = analysis.ocrText() == null || analysis.ocrText().isBlank()
@@ -66,10 +76,7 @@ public class LoveChatOrchestrator {
                     publishStatus(emitter, runId, "ocr_result", ocrHint);
                 }
 
-                publishStatus(emitter, runId, "rewrite_result",
-                        "我已经把你的问题整理好了：" + shorten(analysis.rewrittenQuestion(), 96));
-
-                // Step 2 (NEW): Probability analysis — if intent detected
+                // Step 2: Probability analysis — if intent detected
                 if (analysis.probabilityRequested()) {
                     publishStatus(emitter, runId, "probability_status", "正在评估成功概率...");
                     try {
@@ -84,24 +91,22 @@ public class LoveChatOrchestrator {
                         }
                     } catch (Exception e) {
                         log.warn("概率分析失败，跳过: chatId={}, error={}", context.chatId(), e.getMessage());
-                        // 不抛出，继续走文字分析
                     }
                 }
 
-                // Step 3: RAG — retrieve relevant knowledge using rewritten question
+                // Step 3: RAG — retrieve using (ocrSummary + userMessage)
                 publishStatus(emitter, runId, "rag_status", "正在查阅恋爱知识库，补充参考资料...");
-                String ragKnowledge = ragKnowledgeService.retrieveKnowledge(analysis.rewrittenQuestion());
+                String ragKnowledge = ragKnowledgeService.retrieveKnowledge(buildRagQuery(analysis));
 
                 publishStatus(emitter, runId, "status", "正在生成对方意图分析和可直接发送的回复建议...");
 
-                // Step 4: Build system context — inject intake analysis + RAG knowledge
+                // Step 4: Build system context
                 String systemContext = buildSystemContext(analysis, ragKnowledge, probResult);
                 String conversationId = ConversationIds.forMode(context.userId(), context.mode(), context.chatId());
 
-                // Capture probability for persistence in doOnComplete
                 final ProbabilityAnalysis finalProbResult = probResult;
 
-                // Step 5: Stream content chunks to client
+                // Step 5: Stream content chunks
                 loveApp.doChatWithRAGContextStream(
                         safe(context.userMessage()), systemContext, conversationId
                 ).doOnComplete(() -> {
@@ -112,7 +117,6 @@ public class LoveChatOrchestrator {
                             log.warn("保存 imageUrl 失败: {}", e.getMessage());
                         }
                     }
-                    // Persist probability analysis on the latest assistant message
                     if (finalProbResult != null) {
                         try {
                             String probJson = objectMapper.writeValueAsString(finalProbResult);
@@ -149,6 +153,30 @@ public class LoveChatOrchestrator {
         return emitter;
     }
 
+    private IntakeAnalysisResult buildIntake(ChatInputContext context) {
+        if (rewriteProperties.legacyMode()) {
+            log.info("Rewrite legacy-mode 启用，走旧 MultimodalIntakeService: chatId={}", context.chatId());
+            return multimodalIntakeService.analyze(context);
+        }
+        OcrExtractionResult ocr = null;
+        if (context.hasImage()) {
+            ocr = ocrAgentService.extract(context.imageUrl(), context.userId(), context.userMessage());
+        }
+        boolean likelyNeedTools = toolHintDetector.detect(context.userMessage());
+        boolean probabilityRequested = probabilityKeywordDetector.detect(context.userMessage());
+        return IntakeAnalysisResult.forMainChain(context, ocr, likelyNeedTools, probabilityRequested);
+    }
+
+    private String buildRagQuery(IntakeAnalysisResult analysis) {
+        String userMessage = safe(analysis.rewrittenQuestion());
+        if (analysis.hasImage()
+                && analysis.conversationSummary() != null
+                && !analysis.conversationSummary().isBlank()) {
+            return analysis.conversationSummary() + " / " + userMessage;
+        }
+        return userMessage;
+    }
+
     private String buildSystemContext(IntakeAnalysisResult analysis, String ragKnowledge, ProbabilityAnalysis prob) {
         StringBuilder sb = new StringBuilder();
         sb.append("# 当前请求分析\n");
@@ -156,13 +184,12 @@ public class LoveChatOrchestrator {
         if (analysis.hasImage() && analysis.ocrText() != null && !analysis.ocrText().isBlank()) {
             sb.append("截图摘录:").append(shorten(analysis.ocrText(), 200)).append("\n");
         }
-        sb.append("重写后的问题:").append(safe(analysis.rewrittenQuestion())).append("\n");
+        sb.append("用户原始问题:").append(safe(analysis.rewrittenQuestion())).append("\n");
         if (!analysis.uncertainties().isEmpty()) {
             sb.append("不确定项:").append(String.join("；", analysis.uncertainties())).append("\n");
         }
         sb.append("用户意图:").append(safe(analysis.suggestedIntent())).append("\n");
 
-        // If probability card was shown, instruct the model accordingly
         if (prob != null) {
             sb.append("\n# 概率分析已展示\n");
             sb.append("前置概率分析服务已给出成功概率 ").append(prob.probability()).append("% (").append(prob.tier()).append(")。\n");

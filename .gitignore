@@ -41,8 +41,6 @@ dist/
 # Claude Code local settings
 .claude/settings.local.json
 
-# Super Dev generated files
-.super-dev/
 output/
 
 # Playwright MCP

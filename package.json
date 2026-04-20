@@ -1,0 +1,8 @@
+{
+  "name": "lovemaster-monorepo",
+  "private": true,
+  "workspaces": [
+    "springai-front-react"
+  ],
+  "scripts": {}
+}

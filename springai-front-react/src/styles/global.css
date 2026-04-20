@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap');
 
 /* ============================================================
    Lovemaster — Warm Peach + Cream + Sage Design System
@@ -36,9 +37,9 @@
   --r-lg: 28px;
   --r-xl: 36px;
 
-  --font-display: 'ZCOOL KuaiLe', 'Ma Shan Zheng', system-ui, sans-serif;
-  --font-body:    'ZCOOL KuaiLe', 'Ma Shan Zheng', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
-  --font-en:      'Inter', system-ui, sans-serif;
+  --font-display: 'Manrope', 'Source Sans 3', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-body:    'Source Sans 3', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-en:      'Manrope', 'Source Sans 3', sans-serif;
 
   /* Legacy aliases so older module.css still render without breaking */
   --color-primary:        var(--primary);
@@ -52,7 +53,7 @@
   --text-secondary:       var(--text-body);
   --border-subtle:        var(--border-soft);
   --border-medium:        rgba(196, 123, 90, 0.3);
-  --gradient-warm:        linear-gradient(135deg, #F2A987 0%, #E89B7A 100%);
+  --gradient-warm:        #E89B7A;
   --gradient-button:      var(--gradient-warm);
   --shadow-sm:            var(--shadow-soft);
   --shadow-md:            var(--shadow-card);
@@ -144,11 +145,9 @@ h1, h2, h3, h4, h5, h6 {
 .breathe    { animation: breathe 3.5s ease-in-out infinite; }
 
 .shimmer-text {
-  background: linear-gradient(90deg, var(--text-muted) 0%, var(--text-muted) 40%, var(--primary) 50%, var(--text-muted) 60%, var(--text-muted) 100%);
-  background-size: 200% 100%;
+  background: var(--text-muted);
   -webkit-background-clip: text; background-clip: text;
   color: transparent;
-  animation: shimmer 2.6s linear infinite;
 }
 
 /* ── Cards ── */
@@ -180,7 +179,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Buttons ── */
 .btn-primary {
   position: relative;
-  background: linear-gradient(180deg, #F2A987 0%, #E89B7A 50%, #D98262 100%);
+  background: #E89B7A;
   color: #FFFAF5;
   border: none;
   border-radius: 999px;
@@ -206,7 +205,7 @@ h1, h2, h3, h4, h5, h6 {
 .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 .btn-primary::after {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  background: rgba(255,255,255,0.24);
   transform: translateX(-120%) skewX(-18deg);
   pointer-events: none;
 }
@@ -229,8 +228,7 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Divider ── */
 .dot-divider {
   height: 1px;
-  background-image: linear-gradient(90deg, var(--border-soft) 50%, transparent 50%);
-  background-size: 8px 1px;
+  background-color: var(--border-soft);
 }
 
 .bubble-in { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both; }

@@ -4,9 +4,9 @@
 Track product completeness and readiness evidence.
 
 ## Commands
-- `super-dev product-audit`
-- `super-dev release proof-pack`
-- `super-dev release readiness`
+- `mvn test`
+- `cd springai-front-react && npm run lint`
+- `cd springai-front-react && npm run build`
 
 ## Review Checklist
 - Core user journey is demonstrable.

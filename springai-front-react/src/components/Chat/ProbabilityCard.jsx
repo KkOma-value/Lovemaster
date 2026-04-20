@@ -130,14 +130,14 @@ const ProbabilityCard = ({
             {greenFlags.length > 0 && (
                 <>
                     <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider mt-4 mb-2.5" style={{ color: 'var(--text-secondary)' }}>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(196,123,90,0.18)' }} />
                         <span>正面信号<span className="ml-[6px] font-medium" style={{ color: 'var(--text-muted)' }}>{greenFlags.length}</span></span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(196,123,90,0.18)' }} />
                     </div>
                     <div className="flex flex-col gap-2">
                         {greenFlags.map((flag, idx) => (
                             <div key={`g-${idx}`} className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-[rgba(16,185,129,0.18)] bg-[rgba(236,253,245,0.55)]">
-                                <TrendingUp size={18} className="shrink-0 mt-[2px] text-[#059669]" aria-hidden="true" />
+                                <TrendingUp size={18} className="shrink-0 mt-[2px]" style={{ color: 'var(--sage)' }} aria-hidden="true" />
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-[13.5px] font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>{flag.title}</span>
@@ -161,9 +161,9 @@ const ProbabilityCard = ({
             {redFlags.length > 0 && (
                 <>
                     <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider mt-4 mb-2.5" style={{ color: 'var(--text-secondary)' }}>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(196,123,90,0.18)' }} />
                         <span>风险信号<span className="ml-[6px] font-medium" style={{ color: 'var(--text-muted)' }}>{redFlags.length}</span></span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(196,123,90,0.18)' }} />
                     </div>
                     <div className="flex flex-col gap-2">
                         {redFlags.map((flag, idx) => {
@@ -198,16 +198,16 @@ const ProbabilityCard = ({
             {nextActions.length > 0 && (
                 <>
                     <div className="flex items-center gap-3 text-[12px] font-semibold uppercase tracking-wider mt-4 mb-2.5" style={{ color: 'var(--text-secondary)' }}>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(196,123,90,0.18)' }} />
                         <span>下一步怎么做</span>
-                        <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[rgba(196,123,90,0.18)] to-transparent" />
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(196,123,90,0.18)' }} />
                     </div>
                     <div className="flex flex-col gap-2">
                         {nextActions.map((action, idx) => {
                             let toneColor = '', toneBg = '';
                             switch(action.tone) {
                                 case '主动': toneBg = 'rgba(196,123,90,0.16)'; toneColor = 'var(--primary-dark)'; break;
-                                case '温和': toneBg = 'rgba(16,185,129,0.14)'; toneColor = '#047857'; break;
+                                case '温和': toneBg = 'rgba(143,176,159,0.18)'; toneColor = 'var(--sage)'; break;
                                 case '稳健': toneBg = 'rgba(122,92,71,0.14)'; toneColor = 'var(--text-secondary)'; break;
                                 case '克制': toneBg = 'rgba(220,38,38,0.12)'; toneColor = '#991B1B'; break;
                                 case '有趣': toneBg = 'rgba(232,122,93,0.16)'; toneColor = '#B8482E'; break;
@@ -245,7 +245,7 @@ const ProbabilityCard = ({
             )}
             
             {clamped >= 82 && (
-                <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg text-[12px] font-medium bg-[#f0fdf4] text-[#10b981]">
+                <div className="flex items-center gap-1.5 mt-3 px-3 py-2 rounded-lg text-[12px] font-medium" style={{ background: 'rgba(143,176,159,0.16)', color: 'var(--sage)' }}>
                     <BookmarkCheck size={14} />
                     <span>该条回复已自动进入高质量知识蒸馏队列</span>
                 </div>

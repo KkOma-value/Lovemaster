@@ -1,13 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import { Send, Image as ImageIcon, Sparkles } from 'lucide-react';
+import { Send, Image as ImageIcon } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import OptimizeButton from './OptimizeButton';
 import { useImageUpload } from '../../hooks/useImageUpload';
+import { useOptimizePrompt } from '../../hooks/useOptimizePrompt';
+import { toast } from '../../hooks/useToast';
 
 const MAX_CHARS = 2000;
 
-const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
+const ChatInput = ({ inputValue, setInputValue, onSend, isLoading, chatType = 'loveapp' }) => {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const uploadedUrlRef = useRef(null);
   const {
     compressImage,
     uploadImage,
@@ -19,6 +23,7 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     compressedFile,
     originalFile,
   } = useImageUpload();
+  const { optimize, isOptimizing } = useOptimizePrompt();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -28,20 +33,72 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     }
   }, [inputValue]);
 
+  const handleReset = () => {
+    uploadedUrlRef.current = null;
+    reset();
+  };
+
+  const ensureImageUploaded = async () => {
+    if (!compressedFile) return null;
+    if (uploadedUrlRef.current) return uploadedUrlRef.current;
+    const result = await uploadImage();
+    const url = result.url || result.fileName;
+    uploadedUrlRef.current = url;
+    return url;
+  };
+
   const handleSend = async () => {
     if (!inputValue.trim() && !compressedFile) return;
     let uploadedImageUrl = null;
     if (compressedFile) {
       try {
-        const result = await uploadImage();
-        uploadedImageUrl = result.url || result.fileName;
+        uploadedImageUrl = await ensureImageUploaded();
       } catch (err) {
         console.error('Failed to upload', err);
+        toast.error('图片上传失败，请重试');
         return;
       }
     }
     onSend(inputValue, uploadedImageUrl);
-    reset();
+    handleReset();
+  };
+
+  const handleOptimize = async () => {
+    if (!inputValue.trim() && !compressedFile) return;
+    let imageUrl = null;
+    if (compressedFile) {
+      try {
+        imageUrl = await ensureImageUploaded();
+      } catch {
+        toast.error('图片上传失败，将发送原文');
+        return;
+      }
+    }
+    const mode = chatType === 'coach' ? 'coach' : 'love';
+    try {
+      const optimizedText = await optimize({
+        userMessage: inputValue,
+        imageUrl,
+        mode,
+      });
+      setInputValue(optimizedText.slice(0, MAX_CHARS));
+      requestAnimationFrame(() => {
+        const el = textareaRef.current;
+        if (el) {
+          el.focus();
+          const end = el.value.length;
+          el.setSelectionRange(end, end);
+        }
+      });
+    } catch (err) {
+      if (err.code === 'RATE_LIMITED') {
+        toast.error('优化太频繁，请稍后再试');
+      } else if (err.code === 'TIMEOUT') {
+        toast.error('优化超时，将发送原文');
+      } else {
+        toast.error('优化失败，将发送原文');
+      }
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -51,7 +108,10 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
     }
   };
 
-  const canSend = (!!inputValue.trim() || !!compressedFile) && !isLoading && !isUploading;
+  const hasContent = !!inputValue.trim() || !!compressedFile;
+  const canSend = hasContent && !isLoading && !isUploading && !isOptimizing;
+  const canOptimize =
+    hasContent && !isLoading && !isUploading && !isOptimizing && !isCompressing;
   const charCount = inputValue.length;
 
   return (
@@ -72,7 +132,7 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
             fileName={originalFile?.name}
             originalSize={originalFile?.size}
             compressedSize={compressedFile?.size}
-            onClear={reset}
+            onClear={handleReset}
           />
         </div>
       )}
@@ -131,22 +191,18 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
             style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.target.files[0];
-              if (file) compressImage(file);
+              if (file) {
+                uploadedUrlRef.current = null;
+                compressImage(file);
+              }
               if (fileInputRef.current) fileInputRef.current.value = '';
             }}
           />
-          <span
-            className="grid place-items-center"
-            title="温柔提示"
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 10,
-              color: 'var(--text-faint)',
-            }}
-          >
-            <Sparkles size={14} />
-          </span>
+          <OptimizeButton
+            disabled={!canOptimize}
+            isOptimizing={isOptimizing}
+            onClick={handleOptimize}
+          />
         </div>
 
         <div className="flex items-center gap-3">
@@ -161,7 +217,7 @@ const ChatInput = ({ inputValue, setInputValue, onSend, isLoading }) => {
               width: 40,
               height: 40,
               borderRadius: 14,
-              background: canSend ? 'linear-gradient(135deg, #F2A987, #E89B7A)' : '#EDE4D8',
+              background: canSend ? '#E89B7A' : '#EDE4D8',
               color: canSend ? '#FFFAF5' : '#B09080',
               boxShadow: canSend ? '0 8px 20px rgba(232,155,122,0.4)' : 'none',
               transition: 'all .2s',

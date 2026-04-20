@@ -25,8 +25,13 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated 主链路已切换为 OcrAgentService + detector 组合，RewriteAgentService 仅由前端按钮显式触发。
+ * 仅在 app.rewrite.legacy-mode=true 时作为回滚链路保留，后续版本将移除。
+ */
 @Service
 @Slf4j
+@Deprecated(since = "2026-04-20", forRemoval = false)
 public class MultimodalIntakeService {
 
     private static final String TEXT_ONLY_SYSTEM_PROMPT = """

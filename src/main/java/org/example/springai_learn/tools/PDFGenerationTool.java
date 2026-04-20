@@ -55,7 +55,7 @@ public class PDFGenerationTool {
         SanitizeResult sanitized = sanitizeNonBmp(content);
         String safeContent = sanitized.cleaned();
         if (StrUtil.isBlank(safeContent)) {
-            return "Error generating PDF: content became empty after removing unsupported characters (emoji)";
+            return "Error generating PDF: content became empty after removing unsupported supplementary-plane symbols";
         }
 
         Path baseDir = Path.of(fileSaveDir);
@@ -137,7 +137,7 @@ public class PDFGenerationTool {
                 return "Error generating PDF: empty file generated at " + filePath;
             }
             String notice = sanitized.removed() > 0
-                    ? " (note: removed " + sanitized.removed() + " unsupported non-BMP characters such as emoji)"
+                    ? " (note: removed " + sanitized.removed() + " unsupported non-BMP characters)"
                     : "";
             return "PDF generated successfully to: " + filePath + " (" + size + " bytes)"
                     + " (downloadDir=" + downloadDir + ", pdfDir=" + fileDir + ")" + notice;

@@ -1,19 +1,18 @@
 # HOST_USAGE_GUIDE
 
 ## Trigger Modes
-- Slash mode: /super-dev <requirement>
-- Text mode: super-dev: <requirement>
-- Entry mode: `super-dev start --idea "Lovemaster workflow continuation"`
+- Chat mode: describe requirement directly
+- Terminal mode: run backend/frontend commands
 
 ## Workflow Gate Reminder
-- 当前阶段是 `research`
-- Keep research and document confirmation gates before implementation.
+- Clarify requirement scope before coding
+- Keep design and implementation changes traceable in repository files
 
 ## Smoke
-1. Run `super-dev status`.
-2. Trigger host command with `/super-dev` or `super-dev:`.
-3. Verify state files under `.super-dev/` are updated.
+1. Run backend in local profile.
+2. Run frontend dev server.
+3. Verify main chat flow loads and requests reach `/api`.
 
 ## Common Recovery
-- Use `super-dev next` for next action.
-- Use `super-dev continue` to resume current flow.
+- Backend build fails: run `mvn -DskipTests=true package` and inspect error logs.
+- Frontend build fails: run `cd springai-front-react && npm run lint && npm run build`.

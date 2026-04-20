@@ -63,7 +63,7 @@ export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="relative z-10 flex flex-col justify-center p-8 md:p-10 md:w-1/2 md:h-screen"
         style={{
-          background: 'linear-gradient(145deg, rgba(252,231,213,0.88) 0%, rgba(245,196,168,0.85) 100%)',
+          background: 'rgba(252,231,213,0.88)',
           backdropFilter: 'blur(8px)',
         }}
       >

@@ -244,6 +244,63 @@ export async function createKnowledgeCandidate(chatId, runId, question, answer, 
 }
 
 /**
+ * Optimize the user's prompt via RewriteAgent.
+ * Returns { optimizedText }. Throws { code, message } on failure.
+ */
+export async function optimizePrompt({ userMessage, imageUrl, mode = 'love' }) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+    let token;
+    try {
+        token = await getValidAccessToken();
+    } catch {
+        token = null;
+    }
+
+    let response;
+    try {
+        response = await fetch(`${API_BASE}/ai/rewrite`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ userMessage, imageUrl: imageUrl || null, mode }),
+            signal: controller.signal,
+        });
+    } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+            const e = new Error('optimize timeout');
+            e.code = 'TIMEOUT';
+            throw e;
+        }
+        const e = new Error('network error');
+        e.code = 'NETWORK_ERROR';
+        throw e;
+    }
+    clearTimeout(timeoutId);
+
+    if (response.status === 429) {
+        const e = new Error('rate limited');
+        e.code = 'RATE_LIMITED';
+        throw e;
+    }
+    if (!response.ok) {
+        const e = new Error(`rewrite failed: ${response.status}`);
+        e.code = 'SERVER_ERROR';
+        throw e;
+    }
+    const data = await response.json();
+    if (!data?.optimizedText) {
+        const e = new Error('empty optimized text');
+        e.code = 'SERVER_ERROR';
+        throw e;
+    }
+    return { optimizedText: data.optimizedText };
+}
+
+/**
  * Submits feedback on a candidate or general response
  */
 export async function createFeedbackEvent(candidateId, chatId, runId, eventType, eventValue = null, eventScore = 1.0, meta = {}) {

@@ -93,8 +93,6 @@ const HomePage = () => {
   const { activeRuns } = useChatRuntime();
   const activeRunCount = activeRuns.length;
 
-  const heroGrad = 'linear-gradient(145deg, #F5D8D8 0%, #E8A4A4 50%, #D98B8B 100%)';
-
   const goChat = (mode = 'loveapp') => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -119,7 +117,7 @@ const HomePage = () => {
       {/* Warm overlay */}
       <div
         className="fixed inset-0 z-0 pointer-events-none"
-        style={{ background: 'linear-gradient(180deg, rgba(251,244,236,0.5) 0%, rgba(251,244,236,0.7) 100%)' }}
+        style={{ background: 'rgba(251,244,236,0.62)' }}
       />
       {/* Warm gradient overlay */}
       <div className="warm-bg fixed inset-0 z-0 pointer-events-none" />
@@ -223,7 +221,7 @@ const HomePage = () => {
             {/* Overlay for text readability */}
             <div
               className="absolute inset-0"
-              style={{ background: 'linear-gradient(180deg, rgba(40,35,30,0.3) 0%, rgba(40,35,30,0.2) 40%, rgba(40,35,30,0.45) 100%)', borderRadius: 'var(--r-xl)' }}
+              style={{ background: 'rgba(40,35,30,0.34)', borderRadius: 'var(--r-xl)' }}
             />
             <div className="relative z-10 h-full flex flex-col justify-between">
               <div>
@@ -433,7 +431,7 @@ const HomePage = () => {
           >
             <div
               className="soft-card relative overflow-hidden"
-              style={{ padding: 18, background: 'linear-gradient(135deg, #FCE7D5 0%, #F5C4A8 100%)', flex: 1 }}
+              style={{ padding: 18, background: '#FCE7D5', flex: 1 }}
             >
               <div className="display text-[32px] leading-none" style={{ color: 'var(--primary-dark)' }}>
                 4.9

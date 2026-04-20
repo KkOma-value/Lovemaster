@@ -9,9 +9,9 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
 
     return (
         <div style={{
-            fontFamily: "'Inter', -apple-system, sans-serif",
+            fontFamily: 'var(--font-body)',
             lineHeight: 1.6,
-            color: '#111827'
+            color: 'var(--text-ink)'
         }}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
@@ -44,7 +44,7 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                                     <code style={{
                                         fontFamily: "'SF Mono', 'Menlo', monospace",
                                         fontSize: '13px',
-                                        color: '#111827'
+                                        color: 'var(--text-ink)'
                                     }} {...props}>
                                         {children}
                                     </code>
@@ -52,8 +52,8 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                             </div>
                         ) : (
                             <code style={{
-                                backgroundColor: '#FFF1F2',
-                                color: '#BE123C',
+                                backgroundColor: 'var(--bg-peach)',
+                                color: 'var(--primary-dark)',
                                 padding: '2px 6px',
                                 borderRadius: '6px',
                                 fontFamily: "'SF Mono', 'Menlo', monospace",
@@ -126,7 +126,7 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                             fontWeight: 700,
                             marginTop: '24px',
                             marginBottom: '12px',
-                            color: '#111827'
+                            color: 'var(--text-ink)'
                         }}>
                             {children}
                         </h1>
@@ -137,7 +137,7 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                             fontWeight: 600,
                             marginTop: '20px',
                             marginBottom: '10px',
-                            color: '#111827'
+                            color: 'var(--text-ink)'
                         }}>
                             {children}
                         </h2>
@@ -148,7 +148,7 @@ const MarkdownRenderer = React.memo(({ content, isStreaming = false }) => {
                             fontWeight: 600,
                             marginTop: '16px',
                             marginBottom: '8px',
-                            color: '#111827'
+                            color: 'var(--text-ink)'
                         }}>
                             {children}
                         </h3>

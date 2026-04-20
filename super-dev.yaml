@@ -1,5 +1,5 @@
 author: ''
-backend: java
+backend: node
 cli: {}
 codex_review_enabled: false
 codex_review_phases:
@@ -7,9 +7,9 @@ codex_review_phases:
 - redteam
 - qa
 database: postgresql
-description: Lovemaster dating AI app with Spring Boot backend and React frontend
+description: ''
 design_inspiration_slug: ''
-domain: social
+domain: ''
 execution_mode: standard
 experts:
 - PM
@@ -18,7 +18,7 @@ experts:
 - UX
 - SECURITY
 - CODE
-frontend: react-vite
+frontend: next
 host_compatibility_min_ready_hosts: 1
 host_compatibility_min_score: 80
 host_profile_enforce_selected: false

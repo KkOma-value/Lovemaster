@@ -181,6 +181,7 @@ const ChatArea = ({
             setInputValue={setInputValue}
             onSend={onSendMessage}
             isLoading={isLoading}
+            chatType={chatType}
           />
           <div
             className="text-center mt-2 text-[10.5px]"

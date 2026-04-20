@@ -37,8 +37,8 @@ export default function ImageUpload({
         {(isCompressing || isUploading) && (
           <div className="h-[3px] bg-[rgba(196,123,90,0.1)] rounded-sm mt-1.5 overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#C47B5A] to-[#3A8B7F] rounded-sm transition-[width] duration-200 ease-in-out"
-              style={{ width: `${progress}%` }}
+              className="h-full rounded-sm transition-[width] duration-200 ease-in-out"
+              style={{ width: `${progress}%`, backgroundColor: '#C47B5A' }}
             />
           </div>
         )}

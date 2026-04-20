@@ -97,6 +97,11 @@ app:
     autostart: ${APP_MCP_AUTOSTART:true}
   google:
     client-id: ${GOOGLE_CLIENT_ID:59540883835-shhhvumlokiqd24eb2jnjq7o6dt9rohk.apps.googleusercontent.com}
+  rewrite:
+    legacy-mode: ${APP_REWRITE_LEGACY_MODE:false}
+    rate-limit:
+      per-user-per-minute: ${APP_REWRITE_RATE_LIMIT_PER_USER_PER_MINUTE:5}
+      per-ip-per-minute: ${APP_REWRITE_RATE_LIMIT_PER_IP_PER_MINUTE:20}
   knowledge:
     fanout:
       total-timeout-ms: ${APP_KNOWLEDGE_TOTAL_TIMEOUT_MS:800}

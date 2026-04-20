@@ -1,8 +1,8 @@
 # WORKFLOW_GUIDE_EN
 
 ## Required commands
-- `super-dev review docs`
-- `super-dev run --resume`
+- `mvn test`
+- `cd springai-front-react && npm run build`
 
 ## Flow
-research -> docs -> confirm -> spec -> frontend runtime -> backend -> quality -> delivery
+requirements -> docs -> implementation -> frontend runtime -> backend -> quality -> delivery

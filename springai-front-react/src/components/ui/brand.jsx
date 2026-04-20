@@ -9,7 +9,7 @@ export function BrandMark({ size = 32 }) {
         width: size,
         height: size,
         borderRadius: '50%',
-        background: 'linear-gradient(135deg, #F5C4A8 0%, #E89B7A 55%, #E8A4A4 100%)',
+        background: '#E89B7A',
         boxShadow: '0 6px 16px rgba(232,155,122,0.38), inset 0 1px 0 rgba(255,255,255,0.55)',
         color: '#FFFAF5',
         flexShrink: 0,
@@ -59,10 +59,10 @@ export function SectionTitle({ eyebrow, title, subtitle, align = 'left' }) {
 }
 
 const STICKER_TONES = {
-  peach: 'linear-gradient(135deg, #F5C4A8 0%, #E89B7A 100%)',
-  sage:  'linear-gradient(135deg, #B8CFC2 0%, #8FB09F 100%)',
-  rose:  'linear-gradient(135deg, #F5D8D8 0%, #E8A4A4 100%)',
-  cream: 'linear-gradient(135deg, #F5E4D1 0%, #D8BF9F 100%)',
+  peach: '#E89B7A',
+  sage: '#8FB09F',
+  rose: '#E8A4A4',
+  cream: '#D8BF9F',
 };
 
 export function IconSticker({ children, tone = 'peach', size = 44 }) {
@@ -84,9 +84,9 @@ export function IconSticker({ children, tone = 'peach', size = 44 }) {
 }
 
 const AVATAR_TONES = {
-  peach: 'linear-gradient(135deg, #F5C4A8, #E89B7A)',
-  sage:  'linear-gradient(135deg, #B8CFC2, #8FB09F)',
-  rose:  'linear-gradient(135deg, #F5D8D8, #E8A4A4)',
+  peach: '#E89B7A',
+  sage: '#8FB09F',
+  rose: '#E8A4A4',
 };
 
 export function Avatar({ name = '她', tone = 'rose', size = 36, src = null, onClick = null, title = '' }) {

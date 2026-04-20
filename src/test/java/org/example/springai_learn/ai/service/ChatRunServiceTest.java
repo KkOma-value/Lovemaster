@@ -48,7 +48,7 @@ class ChatRunServiceTest {
     }
 
     @Test
-    void appendContent_shouldAccumulatePartialResponseAndSetRunning() {
+    void appendContent_shouldBufferChunksAndPersistOnCompletion() {
         ChatRun run = ChatRun.builder()
                 .id("run-1")
                 .userId("user-1")
@@ -61,12 +61,13 @@ class ChatRunServiceTest {
 
         chatRunService.appendContent("run-1", "你好");
         chatRunService.appendContent("run-1", "世界");
+        chatRunService.markCompleted("run-1", null);
 
         ArgumentCaptor<ChatRun> captor = ArgumentCaptor.forClass(ChatRun.class);
         verify(chatRunRepository, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
         ChatRun saved = captor.getValue();
-        assertEquals(ChatRunStatus.RUNNING, saved.getStatus());
+        assertEquals(ChatRunStatus.COMPLETED, saved.getStatus());
         assertEquals("你好世界", saved.getPartialResponse());
-        assertEquals("content", saved.getLastEventType());
+        assertEquals("done", saved.getLastEventType());
     }
 }

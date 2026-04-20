@@ -82,7 +82,7 @@ const SAMPLES = {
 
 const pageStyle = {
     minHeight: '100vh',
-    background: '#F9FAFB',
+    background: 'var(--bg-cream)',
     padding: '40px 20px',
     display: 'flex',
     flexDirection: 'column',
@@ -94,13 +94,13 @@ const pageStyle = {
 const headerStyle = {
     fontSize: '20px',
     fontWeight: 600,
-    color: '#111827',
+    color: 'var(--text-ink)',
     marginBottom: '4px'
 };
 
 const descStyle = {
     fontSize: '14px',
-    color: '#6B7280',
+    color: 'var(--text-muted)',
     marginBottom: '12px'
 };
 
@@ -113,9 +113,9 @@ const tabsStyle = {
 const tabStyle = (active) => ({
     padding: '8px 16px',
     borderRadius: '10px',
-    border: active ? '1px solid #C47B5A' : '1px solid #E5E7EB',
-    background: active ? '#FFF8F4' : '#FFFFFF',
-    color: active ? '#C47B5A' : '#374151',
+    border: active ? '1px solid var(--primary-dark)' : '1px solid var(--border-soft)',
+    background: active ? 'var(--bg-peach)' : 'var(--bg-input)',
+    color: active ? 'var(--primary-dark)' : 'var(--text-body)',
     fontWeight: 500,
     cursor: 'pointer',
     fontSize: '13px'
@@ -124,15 +124,15 @@ const tabStyle = (active) => ({
 const cardWrapStyle = {
     width: '100%',
     maxWidth: '680px',
-    background: '#FFFFFF',
+    background: 'var(--bg-input)',
     padding: '16px',
     borderRadius: '20px',
-    boxShadow: '0 4px 24px rgba(0,0,0,0.04)'
+    boxShadow: 'var(--shadow-soft)'
 };
 
 const copyNoteStyle = {
     fontSize: '12px',
-    color: '#9CA3AF',
+    color: 'var(--text-muted)',
     marginTop: '8px'
 };
 

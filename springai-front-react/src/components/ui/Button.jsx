@@ -18,28 +18,26 @@ export const Button = ({
         switch (variant) {
             case 'secondary':
                 return {
-                    backgroundColor: isHovered ? '#F3F4F6' : '#fff',
-                    color: '#111827',
-                    border: '1px solid #E5E7EB'
+                    backgroundColor: isHovered ? 'rgba(107, 74, 56, 0.08)' : 'var(--bg-input)',
+                    color: 'var(--text-ink)',
+                    border: '1px solid var(--border-soft)'
                 };
             case 'ghost':
                 return {
-                    backgroundColor: isHovered ? '#F3F4F6' : 'transparent',
-                    color: '#111827',
+                    backgroundColor: isHovered ? 'rgba(107, 74, 56, 0.08)' : 'transparent',
+                    color: 'var(--text-ink)',
                     border: 'none'
                 };
             case 'danger':
                 return {
-                    backgroundColor: isHovered ? '#EF4444' : '#FEE2E2',
-                    color: isHovered ? '#fff' : '#DC2626',
+                    backgroundColor: isHovered ? '#D95F59' : '#F8E0E0',
+                    color: isHovered ? 'var(--bg-input)' : '#A55F5F',
                     border: 'none'
                 };
             default: // primary - warm brand gradient
                 return {
-                    background: isHovered
-                        ? 'linear-gradient(135deg, #C47B5A 0%, #DCA080 100%)'
-                        : 'linear-gradient(135deg, #DCA080 0%, #E8C4A0 100%)',
-                    color: '#fff',
+                    backgroundColor: isHovered ? 'var(--primary-dark)' : 'var(--primary)',
+                    color: 'var(--bg-input)',
                     border: 'none',
                     boxShadow: isHovered
                         ? '0 8px 24px rgba(196, 123, 90, 0.4)'
@@ -60,7 +58,7 @@ export const Button = ({
     };
 
     const baseStyle = {
-        fontFamily: "'Inter', -apple-system, sans-serif",
+        fontFamily: 'var(--font-body)',
         fontWeight: 600,
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         opacity: disabled || loading ? 0.5 : 1,

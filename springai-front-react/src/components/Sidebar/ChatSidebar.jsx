@@ -31,7 +31,7 @@ function ModeBtn({ active, onClick, icon, children }) {
       className="flex-1 flex items-center justify-center gap-1 py-1.5 text-xs font-medium"
       style={{
         borderRadius: 999,
-        background: active ? 'linear-gradient(135deg, #F2A987, #E89B7A)' : 'transparent',
+        background: active ? '#E89B7A' : 'transparent',
         color: active ? '#FFFAF5' : 'var(--text-body)',
         boxShadow: active ? '0 4px 10px rgba(232,155,122,0.3)' : 'none',
         transition: 'all .2s',
@@ -272,7 +272,7 @@ const ChatSidebar = ({
         className="flex items-center gap-2 mb-3 w-full"
         style={{
           padding: '10px 14px',
-          background: 'linear-gradient(135deg, #F2A987, #E89B7A)',
+          background: '#E89B7A',
           color: '#FFFAF5',
           borderRadius: 14,
           boxShadow: '0 6px 16px rgba(232,155,122,0.32), inset 0 1px 0 rgba(255,255,255,0.4)',

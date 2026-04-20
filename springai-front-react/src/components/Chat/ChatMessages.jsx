@@ -11,7 +11,7 @@ import ActionBar from './ActionBar';
 const BUBBLE_RADIUS = 20;
 
 const USER_BUBBLE_STYLE = {
-  background: 'linear-gradient(135deg, #F2A987 0%, #E89B7A 100%)',
+  background: '#E89B7A',
   color: '#FFFAF5',
   padding: '12px 16px',
   borderRadius: `${BUBBLE_RADIUS}px ${BUBBLE_RADIUS}px 6px ${BUBBLE_RADIUS}px`,

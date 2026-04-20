@@ -70,6 +70,7 @@ APP_FILE_SAVE_DIR=                 # Shared dir for file ops
 Prefix: `/api`
 - `GET /api/ai/love_app/chat/sse` — Love mode SSE
 - `GET /api/ai/manus/chat` — Coach mode SSE
+- `POST /api/ai/rewrite` — Prompt optimization endpoint (invoked only when user clicks optimize button)
 - `POST /api/ai/probability/analyze` — Kiko probability analysis
 - `GET /api/ai/sessions/{chatId}/runs` — Background run status
 - `GET /api/health` — Health check

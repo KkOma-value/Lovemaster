@@ -1,6 +1,6 @@
 # Backend Path Compatibility Marker
 
-This directory exists only to satisfy Super Dev workflow path detection in v2.3.8.
+This directory is a compatibility placeholder for tooling that expects a `backend/` path.
 
 Real backend implementation is located at repository root:
 - src/main/java

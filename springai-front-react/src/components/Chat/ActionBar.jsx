@@ -96,7 +96,7 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
             <button
                 type="button"
                 className={`flex items-center justify-center h-[32px] w-auto px-2 gap-1.5 rounded-md transition-colors disabled:opacity-[0.7] border-none cursor-pointer ${
-                    wikiStatus === 'candidate' ? 'text-[#10b981] bg-[#ecfdf5]' : 
+                    wikiStatus === 'candidate' ? 'text-[var(--sage)] bg-[rgba(143,176,159,0.16)]' : 
                     wikiStatus === 'rejected' ? 'text-[#ef4444] bg-[#fef2f2]' : 
                     wikiStatus === 'unknown_topic' ? 'text-[#b45309] bg-[#fffbeb]' : 
                     'bg-transparent text-gray-500 hover:bg-gray-100 hover:text-gray-700'
@@ -115,4 +115,4 @@ const ActionBar = ({ chatId, runId, question, answer, onCopyAction }) => {
     );
 };
 
-export default ActionBar;
+export default ActionBar;

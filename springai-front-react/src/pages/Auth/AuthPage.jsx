@@ -53,7 +53,7 @@ function LeftCard({ mode }) {
     <div
       className="hidden lg:flex flex-1 flex-col justify-center relative overflow-hidden"
       style={{
-        background: 'linear-gradient(165deg, rgba(252,231,213,0.82) 0%, rgba(245,208,184,0.78) 40%, rgba(245,200,200,0.72) 100%)',
+        background: 'rgba(252,231,213,0.86)',
         backdropFilter: 'blur(12px) saturate(1.2)',
         WebkitBackdropFilter: 'blur(12px) saturate(1.2)',
         borderRadius: 28,
@@ -684,8 +684,7 @@ function AuthDivider({ text = '或者' }) {
         className="flex-1"
         style={{
           height: 1,
-          backgroundImage: 'linear-gradient(90deg, rgba(232,155,122,0.18) 50%, transparent 50%)',
-          backgroundSize: '8px 1px',
+          backgroundColor: 'rgba(232,155,122,0.18)',
         }}
       />
       <span className="text-[11px]" style={{ color: '#A98872' }}>
@@ -695,8 +694,7 @@ function AuthDivider({ text = '或者' }) {
         className="flex-1"
         style={{
           height: 1,
-          backgroundImage: 'linear-gradient(90deg, rgba(232,155,122,0.18) 50%, transparent 50%)',
-          backgroundSize: '8px 1px',
+          backgroundColor: 'rgba(232,155,122,0.18)',
         }}
       />
     </div>

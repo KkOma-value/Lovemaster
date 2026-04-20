@@ -1,14 +1,13 @@
 # WORKFLOW_GUIDE
 
 ## Standard Flow
-research -> docs -> docs confirmation -> spec/tasks -> frontend runtime -> backend -> quality -> delivery
+requirement clarification -> design docs -> implementation -> frontend verification -> backend verification -> quality -> delivery
 
 ## Required Commands
-- `super-dev review docs`
-- `super-dev run --resume`
-- `super-dev review quality`
-- `super-dev next`
-- `super-dev continue`
+- `mvn test`
+- `mvn -DskipTests=true package`
+- `cd springai-front-react && npm run lint`
+- `cd springai-front-react && npm run build`
 
 ## Gate Rules
 - Do not start coding before docs confirmation.

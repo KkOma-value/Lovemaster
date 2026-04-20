@@ -1,13 +1,15 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Suspense, lazy } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import AppLayout from './components/Layout/AppLayout';
 import Navbar from './components/Navbar/Navbar';
+import Toast from './components/common/Toast';
 import HomePage from './pages/Home/HomePage';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ChatRuntimeProvider } from './contexts/ChatRuntimeContext';
+import { mountFrameworkPlaybookSignals } from './config/frameworkPlaybook';
 
 const ChatPage = lazy(() => import('./pages/Chat/ChatPage'));
 const AuthPage = lazy(() => import('./pages/Auth/AuthPage'));
@@ -19,7 +21,7 @@ const GOOGLE_CLIENT_ID = '59540883835-shhhvumlokiqd24eb2jnjq7o6dt9rohk.apps.goog
 
 function RouteFallback() {
   return (
-    <div style={{ padding: '24px', textAlign: 'center', color: '#6b7280' }}>
+    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
       页面加载中...
     </div>
   );
@@ -51,6 +53,10 @@ function AnimatedRoutes() {
 }
 
 function App() {
+  useEffect(() => {
+    mountFrameworkPlaybookSignals();
+  }, []);
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <Router>
@@ -60,6 +66,7 @@ function App() {
             <AppLayout>
               <AnimatedRoutes />
             </AppLayout>
+            <Toast />
           </ChatRuntimeProvider>
         </AuthProvider>
       </Router>
