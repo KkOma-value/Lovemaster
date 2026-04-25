@@ -27,6 +27,9 @@ public class KnowledgeMetrics {
     private final Counter sanitizerBlocked;
     private final Counter feedbackReinforced;
     private final Counter feedbackSkipped;
+    private final Counter autoApproved;
+    private final Counter autoRejected;
+    private final Counter markedUnknownTopic;
 
     public KnowledgeMetrics(MeterRegistry registry) {
         this.registry = registry;
@@ -42,6 +45,12 @@ public class KnowledgeMetrics {
                 .description("Feedback events converted to wiki inbox files").register(registry);
         this.feedbackSkipped = Counter.builder(NS + "_feedback_skipped_total")
                 .description("Feedback events skipped during reinforcement sweep").register(registry);
+        this.autoApproved = Counter.builder(NS + "_auto_approved_total")
+                .description("Candidates auto-approved by feedback-driven pipeline").register(registry);
+        this.autoRejected = Counter.builder(NS + "_auto_rejected_total")
+                .description("Candidates auto-rejected (stale, no positive feedback)").register(registry);
+        this.markedUnknownTopic = Counter.builder(NS + "_unknown_topic_total")
+                .description("Candidates marked unknown_topic after extended pending period").register(registry);
     }
 
     public void recordFanout(String strategy, long elapsedNanos) {
@@ -91,6 +100,24 @@ public class KnowledgeMetrics {
     public void feedbackSkipped(int count) {
         if (count > 0) {
             feedbackSkipped.increment(count);
+        }
+    }
+
+    public void autoApproved(int count) {
+        if (count > 0) {
+            autoApproved.increment(count);
+        }
+    }
+
+    public void autoRejected(int count) {
+        if (count > 0) {
+            autoRejected.increment(count);
+        }
+    }
+
+    public void markedUnknownTopic(int count) {
+        if (count > 0) {
+            markedUnknownTopic.increment(count);
         }
     }
 }

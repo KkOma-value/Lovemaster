@@ -22,6 +22,7 @@ public class KnowledgeReviewService {
 
     private final WikiCandidateRepository wikiCandidateRepository;
     private final KnowledgeProperties properties;
+    private final WikiGraphSyncService graphSyncService;
 
     @Transactional
     public WikiCandidate approve(String candidateId, String reviewerId, String note) {
@@ -45,6 +46,7 @@ public class KnowledgeReviewService {
         // Write to wiki/topics/ directory
         try {
             writeToTopics(saved);
+            graphSyncService.requestSync("approve-" + candidateId);
         } catch (IOException ex) {
             log.warn("Failed to write approved candidate to topics dir: candidateId={}, error={}",
                     candidateId, ex.getMessage());

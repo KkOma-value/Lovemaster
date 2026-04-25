@@ -47,6 +47,7 @@ public class KnowledgeReinforcementJob {
     private final WikiFeedbackEventRepository feedbackEventRepository;
     private final WikiCandidateRepository candidateRepository;
     private final KnowledgeMetrics metrics;
+    private final WikiGraphSyncService graphSyncService;
 
     @Scheduled(cron = "${app.knowledge.feedback.cron:0 0 */6 * * *}")
     public void reinforceFromFeedback() {
@@ -109,6 +110,11 @@ public class KnowledgeReinforcementJob {
         metrics.feedbackSkipped(skipped);
         log.info("Knowledge reinforcement sweep done, reinforced={}, skipped={}, candidates={}",
                 reinforced, skipped, groupedByCandidate.size());
+
+        // 写入新文件后触发 graphify 图谱同步
+        if (reinforced > 0) {
+            graphSyncService.requestSync("reinforcement-job");
+        }
     }
 
     @Transactional

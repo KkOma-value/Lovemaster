@@ -17,6 +17,8 @@ public class KnowledgeProperties {
     private Abstractor abstractor = new Abstractor();
     private Review review = new Review();
     private Strategy strategy = new Strategy();
+    private AutoApproval autoApproval = new AutoApproval();
+    private GraphSync graphSync = new GraphSync();
 
     @Data
     public static class Fanout {
@@ -85,7 +87,7 @@ public class KnowledgeProperties {
         private double helpfulThreshold = 0.8;
         private int minRepeat = 2;
         private String inboxDir = "knowledge/wiki/inbox";
-        private String cron = "0 0 */6 * * *";
+        private String cron = "0 */30 * * * *";
         private int batchSize = 200;
     }
 
@@ -111,5 +113,37 @@ public class KnowledgeProperties {
         private int minSamples = 3;
         private int topK = 20;
         private int grayPercent = 10;
+    }
+
+    @Data
+    public static class AutoApproval {
+        /** 是否启用用户反馈驱动的自动审批 */
+        private boolean enabled = true;
+        /** 定时检查周期 (cron) */
+        private String cron = "0 */10 * * * *";
+        /** 自动批准所需的最少正向反馈数 */
+        private int minPositiveFeedback = 3;
+        /** 正向反馈事件类型列表 */
+        private java.util.List<String> positiveEventTypes = java.util.List.of("thumbs_up", "candidate_submitted", "helpful");
+        /** 负向反馈事件类型列表 */
+        private java.util.List<String> negativeEventTypes = java.util.List.of("thumbs_down", "unhelpful");
+        /** 正向反馈最低评分阈值 */
+        private double positiveScoreThreshold = 0.6;
+        /** 冷数据自动清理天数 (超过此天数且反馈不足的候选自动拒绝) */
+        private int staleDays = 7;
+        /** 候选在 pending 状态超过此天数转为 unknown_topic */
+        private int unknownTopicDays = 14;
+    }
+
+    @Data
+    public static class GraphSync {
+        /** 是否启用 wiki 变更后自动同步 graphify 图谱 */
+        private boolean enabled = true;
+        /** wiki 变更后的防抖时间 (秒) */
+        private int debounceSeconds = 30;
+        /** graphify 命令路径 (留空则自动查找) */
+        private String graphifyCommand = "graphify";
+        /** graphify 输出目录 */
+        private String outputDir = "graphify-out";
     }
 }

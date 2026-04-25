@@ -35,4 +35,6 @@ public interface WikiFeedbackEventRepository extends JpaRepository<WikiFeedbackE
             "  AND e.candidateId IS NOT NULL " +
             "GROUP BY e.candidateId, e.eventType")
     List<Object[]> aggregateByCandidateAndType(@Param("since") LocalDateTime since);
+
+    List<WikiFeedbackEvent> findByCandidateId(String candidateId);
 }

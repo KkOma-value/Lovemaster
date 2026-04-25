@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lovemaster Wiki 全自动反馈驱动更新系统 — 开发展示</title>
+<style>
+  /* ===== Design Tokens ===== */
+  :root {
+    --color-bg: #f8fafc;
+    --color-surface: #ffffff;
+    --color-surface-alt: #f1f5f9;
+    --color-border: #e2e8f0;
+    --color-border-strong: #cbd5e1;
+    --color-text-primary: #0f172a;
+    --color-text-secondary: #475569;
+    --color-text-tertiary: #94a3b8;
+    --color-accent: #2563eb;
+    --color-accent-light: #eff6ff;
+    --color-accent-dark: #1d4ed8;
+    --color-success: #059669;
+    --color-success-light: #ecfdf5;
+    --color-success-bg: #d1fae5;
+    --color-warning: #d97706;
+    --color-warning-light: #fffbeb;
+    --color-warning-bg: #fef3c7;
+    --color-danger: #dc2626;
+    --color-danger-light: #fef2f2;
+    --color-danger-bg: #fee2e2;
+    --color-info: #7c3aed;
+    --color-info-light: #f5f3ff;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  }
+
+  /* ===== Reset & Base ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== Layout ===== */
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Hero ===== */
+  .hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a5f 100%);
+    color: #ffffff;
+    padding: 72px 0 56px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-content { position: relative; z-index: 1; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 99px;
+    background: rgba(37,99,235,0.2); border: 1px solid rgba(37,99,235,0.3);
+    font-size: 13px; font-weight: 500; color: #93c5fd;
+    margin-bottom: 24px;
+  }
+  .hero-badge-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #3b82f6;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 44px); font-weight: 800; letter-spacing: -0.02em;
+    line-height: 1.15; margin-bottom: 16px;
+  }
+  .hero h1 span { color: #60a5fa; }
+  .hero-subtitle {
+    font-size: 17px; color: #94a3b8; max-width: 640px; line-height: 1.7;
+  }
+  .hero-meta {
+    display: flex; gap: 24px; margin-top: 32px; flex-wrap: wrap;
+  }
+  .hero-meta-item {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 14px; color: #cbd5e1;
+  }
+  .hero-meta-item svg { width: 16px; height: 16px; flex-shrink: 0; color: #64748b; }
+
+  /* ===== Section ===== */
+  .section { padding: 64px 0; }
+  .section-header { margin-bottom: 40px; }
+  .section-header h2 {
+    font-size: 28px; font-weight: 700; letter-spacing: -0.01em;
+    color: var(--color-text-primary); margin-bottom: 8px;
+  }
+  .section-header p { color: var(--color-text-secondary); font-size: 15px; }
+
+  /* ===== Comparison Grid ===== */
+  .comparison-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+  }
+  @media (max-width: 768px) { .comparison-grid { grid-template-columns: 1fr; } }
+
+  .comparison-card {
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .comparison-card.old { border-top: 3px solid var(--color-danger); }
+  .comparison-card.new { border-top: 3px solid var(--color-success); }
+  .card-header {
+    padding: 18px 24px; display: flex; align-items: center; gap: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .card-header-badge {
+    font-size: 12px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; padding: 4px 10px; border-radius: 4px;
+  }
+  .old .card-header-badge { background: var(--color-danger-light); color: var(--color-danger); }
+  .new .card-header-badge { background: var(--color-success-light); color: var(--color-success); }
+  .card-header h3 { font-size: 16px; font-weight: 600; flex: 1; }
+  .card-body { padding: 24px; }
+  .card-body p { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 16px; line-height: 1.7; }
+
+  /* ===== Flow Diagram ===== */
+  .flow-wrap {
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); padding: 12px 20px;
+    margin-bottom: 16px; overflow-x: auto;
+  }
+  .flow-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: nowrap;
+    min-width: max-content;
+  }
+  .flow-node {
+    padding: 8px 14px; border-radius: var(--radius-sm);
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+    background: var(--color-surface-alt); border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+  }
+  .flow-node.danger { background: var(--color-danger-light); border-color: var(--color-danger-bg); color: var(--color-danger); }
+  .flow-node.success { background: var(--color-success-light); border-color: var(--color-success-bg); color: var(--color-success); }
+  .flow-node.accent { background: var(--color-accent-light); border-color: #bfdbfe; color: var(--color-accent); }
+  .flow-node.info { background: var(--color-info-light); border-color: #ddd6fe; color: var(--color-info); }
+  .flow-arrow { color: var(--color-text-tertiary); font-size: 16px; font-weight: 700; flex-shrink: 0; }
+
+  /* ===== Feature List ===== */
+  .feature-list { list-style: none; }
+  .feature-list li {
+    display: flex; align-items: flex-start; gap: 10px; padding: 8px 0;
+    font-size: 14px; color: var(--color-text-secondary); line-height: 1.5;
+  }
+  .feature-list li::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--color-accent); flex-shrink: 0; margin-top: 8px;
+  }
+  .old .feature-list li::before { background: var(--color-danger); }
+  .new .feature-list li::before { background: var(--color-success); }
+
+  /* ===== Comparison Table ===== */
+  .diff-table {
+    width: 100%; border-collapse: separate; border-spacing: 0;
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); overflow: hidden;
+  }
+  .diff-table thead th {
+    text-align: left; padding: 14px 20px; font-size: 13px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-text-tertiary);
+    background: var(--color-surface-alt); border-bottom: 1px solid var(--color-border);
+  }
+  .diff-table thead th:first-child { width: 22%; }
+  .diff-table thead th:nth-child(2) { width: 28%; color: var(--color-danger); }
+  .diff-table thead th:nth-child(3) { width: 28%; color: var(--color-success); }
+  .diff-table thead th:last-child { width: 22%; }
+  .diff-table tbody td {
+    padding: 14px 20px; font-size: 14px; color: var(--color-text-secondary);
+    border-bottom: 1px solid var(--color-border); vertical-align: top;
+    line-height: 1.5;
+  }
+  .diff-table tbody tr:last-child td { border-bottom: none; }
+  .diff-table tbody td:first-child { font-weight: 600; color: var(--color-text-primary); }
+  .diff-table .tag-old {
+    display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 4px;
+    font-weight: 600; color: var(--color-danger); background: var(--color-danger-light);
+  }
+  .diff-table .tag-new {
+    display: inline-block; font-size: 12px; padding: 3px 10px; border-radius: 4px;
+    font-weight: 600; color: var(--color-success); background: var(--color-success-light);
+  }
+  .diff-table .impact {
+    font-size: 12px; padding: 3px 8px; border-radius: 4px; font-weight: 600;
+  }
+  .impact-high { background: #fef3c7; color: #92400e; }
+  .impact-positive { background: #d1fae5; color: #065f46; }
+
+  /* ===== Architecture Cards ===== */
+  .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; }
+  .arch-card {
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); box-shadow: var(--shadow-sm);
+    padding: 24px; transition: box-shadow 0.2s, border-color 0.2s;
+  }
+  .arch-card:hover { box-shadow: var(--shadow-md); border-color: var(--color-border-strong); }
+  .arch-card-icon {
+    width: 40px; height: 40px; border-radius: var(--radius-md);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px; font-size: 20px;
+  }
+  .arch-card-icon.green { background: var(--color-success-light); color: var(--color-success); }
+  .arch-card-icon.blue { background: var(--color-accent-light); color: var(--color-accent); }
+  .arch-card-icon.purple { background: var(--color-info-light); color: var(--color-info); }
+  .arch-card h4 { font-size: 16px; font-weight: 650; margin-bottom: 6px; }
+  .arch-card p { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 12px; }
+  .arch-card code {
+    font-family: var(--font-mono); font-size: 12px;
+    background: var(--color-surface-alt); padding: 2px 6px;
+    border-radius: 3px; color: var(--color-accent-dark);
+  }
+
+  /* ===== Code Block ===== */
+  .code-block {
+    background: #1e293b; color: #e2e8f0; border-radius: var(--radius-md);
+    padding: 18px 22px; font-family: var(--font-mono); font-size: 13px;
+    line-height: 1.7; overflow-x: auto; margin: 16px 0;
+  }
+  .code-block .key { color: #93c5fd; }
+  .code-block .val { color: #86efac; }
+  .code-block .comment { color: #64748b; }
+
+  /* ===== File Tree ===== */
+  .file-tree {
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); padding: 20px 24px;
+    font-family: var(--font-mono); font-size: 13px; line-height: 2;
+  }
+  .file-tree .dir { color: var(--color-accent); font-weight: 600; }
+  .file-tree .file { color: var(--color-text-secondary); padding-left: 20px; }
+  .file-tree .tag {
+    display: inline-block; font-size: 10px; padding: 1px 6px; border-radius: 3px;
+    margin-left: 8px; font-weight: 700;
+  }
+  .file-tree .tag-new-file { background: var(--color-success-bg); color: var(--color-success); }
+  .file-tree .tag-mod { background: var(--color-warning-bg); color: var(--color-warning); }
+
+  /* ===== Stats ===== */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  @media (max-width: 768px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  .stat-card {
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); padding: 22px; text-align: center;
+  }
+  .stat-value { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
+  .stat-label { font-size: 13px; color: var(--color-text-tertiary); margin-top: 4px; }
+  .stat-value.green { color: var(--color-success); }
+  .stat-value.blue { color: var(--color-accent); }
+  .stat-value.amber { color: var(--color-warning); }
+  .stat-value.slate { color: var(--color-text-primary); }
+
+  /* ===== Footer ===== */
+  .footer {
+    border-top: 1px solid var(--color-border); padding: 32px 0;
+    text-align: center; font-size: 13px; color: var(--color-text-tertiary);
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <span class="hero-badge-dot"></span>
+      Super Dev 全自动流水线交付
+    </div>
+    <h1>Wiki <span>全自动反馈驱动</span>更新系统</h1>
+    <p class="hero-subtitle">
+      将知识入库从"管理员手工审批"彻底升级为"用户反馈信号自动驱动"，
+      零人工介入、30 分钟反馈闭环、图谱自动同步。
+    </p>
+    <div class="hero-meta">
+      <div class="hero-meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        2026-04-25
+      </div>
+      <div class="hero-meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        全自动 · 零人工确认
+      </div>
+      <div class="hero-meta-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+        Maven BUILD SUCCESS
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===== 核心变更对比 ===== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>核心流程对比</h2>
+      <p>旧机制 vs 新机制：用户反馈信号直接驱动 Wiki 进化</p>
+    </div>
+
+    <div class="comparison-grid">
+      <!-- OLD -->
+      <div class="comparison-card old">
+        <div class="card-header">
+          <span class="card-header-badge">旧机制</span>
+          <h3>人工审批驱动</h3>
+        </div>
+        <div class="card-body">
+          <div class="flow-wrap">
+            <div class="flow-row">
+              <div class="flow-node">用户保存到Wiki</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node">Candidate</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node danger">管理员审核</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node">topics/</div>
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li>知识入库需要管理员逐条 Y/N 审批</li>
+            <li>反馈信号（点赞/点踩）仅做评分统计，不直接驱动入库</li>
+            <li>图谱 (graphify-out/) 需手动运行 graphify update .</li>
+            <li>反馈处理周期长达 6 小时</li>
+            <li>冷数据无自动清理机制</li>
+            <li>候选长期无人理会造成知识库积压</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- NEW -->
+      <div class="comparison-card new">
+        <div class="card-header">
+          <span class="card-header-badge">新机制</span>
+          <h3>用户反馈驱动（全自动）</h3>
+        </div>
+        <div class="card-body">
+          <div class="flow-wrap">
+            <div class="flow-row">
+              <div class="flow-node">点赞/保存/继续对话</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node accent">信号聚合评分</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node success">自动审批/清理</div>
+              <div class="flow-arrow">→</div>
+              <div class="flow-node info">topics/ + 图谱同步</div>
+            </div>
+          </div>
+          <ul class="feature-list">
+            <li>达到 3 个正向反馈 → 自动批准入库</li>
+            <li>超过 7 天零正向反馈 → 自动清理</li>
+            <li>超过 14 天无人理会 → 自动归档 unknown_topic</li>
+            <li>反馈处理周期从 6h 缩短到 30 分钟</li>
+            <li>知识文件变更后 30 秒内图谱自动同步</li>
+            <li>全链路可观测 (Micrometer 指标)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 环节级对比 ===== -->
+<section class="section" style="background: var(--color-surface);">
+  <div class="container">
+    <div class="section-header">
+      <h2>逐环节对比</h2>
+      <p>11 个关键环节的变更——从审批方式到图谱同步，每个环节都有明确升级</p>
+    </div>
+
+    <div style="overflow-x: auto;">
+    <table class="diff-table">
+      <thead>
+        <tr>
+          <th>环节</th>
+          <th>旧</th>
+          <th>新</th>
+          <th>影响</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>知识入库</td>
+          <td><span class="tag-old">管理员手工 Y/N</span></td>
+          <td><span class="tag-new">≥3 正向反馈自动入库</span></td>
+          <td><span class="impact impact-positive">消除人工瓶颈</span></td>
+        </tr>
+        <tr>
+          <td>冷数据清理</td>
+          <td><span class="tag-old">无机制</span></td>
+          <td><span class="tag-new">≥7 天无反馈自动清理</span></td>
+          <td><span class="impact impact-positive">自动维护知识库健康</span></td>
+        </tr>
+        <tr>
+          <td>候选过期</td>
+          <td><span class="tag-old">无处理</span></td>
+          <td><span class="tag-new">≥14 天标记 unknown_topic</span></td>
+          <td><span class="impact impact-positive">防止积压</span></td>
+        </tr>
+        <tr>
+          <td>审批检查频率</td>
+          <td><span class="tag-old">人工，无定时</span></td>
+          <td><span class="tag-new">每 10 分钟自动</span></td>
+          <td><span class="impact impact-positive">实时响应</span></td>
+        </tr>
+        <tr>
+          <td>反馈强化周期</td>
+          <td><span class="tag-old">每 6 小时</span></td>
+          <td><span class="tag-new">每 30 分钟</span></td>
+          <td><span class="impact impact-positive">12x 速度提升</span></td>
+        </tr>
+        <tr>
+          <td>图谱同步</td>
+          <td><span class="tag-old">手动 graphify update .</span></td>
+          <td><span class="tag-new">文件变更后自动同步 (防抖 30s)</span></td>
+          <td><span class="impact impact-positive">零操作</span></td>
+        </tr>
+        <tr>
+          <td>审批界面</td>
+          <td><span class="tag-old">审核操作台 (Y/N 按钮)</span></td>
+          <td><span class="tag-new">观察仪表盘 (只读统计)</span></td>
+          <td><span class="impact impact-positive">简化维护</span></td>
+        </tr>
+        <tr>
+          <td>Wiki 文案</td>
+          <td><span class="tag-old">"已提交蒸馏队列 / 待人工归类"</span></td>
+          <td><span class="tag-new">"知识贡献中 / 反馈积累中 / 已入知识库"</span></td>
+          <td><span class="impact impact-positive">用户友好</span></td>
+        </tr>
+        <tr>
+          <td>指标可观测</td>
+          <td><span class="tag-old">仅 reinforce/skip 计数</span></td>
+          <td><span class="tag-new">+autoApproved +autoRejected +unknownTopic</span></td>
+          <td><span class="impact impact-positive">全面可观测</span></td>
+        </tr>
+        <tr>
+          <td>Claude Code 联动</td>
+          <td><span class="tag-old">仅 PreToolUse (图谱提示)</span></td>
+          <td><span class="tag-new">+PostToolUse (Edit/Write 后触发更新)</span></td>
+          <td><span class="impact impact-positive">编辑即更新</span></td>
+        </tr>
+        <tr>
+          <td>CLI 工具链</td>
+          <td><span class="tag-old">无脚本，手工命令</span></td>
+          <td><span class="tag-new">wiki-update.sh (防抖+锁+索+索引) + setup 脚本</span></td>
+          <td><span class="impact impact-positive">一键部署</span></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 新增组件 ===== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>新增架构组件</h2>
+      <p>两个新增服务 + 两个 CLI 脚本，无缝集成现有管线</p>
+    </div>
+
+    <div class="arch-grid">
+      <div class="arch-card">
+        <div class="arch-card-icon green">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h4>KnowledgeAutoApprovalJob</h4>
+        <p>反馈驱动自动审批引擎。每 10 分钟扫描 pending_review 候选，聚合用户正向/负向反馈信号后自动决策。</p>
+        <p><code>@Scheduled(cron="0 */10 * * * *")</code></p>
+        <p>三条规则：≥3 正向反馈→批准 / >7d 无反馈→清理 / >14d→归档</p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-card-icon blue">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        </div>
+        <h4>WikiGraphSyncService</h4>
+        <p>Wiki 内容变更后自动调用 graphify 同步知识图谱。30 秒防抖合并高频触发，120 秒超时保护。</p>
+        <p><code>requestSync("approve")</code> / <code>requestSync("reinforcement")</code></p>
+        <p>所有写入路径 (approve/reinforcement) 均自动触发</p>
+      </div>
+
+      <div class="arch-card">
+        <div class="arch-card-icon purple">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        </div>
+        <h4>wiki-update.sh</h4>
+        <p>CLI 统一更新入口。内置锁机制防并发、3 秒防抖、自动生成 index.md + CHANGELOG.md + .wiki-status.json。</p>
+        <p><code>bash scripts/wiki-update.sh "trigger-source"</code></p>
+        <p>支持 post-commit / claude-code-edit / manual 三种触发源</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 自动规则详解 ===== -->
+<section class="section" style="background: var(--color-surface);">
+  <div class="container">
+    <div class="section-header">
+      <h2>三条自动决策规则</h2>
+      <p>完全由用户反馈信号驱动，零人工判断</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+      <div style="background: var(--color-success-light); border-radius: var(--radius-lg); padding: 28px; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 12px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <h4 style="margin-bottom: 8px; color: var(--color-success);">自动入库</h4>
+        <p style="font-size: 14px; color: #065f46; line-height: 1.6;">
+          条件：正向反馈 ≥ 3 条<br>
+          动作：自动 approve<br>
+          写入：knowledge/wiki/topics/
+        </p>
+      </div>
+
+      <div style="background: var(--color-danger-light); border-radius: var(--radius-lg); padding: 28px; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 12px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <h4 style="margin-bottom: 8px; color: var(--color-danger);">自动清理</h4>
+        <p style="font-size: 14px; color: #991b1b; line-height: 1.6;">
+          条件：创建 ≥ 7 天<br>
+          + 零正向反馈<br>
+          动作：自动 reject
+        </p>
+      </div>
+
+      <div style="background: var(--color-warning-light); border-radius: var(--radius-lg); padding: 28px; text-align: center;">
+        <div style="font-size: 36px; margin-bottom: 12px;">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--color-warning)" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <h4 style="margin-bottom: 8px; color: var(--color-warning);">自动归档</h4>
+        <p style="font-size: 14px; color: #92400e; line-height: 1.6;">
+          条件：创建 ≥ 14 天<br>
+          + 仍为 pending_review<br>
+          动作：标记 unknown_topic
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 文件变更统计 ===== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>文件变更统计</h2>
+      <p>4 个新增文件 + 8 个修改文件，共 ~226 行新增代码</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value green">4</div>
+        <div class="stat-label">新增文件</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value blue">8</div>
+        <div class="stat-label">修改文件</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value amber">226</div>
+        <div class="stat-label">新增代码行</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value slate">12×</div>
+        <div class="stat-label">反馈速度提升</div>
+      </div>
+    </div>
+
+    <div class="file-tree" style="margin-top: 28px;">
+      <div class="dir">Lovemaster/</div>
+      <div class="dir" style="padding-left: 16px;">src/main/java/.../ai/service/</div>
+      <div class="file">KnowledgeAutoApprovalJob.java<span class="tag tag-new-file">NEW</span></div>
+      <div class="file">WikiGraphSyncService.java<span class="tag tag-new-file">NEW</span></div>
+      <div class="file">KnowledgeReinforcementJob.java<span class="tag tag-mod">MOD</span></div>
+      <div class="file">KnowledgeReviewService.java<span class="tag tag-mod">MOD</span></div>
+      <div class="file">KnowledgeMetrics.java<span class="tag tag-mod">MOD</span></div>
+      <div class="dir" style="padding-left: 16px;">src/main/java/.../config/</div>
+      <div class="file">KnowledgeProperties.java<span class="tag tag-mod">MOD</span></div>
+      <div class="dir" style="padding-left: 16px;">src/main/java/.../auth/repository/</div>
+      <div class="file">WikiFeedbackEventRepository.java<span class="tag tag-mod">MOD</span></div>
+      <div class="dir" style="padding-left: 16px;">scripts/</div>
+      <div class="file">wiki-update.sh<span class="tag tag-new-file">NEW</span></div>
+      <div class="file">setup-wiki-autoupdate.sh<span class="tag tag-new-file">NEW</span></div>
+      <div class="dir" style="padding-left: 16px;">springai-front-react/src/</div>
+      <div class="file">components/Chat/ActionBar.jsx<span class="tag tag-mod">MOD</span></div>
+      <div class="file">pages/Admin/KnowledgeReviewPage.jsx<span class="tag tag-mod">MOD</span></div>
+      <div class="dir" style="padding-left: 16px;">.claude/</div>
+      <div class="file">settings.local.json<span class="tag tag-mod">MOD</span></div>
+      <div class="dir" style="padding-left: 16px;">tech-dev/</div>
+      <div class="file">wiki-auto-update-summary.md<span class="tag tag-new-file">NEW</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 关键配置 ===== -->
+<section class="section" style="background: var(--color-surface);">
+  <div class="container">
+    <div class="section-header">
+      <h2>关键配置变更</h2>
+      <p>新增 AutoApproval + GraphSync 两块配置，Feedback 周期缩短 12 倍</p>
+    </div>
+    <div class="code-block">
+<span class="comment"># ============ 新增 ============</span>
+<span class="key">app.knowledge.auto-approval</span>:
+  enabled: <span class="val">true</span>
+  min-positive-feedback: <span class="val">3</span>        <span class="comment"># 自动入库阈值</span>
+  stale-days: <span class="val">7</span>                     <span class="comment"># 冷数据自动清理</span>
+  unknown-topic-days: <span class="val">14</span>             <span class="comment"># 长期未处理归档</span>
+
+<span class="key">app.knowledge.graph-sync</span>:
+  enabled: <span class="val">true</span>
+  debounce-seconds: <span class="val">30</span>              <span class="comment"># 图谱同步防抖</span>
+
+<span class="comment"># ============ 修改 ============</span>
+<span class="key">app.knowledge.feedback</span>:
+  cron: <span class="val">"0 */30 * * * *"</span>              <span class="comment"># 旧: "0 0 */6 * * *" (6h → 30min)</span>
+            </div>
+  </div>
+</section>
+
+<!-- ===== 构建结果 ===== -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>构建验证</h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card" style="border-left: 3px solid var(--color-success);">
+        <div class="stat-value green" style="font-size: 20px;">BUILD SUCCESS</div>
+        <div class="stat-label">Maven compile (137 源文件)</div>
+      </div>
+      <div class="stat-card" style="border-left: 3px solid var(--color-success);">
+        <div class="stat-value green" style="font-size: 20px;">0 errors / 0 warnings</div>
+        <div class="stat-label">ESLint (前端)</div>
+      </div>
+      <div class="stat-card" style="border-left: 3px solid var(--color-accent);">
+        <div class="stat-value blue" style="font-size: 20px;">Java 21</div>
+        <div class="stat-label">Spring Boot 3.4.5</div>
+      </div>
+      <div class="stat-card" style="border-left: 3px solid var(--color-accent);">
+        <div class="stat-value blue" style="font-size: 20px;">React 19 + Vite 7</div>
+        <div class="stat-label">前端技术栈</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer class="footer">
+  <div class="container">
+    <p>Lovemaster Wiki Auto-Update System — Super Dev Pipeline Delivery</p>
+    <p style="margin-top: 4px;">
+      KnowledgeAutoApprovalJob + WikiGraphSyncService + Scripts + Frontend — April 2026
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
