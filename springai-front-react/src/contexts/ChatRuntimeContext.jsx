@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { useAuth } from './AuthContext';
 import {
     createCoachSSE,
+    createFeedbackEvent,
     createLoveAppSSE,
     deleteChatSession,
     getActiveRuns,
@@ -19,6 +20,71 @@ const RECOVERY_POLL_INTERVAL_MS = 3000;
 const CHAT_TYPES = ['loveapp', 'coach'];
 const CACHE_STORAGE_KEY = 'lovemaster.chat-cache.v1';
 const CACHE_VERSION = 1;
+
+// Implicit signal config (silent sedimentation v2.0)
+const FOLLOW_UP_WINDOW_MS = 5 * 60 * 1000;       // 5 分钟内追问视为 follow_up
+const QUOTE_MIN_OVERLAP = 8;                      // 复述/引用最小重合字符数
+const QUOTE_MAX_LEN = 2000;                       // 防止过长字符串导致 LCS 性能问题
+const RETURN_VISIT_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 跨日 24h
+const VISIT_TIMESTAMPS_KEY = 'lovemaster.chat-visits.v1';
+
+const reportSignal = (chatId, runId, eventType, eventScore = 1.0, meta = {}) => {
+    if (!chatId || !eventType) return;
+    try {
+        createFeedbackEvent(null, chatId, runId || null, eventType, '', eventScore, meta).catch(() => {});
+    } catch {
+        // silent
+    }
+};
+
+// 简易 LCS（最长公共子串），返回最长匹配长度。
+// 仅用于隐式 quote 信号检测，输入截断到 QUOTE_MAX_LEN 控制成本。
+const longestCommonSubstring = (a, b) => {
+    if (!a || !b) return 0;
+    const s1 = a.length > QUOTE_MAX_LEN ? a.slice(0, QUOTE_MAX_LEN) : a;
+    const s2 = b.length > QUOTE_MAX_LEN ? b.slice(0, QUOTE_MAX_LEN) : b;
+    const n = s1.length;
+    const m = s2.length;
+    let prev = new Array(m + 1).fill(0);
+    let curr = new Array(m + 1).fill(0);
+    let best = 0;
+    for (let i = 1; i <= n; i++) {
+        for (let j = 1; j <= m; j++) {
+            if (s1[i - 1] === s2[j - 1]) {
+                curr[j] = prev[j - 1] + 1;
+                if (curr[j] > best) best = curr[j];
+            } else {
+                curr[j] = 0;
+            }
+        }
+        const tmp = prev;
+        prev = curr;
+        curr = tmp;
+        curr.fill(0);
+    }
+    return best;
+};
+
+const readVisitTimestamps = () => {
+    if (typeof window === 'undefined' || !window.localStorage) return {};
+    try {
+        const raw = window.localStorage.getItem(VISIT_TIMESTAMPS_KEY);
+        return raw ? (JSON.parse(raw) || {}) : {};
+    } catch {
+        return {};
+    }
+};
+
+const writeVisitTimestamp = (chatId, ts) => {
+    if (typeof window === 'undefined' || !window.localStorage || !chatId) return;
+    try {
+        const map = readVisitTimestamps();
+        map[chatId] = ts;
+        window.localStorage.setItem(VISIT_TIMESTAMPS_KEY, JSON.stringify(map));
+    } catch {
+        // silent
+    }
+};
 
 const buildChatKey = (chatType, chatId) => {
     if (!chatType || !chatId) {
@@ -336,6 +402,10 @@ export function ChatRuntimeProvider({ children }) {
     const recoveryPollRunIdsRef = useRef(new Set());
     const messagesLoadPromiseRef = useRef(new Map());
     const sessionsLoadPromiseRef = useRef(new Map());
+    // 最近一次助手消息完成时间，键为 chatKey；用于 follow_up 时间窗判定
+    const lastAssistantFinishedAtRef = useRef(new Map());
+    // 当前活跃会话进入时间，用于 session_retention 时长上报
+    const activeChatRef = useRef(null); // { chatType, chatId, enteredAt }
 
     useEffect(() => {
         runtimesRef.current = runtimes;
@@ -584,7 +654,11 @@ export function ChatRuntimeProvider({ children }) {
                         streamingStatus: null
                     };
 
-                case 'done':
+                case 'done': {
+                    const chatKeyForDone = buildChatKey(chatType, chatId);
+                    if (chatKeyForDone) {
+                        lastAssistantFinishedAtRef.current.set(chatKeyForDone, Date.now());
+                    }
                     return {
                         ...current,
                         messages: finalizeStreamingMessage(current.messages),
@@ -596,6 +670,7 @@ export function ChatRuntimeProvider({ children }) {
                         streamingStatus: null,
                         hasLocalConnection: false
                     };
+                }
 
                 case 'error':
                     return {
@@ -665,6 +740,31 @@ export function ChatRuntimeProvider({ children }) {
         }
 
         const chatKey = buildChatKey(chatType, chatId);
+
+        // 隐式信号：follow_up + quote（基于上一条助手消息）
+        if (chatKey && userMessage) {
+            const currentRuntime = runtimesRef.current[chatKey];
+            const msgs = currentRuntime?.messages || [];
+            const lastAssistantIdx = msgs.findLastIndex(m => m?.role === 'assistant' && !m.isStreaming && m.content);
+            if (lastAssistantIdx >= 0) {
+                const lastAssistant = msgs[lastAssistantIdx];
+                const finishedAt = lastAssistantFinishedAtRef.current.get(chatKey);
+                if (finishedAt && Date.now() - finishedAt <= FOLLOW_UP_WINDOW_MS) {
+                    reportSignal(chatId, lastAssistant.runId || null, 'follow_up', 1.0,
+                        lastAssistant.id ? { messageId: lastAssistant.id } : {});
+                }
+                const overlap = longestCommonSubstring(userMessage, lastAssistant.content || '');
+                if (overlap >= QUOTE_MIN_OVERLAP) {
+                    const denom = Math.max(1, (lastAssistant.content || '').length);
+                    const score = Math.min(1.0, overlap / denom);
+                    reportSignal(chatId, lastAssistant.runId || null, 'quote', score, {
+                        overlapChars: overlap,
+                        ...(lastAssistant.id ? { messageId: lastAssistant.id } : {})
+                    });
+                }
+            }
+        }
+
         const createSSE = chatType === 'coach' ? createCoachSSE : createLoveAppSSE;
         const initialType = imageUrl ? 'intake_status' : 'thinking';
         const initialContent = imageUrl
@@ -796,6 +896,31 @@ export function ChatRuntimeProvider({ children }) {
     }, [updateSessionsForType]);
 
     const selectChat = useCallback((chatType, chatId) => {
+        const now = Date.now();
+        const previous = activeChatRef.current;
+
+        // 离开旧会话 → 上报 session_retention（停留分钟数）
+        if (previous && previous.chatId && (previous.chatId !== chatId || previous.chatType !== chatType)) {
+            const minutes = Math.max(0, Math.round((now - previous.enteredAt) / 60000));
+            if (minutes > 0) {
+                reportSignal(previous.chatId, null, 'session_retention', minutes, { chatType: previous.chatType });
+            }
+        }
+
+        // 进入新会话：若是历史会话且距上次访问 ≥ 24h → return_visit
+        if (chatId) {
+            const visits = readVisitTimestamps();
+            const lastVisit = visits[chatId];
+            if (lastVisit && now - lastVisit >= RETURN_VISIT_THRESHOLD_MS) {
+                const days = Math.round((now - lastVisit) / (24 * 60 * 60 * 1000));
+                reportSignal(chatId, null, 'return_visit', Math.max(1, days), { chatType });
+            }
+            writeVisitTimestamp(chatId, now);
+            activeChatRef.current = { chatType, chatId, enteredAt: now };
+        } else {
+            activeChatRef.current = null;
+        }
+
         updateSessionsForType(chatType, { currentId: chatId });
     }, [updateSessionsForType]);
 
@@ -878,11 +1003,20 @@ export function ChatRuntimeProvider({ children }) {
 
     useEffect(() => {
         if (!isAuthenticated) {
+            const stale = activeChatRef.current;
+            if (stale && stale.chatId) {
+                const minutes = Math.max(0, Math.round((Date.now() - stale.enteredAt) / 60000));
+                if (minutes > 0) {
+                    reportSignal(stale.chatId, null, 'session_retention', minutes, { chatType: stale.chatType });
+                }
+                activeChatRef.current = null;
+            }
             connectionsRef.current.forEach(connection => connection.close());
             connectionsRef.current.clear();
             listenersRef.current.clear();
             messagesLoadPromiseRef.current.clear();
             sessionsLoadPromiseRef.current.clear();
+            lastAssistantFinishedAtRef.current.clear();
             clearCachedSnapshot();
             Promise.resolve().then(() => {
                 setRuntimes({});
@@ -979,12 +1113,22 @@ export function ChatRuntimeProvider({ children }) {
 
         timeoutId = window.setTimeout(pollActiveRuns, RECOVERY_POLL_INTERVAL_MS);
 
+        const handlePageHide = () => {
+            const active = activeChatRef.current;
+            if (!active || !active.chatId) return;
+            const minutes = Math.max(0, Math.round((Date.now() - active.enteredAt) / 60000));
+            if (minutes <= 0) return;
+            reportSignal(active.chatId, null, 'session_retention', minutes, { chatType: active.chatType });
+        };
+        window.addEventListener('pagehide', handlePageHide);
+
         return () => {
             cancelled = true;
             if (timeoutId) {
                 window.clearTimeout(timeoutId);
             }
             recoveryPollRunIds.clear();
+            window.removeEventListener('pagehide', handlePageHide);
         };
     }, [applyRunSnapshot, ensureMessagesLoaded, isAuthenticated, loadSessionsForType, refreshChatMessages, updateRuntime]);
 

@@ -3,6 +3,9 @@ package org.example.springai_learn.config;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @Data
 @ConfigurationProperties(prefix = "app.knowledge")
 public class KnowledgeProperties {
@@ -18,6 +21,7 @@ public class KnowledgeProperties {
     private Review review = new Review();
     private Strategy strategy = new Strategy();
     private AutoApproval autoApproval = new AutoApproval();
+    private AutoDistill autoDistill = new AutoDistill();
     private GraphSync graphSync = new GraphSync();
 
     @Data
@@ -121,18 +125,62 @@ public class KnowledgeProperties {
         private boolean enabled = true;
         /** 定时检查周期 (cron) */
         private String cron = "0 */10 * * * *";
-        /** 自动批准所需的最少正向反馈数 */
-        private int minPositiveFeedback = 3;
-        /** 正向反馈事件类型列表 */
-        private java.util.List<String> positiveEventTypes = java.util.List.of("thumbs_up", "candidate_submitted", "helpful");
-        /** 负向反馈事件类型列表 */
-        private java.util.List<String> negativeEventTypes = java.util.List.of("thumbs_down", "unhelpful");
-        /** 正向反馈最低评分阈值 */
-        private double positiveScoreThreshold = 0.6;
+        /**
+         * v2.0 新阈值：所有信号加权分需达到此值才自动批准。
+         */
+        private double minAggregatedScore = 1.5;
+        /**
+         * v2.0 强负信号否决数：达到此数 thumbs_down 即否决候选。
+         */
+        private int negativeVeto = 1;
+        /**
+         * v2.0 信号权重表。键为 eventType（小写），值为权重；负数代表负向信号。
+         */
+        private Map<String, Double> signalWeights = defaultSignalWeights();
         /** 冷数据自动清理天数 (超过此天数且反馈不足的候选自动拒绝) */
         private int staleDays = 7;
         /** 候选在 pending 状态超过此天数转为 unknown_topic */
         private int unknownTopicDays = 14;
+
+        // ===== Deprecated v1.0 字段（保留作向后兼容回退，默认空集不再启用） =====
+        /** @deprecated v2.0 改为加权分 + signalWeights 表。 */
+        @Deprecated
+        private int minPositiveFeedback = 0;
+        /** @deprecated v2.0 改为加权分 + signalWeights 表。 */
+        @Deprecated
+        private java.util.List<String> positiveEventTypes = java.util.List.of();
+        /** @deprecated v2.0 改为加权分 + signalWeights 表。 */
+        @Deprecated
+        private java.util.List<String> negativeEventTypes = java.util.List.of();
+        /** @deprecated v2.0 改为加权分 + signalWeights 表。 */
+        @Deprecated
+        private double positiveScoreThreshold = 0.0;
+
+        private static Map<String, Double> defaultSignalWeights() {
+            Map<String, Double> map = new LinkedHashMap<>();
+            map.put("copy", 0.6);
+            map.put("dwell", 0.3);
+            map.put("follow_up", 0.4);
+            map.put("quote", 0.5);
+            map.put("session_retention", 0.2);
+            map.put("return_visit", 0.7);
+            map.put("thumbs_up", 0.8);
+            map.put("thumbs_down", -1.0);
+            map.put("llm_judge_positive", 0.5);
+            return map;
+        }
+    }
+
+    @Data
+    public static class AutoDistill {
+        /** 是否启用对话流自动蒸馏候选 */
+        private boolean enabled = true;
+        /** 扫描周期 cron */
+        private String cron = "0 */15 * * * *";
+        /** 助手消息最小内容长度（字符），低于此值不进入候选 */
+        private int minContentLength = 80;
+        /** 回看窗口（小时）：仅扫描最近 N 小时内的助手消息 */
+        private int lookbackHours = 24;
     }
 
     @Data

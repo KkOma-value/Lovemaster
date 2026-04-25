@@ -37,4 +37,16 @@ public interface WikiFeedbackEventRepository extends JpaRepository<WikiFeedbackE
     List<Object[]> aggregateByCandidateAndType(@Param("since") LocalDateTime since);
 
     List<WikiFeedbackEvent> findByCandidateId(String candidateId);
+
+    /**
+     * v2.0 隐式信号聚合：返回某候选已关联的事件 + 同 chat 下尚未关联到任何候选的事件。
+     * 后者覆盖"信号在候选创建前先发生"的场景（ConversationDistillJob 异步生成候选）。
+     */
+    @Query("SELECT e FROM WikiFeedbackEvent e " +
+            "WHERE e.candidateId = :candidateId " +
+            "   OR (e.candidateId IS NULL AND e.sourceChatId = :sourceChatId)")
+    List<WikiFeedbackEvent> findForAggregation(
+            @Param("candidateId") String candidateId,
+            @Param("sourceChatId") String sourceChatId
+    );
 }

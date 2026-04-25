@@ -9,7 +9,6 @@ import {
   BookOpen,
   Trash2,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { BrandMark, Avatar } from '../ui/brand';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImageUpload } from '../../hooks/useImageUpload';

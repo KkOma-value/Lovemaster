@@ -224,7 +224,8 @@ export async function getChatRun(runId) {
 }
 
 /**
- * Creates a knowledge candidate from chat messages
+ * @deprecated Silent sedimentation 方案下不再使用（v2.0）：候选由后端 ConversationDistillJob 自动产出。
+ * 函数保留仅用于过渡期兼容旧客户端，C 端不应再调用。
  */
 export async function createKnowledgeCandidate(chatId, runId, question, answer, triggerType, triggerScore = 1.0) {
     return authFetch(`${API_BASE}/ai/knowledge/candidates`, {

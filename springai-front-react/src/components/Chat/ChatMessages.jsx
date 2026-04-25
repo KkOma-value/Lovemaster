@@ -7,8 +7,10 @@ import StatusSteps from './StatusSteps';
 import StreamingStatus from './StreamingStatus';
 import ProbabilityCard from './ProbabilityCard';
 import ActionBar from './ActionBar';
+import { createFeedbackEvent } from '../../services/chatApi';
 
 const BUBBLE_RADIUS = 20;
+const DWELL_THRESHOLD_MS = 3000;
 
 const USER_BUBBLE_STYLE = {
   background: '#E89B7A',
@@ -32,6 +34,71 @@ const AI_BUBBLE_STYLE = {
   lineHeight: 1.75,
   color: 'var(--text-ink)',
   wordBreak: 'break-word',
+};
+
+// 助手消息可见时长 ≥ 阈值，静默上报 dwell 信号；同消息会话内仅一次。
+const AssistantBubble = ({ children, chatId, runId, messageId }) => {
+  const ref = useRef(null);
+  const reportedRef = useRef(false);
+  const timerRef = useRef(null);
+  const dwellStartRef = useRef(0);
+
+  useEffect(() => {
+    if (!chatId || !messageId || !ref.current || reportedRef.current) return;
+    const node = ref.current;
+
+    const clearTimer = () => {
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+
+    const tryReport = () => {
+      if (reportedRef.current) return;
+      reportedRef.current = true;
+      const dwellSeconds = Math.max(0, Math.round((Date.now() - dwellStartRef.current) / 1000));
+      try {
+        createFeedbackEvent(null, chatId, runId || null, 'dwell', '', dwellSeconds, { messageId }).catch(() => {});
+      } catch {
+        // silent
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') {
+        clearTimer();
+      }
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && document.visibilityState === 'visible') {
+          if (!timerRef.current && !reportedRef.current) {
+            dwellStartRef.current = Date.now();
+            timerRef.current = window.setTimeout(tryReport, DWELL_THRESHOLD_MS);
+          }
+        } else {
+          clearTimer();
+        }
+      });
+    }, { threshold: 0.5 });
+
+    observer.observe(node);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      clearTimer();
+    };
+  }, [chatId, runId, messageId]);
+
+  return (
+    <div ref={ref} style={AI_BUBBLE_STYLE}>
+      {children}
+    </div>
+  );
 };
 
 const ChatMessages = ({ messages, streamingStatus, chatType, chatId, onRetry, onCopyAction }) => {
@@ -116,6 +183,7 @@ const ChatMessages = ({ messages, streamingStatus, chatType, chatId, onRetry, on
             const fallbackImages = (message.images || []).filter(
               (img) => !message.content || !img.url || !message.content.includes(img.url)
             );
+            const enableDwell = !message.isStreaming && !!message.content && !message.isError;
 
             return (
               <div key={messageKey} className="flex gap-2 bubble-in">
@@ -126,7 +194,11 @@ const ChatMessages = ({ messages, streamingStatus, chatType, chatId, onRetry, on
                   className="flex flex-col gap-1.5"
                   style={{ maxWidth: '80%', minWidth: 0, flex: 1 }}
                 >
-                  <div style={AI_BUBBLE_STYLE}>
+                  <AssistantBubble
+                    chatId={enableDwell ? chatId : null}
+                    runId={message.runId || null}
+                    messageId={enableDwell ? message.id : null}
+                  >
                     {message.statusSteps?.length > 0 && (
                       <StatusSteps
                         steps={message.statusSteps}
@@ -201,21 +273,15 @@ const ChatMessages = ({ messages, streamingStatus, chatType, chatId, onRetry, on
                         {message.content}
                       </div>
                     )}
-                  </div>
+                  </AssistantBubble>
                   {!message.isStreaming && message.content && !message.isError && (
                     <ActionBar
                       chatType={chatType}
                       chatId={chatId}
                       messageId={message.id}
                       runId={message.runId || null}
-                      question={
-                        index > 0 && messages[index - 1].role === 'user'
-                          ? messages[index - 1].content
-                          : ''
-                      }
                       answer={message.content}
                       thumbsStatus={message.thumbs || null}
-                      wikiStatus={message.wikiStatus || 'idle'}
                       onCopyAction={onCopyAction}
                     />
                   )}

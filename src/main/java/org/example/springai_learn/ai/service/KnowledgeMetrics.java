@@ -30,6 +30,7 @@ public class KnowledgeMetrics {
     private final Counter autoApproved;
     private final Counter autoRejected;
     private final Counter markedUnknownTopic;
+    private final Counter autoDistillCreated;
 
     public KnowledgeMetrics(MeterRegistry registry) {
         this.registry = registry;
@@ -51,6 +52,8 @@ public class KnowledgeMetrics {
                 .description("Candidates auto-rejected (stale, no positive feedback)").register(registry);
         this.markedUnknownTopic = Counter.builder(NS + "_unknown_topic_total")
                 .description("Candidates marked unknown_topic after extended pending period").register(registry);
+        this.autoDistillCreated = Counter.builder(NS + "_auto_distill_created_total")
+                .description("Candidates created by ConversationDistillJob").register(registry);
     }
 
     public void recordFanout(String strategy, long elapsedNanos) {
@@ -118,6 +121,12 @@ public class KnowledgeMetrics {
     public void markedUnknownTopic(int count) {
         if (count > 0) {
             markedUnknownTopic.increment(count);
+        }
+    }
+
+    public void autoDistillCreated(int count) {
+        if (count > 0) {
+            autoDistillCreated.increment(count);
         }
     }
 }

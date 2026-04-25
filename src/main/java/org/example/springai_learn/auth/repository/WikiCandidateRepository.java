@@ -25,4 +25,10 @@ public interface WikiCandidateRepository extends JpaRepository<WikiCandidate, St
             @Param("intent") String intent,
             @Param("problem") String problem
     );
+
+    /**
+     * v2.0 ConversationDistillJob 幂等检查：
+     * sourceRunId 复用为「被蒸馏消息的 messageId」。triggerType="auto_distill" 标识来源。
+     */
+    boolean existsBySourceRunIdAndTriggerType(String sourceRunId, String triggerType);
 }

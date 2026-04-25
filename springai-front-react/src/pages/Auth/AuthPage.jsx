@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Sparkles } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, FileText, X } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import {
   // eslint-disable-next-line no-unused-vars
@@ -257,39 +257,33 @@ function AuthForm({ mode }) {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPwd, setShowPwd] = useState(false);
+  const [modal, setModal] = useState(null);
 
-  if (mode === 'login') {
-    return (
-      <LoginFormInner
-        onError={setError}
-        onLoading={setIsLoading}
-        isLoading={isLoading}
-        error={error}
-        showPwd={showPwd}
-        setShowPwd={setShowPwd}
-        onLogin={login}
-        onGoogleLogin={googleLogin}
-        navigate={navigate}
-      />
-    );
-  }
+  const formProps = {
+    onError: setError,
+    onLoading: setIsLoading,
+    isLoading,
+    error,
+    showPwd,
+    setShowPwd,
+    navigate,
+    onShowTerms: () => setModal('terms'),
+    onShowPrivacy: () => setModal('privacy'),
+  };
+
+  const formElement = mode === 'login'
+    ? <LoginFormInner {...formProps} onLogin={login} onGoogleLogin={googleLogin} />
+    : <RegisterFormInner {...formProps} onRegister={register} onGoogleLogin={googleLogin} />;
 
   return (
-    <RegisterFormInner
-      onError={setError}
-      onLoading={setIsLoading}
-      isLoading={isLoading}
-      error={error}
-      showPwd={showPwd}
-      setShowPwd={setShowPwd}
-      onRegister={register}
-      onGoogleLogin={googleLogin}
-      navigate={navigate}
-    />
+    <>
+      {formElement}
+      {modal && <PolicyModal type={modal} onClose={() => setModal(null)} />}
+    </>
   );
 }
 
-function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShowPwd, onLogin, onGoogleLogin, navigate }) {
+function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShowPwd, onLogin, onGoogleLogin, navigate, onShowTerms, onShowPrivacy }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
@@ -419,20 +413,30 @@ function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShow
 
         <div className="mt-5 text-[11px] text-center" style={{ color: '#A98872' }}>
           继续即表示同意
-          <span className="mx-0.5" style={{ color: '#C47B5A', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={onShowTerms}
+            className="mx-0.5 bg-transparent border-none cursor-pointer"
+            style={{ color: '#C47B5A', padding: 0, fontSize: 'inherit' }}
+          >
             服务条款
-          </span>
+          </button>
           和
-          <span className="mx-0.5" style={{ color: '#C47B5A', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={onShowPrivacy}
+            className="mx-0.5 bg-transparent border-none cursor-pointer"
+            style={{ color: '#C47B5A', padding: 0, fontSize: 'inherit' }}
+          >
             隐私政策
-          </span>
+          </button>
         </div>
       </motion.div>
     </AnimatePresence>
   );
 }
 
-function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setShowPwd, onRegister, onGoogleLogin, navigate }) {
+function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setShowPwd, onRegister, onGoogleLogin, navigate, onShowTerms, onShowPrivacy }) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -607,13 +611,23 @@ function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setS
 
         <div className="mt-5 text-[11px] text-center" style={{ color: '#A98872' }}>
           继续即表示同意
-          <span className="mx-0.5" style={{ color: '#C47B5A', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={onShowTerms}
+            className="mx-0.5 bg-transparent border-none cursor-pointer"
+            style={{ color: '#C47B5A', padding: 0, fontSize: 'inherit' }}
+          >
             服务条款
-          </span>
+          </button>
           和
-          <span className="mx-0.5" style={{ color: '#C47B5A', cursor: 'pointer' }}>
+          <button
+            type="button"
+            onClick={onShowPrivacy}
+            className="mx-0.5 bg-transparent border-none cursor-pointer"
+            style={{ color: '#C47B5A', padding: 0, fontSize: 'inherit' }}
+          >
             隐私政策
-          </span>
+          </button>
         </div>
       </motion.div>
     </AnimatePresence>
@@ -697,6 +711,122 @@ function AuthDivider({ text = '或者' }) {
           backgroundColor: 'rgba(232,155,122,0.18)',
         }}
       />
+    </div>
+  );
+}
+
+/* ================================================================
+   Policy Modal
+   ================================================================ */
+function PolicyModal({ type, onClose }) {
+  const isTerms = type === 'terms';
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(60, 40, 30, 0.45)', backdropFilter: 'blur(4px)' }}
+      onClick={onClose}
+    >
+      <div
+        className="relative w-full max-w-[480px] max-h-[80vh] overflow-y-auto"
+        style={{
+          background: '#FFFDF9',
+          borderRadius: 20,
+          boxShadow: '0 8px 40px rgba(80, 40, 20, 0.25)',
+          padding: '28px 30px',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div
+            className="grid place-items-center flex-shrink-0"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              background: 'rgba(232,155,122,0.12)',
+              color: '#C47B5A',
+            }}
+          >
+            {isTerms ? <FileText size={18} /> : <Shield size={18} />}
+          </div>
+          <div>
+            <div className="text-[16px] font-semibold" style={{ color: '#4A3020' }}>
+              {isTerms ? '服务条款' : '隐私政策'}
+            </div>
+            <div className="text-[11px]" style={{ color: '#A98872' }}>Love Master</div>
+          </div>
+          <button
+            onClick={onClose}
+            className="ml-auto grid place-items-center bg-transparent border-none cursor-pointer"
+            style={{ width: 28, height: 28, borderRadius: 8, color: 'var(--text-muted)' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="text-[13px] leading-relaxed" style={{ color: '#6B5748' }}>
+          {isTerms ? (
+            <>
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>1. 服务说明</h3>
+              <p className="mb-3">
+                Love Master 是一款 AI 情感陪伴与恋爱教练应用，通过人工智能技术为用户提供情感建议和关系分析服务。本服务仅供个人学习和参考使用，不构成专业心理咨询或医疗建议。
+              </p>
+
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>2. 使用规范</h3>
+              <p className="mb-3">
+                用户应遵守法律法规，不得利用本服务从事违法违规活动。请尊重他人隐私，不要在对话中分享他人的个人信息。
+              </p>
+
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>3. 免责声明</h3>
+              <p className="mb-3">
+                AI 生成的内容仅供参考，不构成任何形式的承诺或保证。我们会持续改进服务质量，但不对服务的连续性、及时性和准确性做绝对保证。
+              </p>
+
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>4. 服务变更</h3>
+              <p>我们保留随时修改或中断服务的权利，重大变更将通过应用内通知告知用户。</p>
+            </>
+          ) : (
+            <>
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>1. 信息收集</h3>
+              <p className="mb-3">
+                我们仅收集提供服务所必需的信息，包括账号信息和您在应用内的对话内容。我们采用行业标准的安全措施保护您的数据。
+              </p>
+
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>2. 数据使用</h3>
+              <p className="mb-3">
+                您的对话数据可能经过匿名化处理后用于改善 AI 回复质量。所有数据处理遵循去标识化原则，无法追溯到具体个人身份。我们不会将您的个人数据出售或分享给第三方。
+              </p>
+
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>3. 数据安全</h3>
+              <p className="mb-3">
+                我们采用加密传输和存储技术保护您的数据安全。您有权随时请求删除账号及关联数据，删除请求将在 7 个工作日内处理。
+              </p>
+
+              <h3 className="text-[14px] font-semibold mb-2" style={{ color: '#4A3020' }}>4. 联系我们</h3>
+              <p>
+                如对隐私政策有任何疑问，请通过应用内反馈联系我们。本政策可能不时更新，重大变更将提前通知。
+              </p>
+            </>
+          )}
+        </div>
+
+        {/* Footer */}
+        <button
+          onClick={onClose}
+          className="w-full mt-5 py-2.5 text-[13px] font-medium border-none cursor-pointer"
+          style={{
+            background: '#E89B7A',
+            color: '#FFFAF5',
+            borderRadius: 12,
+            boxShadow: '0 4px 12px rgba(232,155,122,0.25)',
+          }}
+        >
+          我知道了
+        </button>
+      </div>
     </div>
   );
 }

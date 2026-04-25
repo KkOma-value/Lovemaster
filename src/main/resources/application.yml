@@ -157,6 +157,28 @@ app:
       min-samples: ${APP_KNOWLEDGE_STRATEGY_MIN_SAMPLES:3}
       top-k: ${APP_KNOWLEDGE_STRATEGY_TOP_K:20}
       gray-percent: ${APP_KNOWLEDGE_STRATEGY_GRAY_PERCENT:10}
+    auto-distill:
+      enabled: ${APP_KNOWLEDGE_AUTO_DISTILL_ENABLED:true}
+      cron: ${APP_KNOWLEDGE_AUTO_DISTILL_CRON:0 */15 * * * *}
+      min-content-length: ${APP_KNOWLEDGE_AUTO_DISTILL_MIN_CONTENT_LENGTH:80}
+      lookback-hours: ${APP_KNOWLEDGE_AUTO_DISTILL_LOOKBACK_HOURS:24}
+    auto-approval:
+      enabled: ${APP_KNOWLEDGE_AUTO_APPROVAL_ENABLED:true}
+      cron: ${APP_KNOWLEDGE_AUTO_APPROVAL_CRON:0 */10 * * * *}
+      min-aggregated-score: ${APP_KNOWLEDGE_AUTO_APPROVAL_MIN_SCORE:1.5}
+      negative-veto: ${APP_KNOWLEDGE_AUTO_APPROVAL_NEGATIVE_VETO:1}
+      stale-days: ${APP_KNOWLEDGE_AUTO_APPROVAL_STALE_DAYS:7}
+      unknown-topic-days: ${APP_KNOWLEDGE_AUTO_APPROVAL_UNKNOWN_TOPIC_DAYS:14}
+      signal-weights:
+        copy: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_COPY:0.6}
+        dwell: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_DWELL:0.3}
+        follow_up: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_FOLLOW_UP:0.4}
+        quote: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_QUOTE:0.5}
+        session_retention: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_SESSION_RETENTION:0.2}
+        return_visit: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_RETURN_VISIT:0.7}
+        thumbs_up: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_THUMBS_UP:0.8}
+        thumbs_down: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_THUMBS_DOWN:-1.0}
+        llm_judge_positive: ${APP_KNOWLEDGE_SIGNAL_WEIGHT_LLM_JUDGE:0.5}
 
 management:
   endpoints:
