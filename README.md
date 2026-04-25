@@ -456,14 +456,54 @@ POST /api/auth/upload-image
 - 前端：`useBackgroundRuns` hook + `BackgroundRunsPill` 组件 + `RecoveryBanner` 组件
 - 后端：`ChatRunService` 管理运行状态，SSE 连接断开后任务继续执行
 
-### Graphify 知识图谱
+### Graphify 知识图谱 + 全自动 Wiki
 
-项目集成了 Graphify 代码知识图谱工具：
+项目集成了 Graphify 代码知识图谱工具，并由**用户反馈驱动全自动维护**：
+
+#### 图谱更新
 
 ```bash
-graphify update .        # 基于 AST 更新代码图谱（无 API 成本）
-graphify query "..."     # 基于图谱的代码问答
-graphify explain "X"     # 解释某个代码节点及其邻居
+graphify update .                        # 手动基于 AST 更新代码图谱（无 API 成本）
+graphify query "..."                     # 基于图谱的代码问答
+graphify explain "X"                     # 解释某个代码节点及其邻居
+bash scripts/wiki-update.sh              # CLI 统一更新入口（防抖 + 锁 + 索引生成）
+bash scripts/setup-wiki-autoupdate.sh    # 一键安装 git hooks + 首次图谱生成
+```
+
+#### 全自动知识入库管线
+
+用户反馈（点赞 / 保存到Wiki / 继续对话）直接驱动 Wiki 进化，**零人工介入**：
+
+```
+用户反馈 → KnowledgeAutoApprovalJob (每10分钟)
+              ≥3 正向反馈 → 自动批准 → 写入 topics/
+              >7d 无反馈  → 自动清理
+              >14d 无人理 → 标记 unknown_topic
+         → KnowledgeReinforcementJob (每30分钟)
+             高分反馈事件 → 自动沉淀到 inbox/
+         → WikiGraphSyncService (防抖30s)
+             文件变更后自动同步 graphify 图谱
+```
+
+核心组件：
+
+- `KnowledgeAutoApprovalJob` — 反馈驱动的自动审批引擎
+- `WikiGraphSyncService` — Wiki ↔ 图谱自动同步
+- `KnowledgeReinforcementJob` — 高分反馈自动强化（周期从 6h 缩短至 30min）
+- `KnowledgeReviewService` — 审批 API（兼容旧路径，可被自动引擎调用）
+- 前端 `KnowledgeReviewPage` — 知识蒸馏观察台（只读仪表盘）
+
+#### 配置
+
+```yaml
+app.knowledge:
+  auto-approval:
+    min-positive-feedback: 3     # 自动入库所需正向反馈数
+    stale-days: 7                # 冷数据自动清理天数
+  graph-sync:
+    debounce-seconds: 30         # 图谱同步防抖
+  feedback:
+    cron: "0 */30 * * * *"       # 反馈强化周期
 ```
 
 图谱文件保存在本地 `graphify-out/`，已加入 `.gitignore`。
