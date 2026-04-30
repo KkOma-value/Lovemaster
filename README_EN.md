@@ -1,56 +1,105 @@
-# Love Master - Your AI Dating Companion
+<div align="center">
 
-> A full-stack AI dating companion and coaching application built with Spring AI + React
+# 💕 Love Master
 
-[中文](./README.md)
+### Your AI Dating Companion
 
-![Love Master Homepage](homepage_final.png)
+A full-stack AI dating companion and coaching application built with Spring AI + React
 
-## Features
+[中文](./README.md) · [Quick Start](#-quick-start) · [Features](#-features) · [Architecture](#-architecture)
 
-**Dating Companion**
-- Love Mode: casual chat companion with text and screenshot input
-- Smart Screenshot Understanding: OCR extraction + question rewriting with automatic context enrichment
+---
 
-**Dating Coach**
-- Coach Mode: AI Agent architecture that thinks before acting
-- Tool Calling: email, web search, web scraping, PDF generation, and 10+ tools
-- MCP Server Extension: standalone module for dynamic external tool registration
+[![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://openjdk.org/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring AI](https://img.shields.io/badge/Spring%20AI-1.0.0--M6-6DB33F?style=flat-square)](https://spring.io/projects/spring-ai)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL+PgVector-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-Storage-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
-**Kiko AI Probability Analysis**
-- Dating success probability assessment with structured probability cards
-- Positive/risk signals + next-step action recommendations
+</div>
 
-**Knowledge & Memory**
+<br/>
+
+<p align="center">
+  <img src="bf2842354775bab871453344de9e4c4e.png" alt="Love Master Homepage" width="900" />
+</p>
+
+<br/>
+
+## ✨ Features
+
+<table>
+<tr>
+<td width="50%">
+
+### 💬 Dating Companion · Love Mode
+
+A gentle chat companion that listens without judgment.
+
+- Text and screenshot input support
+- Smart screenshot understanding: OCR extraction + question rewriting
+- Automatic context enrichment for precise understanding
+
+</td>
+<td width="50%">
+
+### 🧠 Dating Coach · Coach Mode
+
+AI Agent architecture — thinks before acting, gives expert advice.
+
+- On-demand tool calling: email, search, web scraping, PDF generation, **10+ tools**
+- MCP Server extension: standalone module with dynamic tool registration
+- Analyzes chat history for tailored, tactful response suggestions
+
+</td>
+</tr>
+<tr>
+<td width="50%">
+
+### 🎯 Kiko AI · Probability Analysis
+
+Dating success probability assessment — know where you stand.
+
+- Auto-triggered by intents like "success rate" or "do I have a chance"
+- Structured probability cards: score + positive/risk signals
+- Next-step action recommendations
+
+</td>
+<td width="50%">
+
+### 📚 Knowledge & Memory
+
+The more it knows, the better the advice.
+
 - RAG retrieval augmentation (PostgreSQL + PgVector / Dify / local Wiki)
-- User feedback-driven fully automatic knowledge ingestion with zero manual approval
-- Session persistence + background run state recovery
+- User feedback-driven automatic knowledge ingestion, zero manual approval
+- Session persistence + background state recovery
+- Google OAuth + JWT auth / Supabase cloud storage
 
-**Auth & Storage**
-- Google OAuth + JWT authentication
-- Supabase cloud storage for conversation images
+</td>
+</tr>
+</table>
 
-## Tech Stack
+<br/>
 
-![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-6DB33F?logo=springboot&logoColor=white)
-![Spring AI](https://img.shields.io/badge/Spring%20AI-1.0.0--M6-6DB33F)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-7-646CFF?logo=vite&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL+PgVector-4169E1?logo=postgresql&logoColor=white)
-![Supabase](https://img.shields.io/badge/Supabase-Storage-3FCF8E?logo=supabase&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-blue)
+## 🏗 Architecture
 
-## Architecture
+<details open>
+<summary><b>System Architecture Diagram</b></summary>
+
+<br/>
 
 ```mermaid
 graph TB
-    subgraph Frontend ["Frontend React + Vite :5173"]
+    subgraph Frontend ["🖥 Frontend React + Vite :5173"]
         UI[Page Components]
     end
 
-    subgraph Backend ["Backend Spring Boot :8088"]
+    subgraph Backend ["⚙️ Backend Spring Boot :8088"]
         Intake[MultimodalIntake<br/>Screenshot / OCR / Question Rewrite]
         RAG[RagKnowledgeService<br/>Dify + PgVector + Wiki]
         Brain[BrainAgentService<br/>Decide whether to call tools]
@@ -60,11 +109,11 @@ graph TB
         Coach[CoachChatOrchestrator]
     end
 
-    subgraph MCP ["MCP Server :8127"]
+    subgraph MCP ["🔌 MCP Server :8127"]
         MCPTools[MCP Tool Set]
     end
 
-    subgraph Storage ["External Services"]
+    subgraph Storage ["☁️ External Services"]
         DB[(PostgreSQL + PgVector)]
         Dify[Dify Dataset API]
         Supa[Supabase Storage]
@@ -85,51 +134,79 @@ graph TB
     Tools --> Supa
 ```
 
-## Quick Start
+</details>
+
+### Chat Pipeline Overview
+
+| Mode | Processing Flow | Characteristics |
+|:---:|:---|:---|
+| **Love** | `Input → Screenshot Understanding → RAG Recall → Companion Response` | Pure chat, direct advice |
+| **Coach** | `Input → Screenshot Understanding → RAG → Brain Decision → [Direct Answer \| Tool Call] → Combined Response` | Agent architecture, think then act |
+| **Kiko** | `Input → Intent Recognition → ProbabilityAnalysisService → Probability Card` | Structured probability analysis |
+
+<br/>
+
+## 🚀 Quick Start
 
 ### Requirements
 
-- Java 21+ / Maven 3.6+ / PostgreSQL 12+ / Node.js 18+
+| Dependency | Minimum Version |
+|:---|:---|
+| Java | 21+ |
+| Maven | 3.6+ |
+| PostgreSQL | 12+ |
+| Node.js | 18+ |
 
-### 1. Configure
+### 1️⃣ Configure
 
 ```bash
 cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
 # Edit application-local.yml with your database and API key credentials
 ```
 
-> Full configuration guide: [docs/QUICKSTART.md](docs/QUICKSTART.md)
+> 💡 Full configuration guide: [docs/QUICKSTART.md](docs/QUICKSTART.md)
 
-### 2. Start Backend
+### 2️⃣ Start Backend
 
 ```bash
-mvn spring-boot:run -Dspring-boot.run.profiles=local    # API: http://localhost:8088
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+# API: http://localhost:8088
 ```
 
-### 3. Start Frontend
+### 3️⃣ Start Frontend
 
 ```bash
 cd springai-front-react
-npm install && npm run dev                               # UI: http://localhost:5173
+npm install && npm run dev
+# UI: http://localhost:5173
 ```
 
-### 4. Start MCP Server (Optional)
+### 4️⃣ Start MCP Server (Optional)
 
 ```bash
 cd mcp-servers
-mvn spring-boot:run -Dspring-boot.run.profiles=local    # MCP: http://localhost:8127
+mvn spring-boot:run -Dspring-boot.run.profiles=local
+# MCP: http://localhost:8127
 ```
 
-Detailed configuration (NVIDIA NIM / Dify / Supabase / Google OAuth): see [docs/QUICKSTART.md](docs/QUICKSTART.md).
+> 📖 Detailed configuration (NVIDIA NIM / Dify / Supabase / Google OAuth): see [docs/QUICKSTART.md](docs/QUICKSTART.md)
 
-## Project Structure
+<br/>
 
-```text
+## 📁 Project Structure
+
+<details>
+<summary><b>Click to expand full directory</b></summary>
+
+```
 Lovemaster/
 ├── src/                           # Spring Boot backend
 │   └── main/java/.../
 │       ├── controller/            # REST API + SSE
-│       ├── ai/                    # Intake / Brain / Tools / Orchestrator
+│       ├── ai/                    # AI core modules
+│       │   ├── intake/            # Multimodal input processing
+│       │   ├── service/           # Brain / Tools / RAG services
+│       │   └── orchestrator/      # Love / Coach orchestrators
 │       ├── app/                   # LoveApp core
 │       ├── auth/                  # Auth + image storage
 │       ├── tools/                 # Tool registration & implementations
@@ -145,54 +222,84 @@ Lovemaster/
 └── scripts/                       # Automation scripts
 ```
 
-## Chat Modes
+</details>
 
-### Love Mode - Dating Companion
+<br/>
 
-Pure chat mode. Gives advice directly without calling tools.
+## 🛠 Common Commands
 
-`Input → Screenshot Understanding → RAG Knowledge Recall → Companion Response`
-
-### Coach Mode - Dating Coach
-
-Agent architecture. Thinks first, acts second. Calls tools as needed.
-
-`Input → Screenshot Understanding → RAG → Brain Decision → [Direct Answer | Tool Calling] → Combined Response`
-
-### Kiko AI - Probability Analysis
-
-Triggered when detecting intents like "success rate" or "do I have a chance". Outputs structured probability cards.
-
-`Input → Intent Recognition → ProbabilityAnalysisService → Probability Card (Value / Signals / Suggestions)`
-
-## Common Commands
+<details>
+<summary><b>Backend</b></summary>
 
 ```bash
-# Backend
 mvn test                              # Run tests
 mvn -DskipTests=true package          # Build JAR
-
-# Frontend
-cd springai-front-react
-npm run lint                          # Lint check
-npm run build                         # Production build
-
-# MCP Server
-cd mcp-servers && mvn test
+mvn spring-boot:run -Dspring-boot.run.profiles=local  # Start app
 ```
 
-## Development Guide
+</details>
 
-- **Add a new tool**: create a class in `tools/`, annotate with `@Tool`, register in `ToolRegistration`
-- **Modify chat flow**: edit files under `ai/orchestrator/` and `ai/service/`
-- **Update knowledge base**: `bash scripts/wiki-update.sh` or `bash scripts/setup-wiki-autoupdate.sh`
+<details>
+<summary><b>Frontend</b></summary>
 
-Full development docs: [docs/WORKFLOW_GUIDE_EN.md](docs/WORKFLOW_GUIDE_EN.md).
+```bash
+cd springai-front-react
+npm run dev                           # Dev mode
+npm run lint                          # Lint check
+npm run build                         # Production build
+```
 
-## License
+</details>
 
-[MIT](LICENSE)
+<details>
+<summary><b>MCP Server</b></summary>
+
+```bash
+cd mcp-servers
+mvn test                              # Run tests
+mvn spring-boot:run -Dspring-boot.run.profiles=local  # Start MCP
+```
+
+</details>
+
+<br/>
+
+## 🧩 Development Guide
+
+| Scenario | How To |
+|:---|:---|
+| **Add a new tool** | Create a class in `tools/`, annotate with `@Tool`, register in `ToolRegistration` |
+| **Modify chat flow** | Edit files under `ai/orchestrator/` and `ai/service/` |
+| **Update knowledge base** | `bash scripts/wiki-update.sh` or `bash scripts/setup-wiki-autoupdate.sh` |
+
+> 📖 Full development docs: [docs/WORKFLOW_GUIDE_EN.md](docs/WORKFLOW_GUIDE_EN.md)
+
+<br/>
+
+## 🤝 Contributing
+
+Contributions of all kinds are welcome! Whether it's filing a bug, suggesting a feature, or submitting a PR — we appreciate it all.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+<br/>
+
+## 📄 License
+
+This project is licensed under [MIT](LICENSE).
+
+<br/>
+
+<div align="center">
 
 ---
 
-If you find this helpful, feel free to give us a Star!
+**If you find this helpful, please give us a ⭐ Star!**
+
+Made with ❤️ by Love Master Team
+
+</div>
