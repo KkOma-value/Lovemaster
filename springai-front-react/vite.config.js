@@ -3,6 +3,11 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setupTests.js',
+    globals: true
+  },
   build: {
     rollupOptions: {
       output: {
@@ -11,9 +16,6 @@ export default defineConfig({
             return undefined;
           }
 
-          if (id.includes('framer-motion')) {
-            return 'motion-vendor';
-          }
           if (id.includes('@react-oauth/google') || id.includes('axios')) {
             return 'network-vendor';
           }
