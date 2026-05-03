@@ -37,6 +37,8 @@ dist/
 # Sensitive configuration files
 **/application-local.properties
 **/application-local.yml
+.env
+.env.*
 
 # Claude Code local settings
 .claude/settings.local.json
@@ -76,3 +78,4 @@ tmp-classpath.txt
 
 # Hash-named artifact directories
 tech-d*/
+.gitnexus

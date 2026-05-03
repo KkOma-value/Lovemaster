@@ -102,7 +102,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="grain relative w-full h-full overflow-y-auto nice-scroll">
+    <div className="grain relative w-full flex-1 min-h-0 overflow-y-auto nice-scroll">
       {/* Full-page background image */}
       <div
         className="fixed inset-0 z-0 pointer-events-none"
@@ -146,12 +146,7 @@ const HomePage = () => {
         )}
       </AnimatePresence>
 
-      <m.div
-        initial={{ opacity: 0, y: 6 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-        transition={{ duration: 0.24 }}
-        className="relative z-10 max-w-[1080px] mx-auto px-6 md:px-10 py-8 md:py-12"
+      <div className="relative z-10 max-w-[1080px] mx-auto px-6 md:px-10 py-8 md:py-12 fade-up" style={{ animationDelay: '0s' }}
       >
         {/* Brand header */}
         <header className="flex items-center justify-between mb-8 fade-up" style={{ animationDelay: '0s' }}>
@@ -464,7 +459,7 @@ const HomePage = () => {
         <footer className="py-6 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
           Love Master AI · 2026 · 愿每一段感情都被温柔以待
         </footer>
-      </m.div>
+      </div>
     </div>
   );
 };

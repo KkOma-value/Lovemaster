@@ -62,10 +62,12 @@ function App() {
       <Router>
         <AuthProvider>
           <ChatRuntimeProvider>
-            <Navbar />
-            <AppLayout>
-              <AnimatedRoutes />
-            </AppLayout>
+            <div className="h-screen flex flex-col overflow-hidden">
+              <Navbar />
+              <AppLayout>
+                <AnimatedRoutes />
+              </AppLayout>
+            </div>
             <Toast />
           </ChatRuntimeProvider>
         </AuthProvider>
