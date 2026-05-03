@@ -64,6 +64,8 @@ artifacts/
 .codebuddy/
 .cursor/
 .gemini/
+.github/
+.super-dev/
 
 # Temporary and build artifacts
 tmp/
