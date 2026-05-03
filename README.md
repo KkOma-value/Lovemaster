@@ -2,11 +2,15 @@
 
 # 💕 Love Master
 
-### 你的恋爱 AI 小助手
+<a href="#">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=ED8B00&center=true&vCenter=true&width=600&lines=你的恋爱+AI+小助手;纯聊天模式，倾听你的心声;AI+恋爱教练，给你最懂人心的建议;基于+Spring+AI+%2B+React+构建" alt="Typing SVG" />
+</a>
 
-基于 Spring AI + React 的全栈 AI 恋爱陪伴与教练应用
+**基于 Spring AI + React 的全栈 AI 恋爱陪伴与教练应用**
 
-[English](./README_EN.md) · [快速开始](#-快速开始) · [功能亮点](#-功能亮点) · [架构设计](#-架构概览)
+🌐 **[简体中文](README.md)** | 🌍 **[English](README_EN.md)**
+<br/>
+[快速开始](#-快速开始) · [功能亮点](#-功能亮点) · [架构设计](#-架构概览)
 
 ---
 

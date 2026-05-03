@@ -2,11 +2,15 @@
 
 # 💕 Love Master
 
-### Your AI Dating Companion
+<a href="#">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=ED8B00&center=true&vCenter=true&width=600&lines=Your+AI+Relationship+Assistant;Love+Mode:+Always+Here+to+Listen;Coach+Mode:+Expert+Advice+%26+Strategies;Built+with+Spring+AI+%2B+React" alt="Typing SVG" />
+</a>
 
-A full-stack AI dating companion and coaching application built with Spring AI + React
+**A full-stack AI dating companion and coaching application built with Spring AI + React**
 
-[中文](./README.md) · [Quick Start](#-quick-start) · [Features](#-features) · [Architecture](#-architecture)
+🌐 **[简体中文](README.md)** | 🌍 **[English](README_EN.md)**
+<br/>
+[Quick Start](#-quick-start) · [Features](#-features) · [Architecture](#-architecture)
 
 ---
 
