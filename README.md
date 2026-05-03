@@ -3,7 +3,7 @@
 # 💕 Love Master
 
 <a href="#">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&duration=3000&pause=1000&color=ED8B00&center=true&vCenter=true&width=600&lines=你的恋爱+AI+小助手;纯聊天模式，倾听你的心声;AI+恋爱教练，给你最懂人心的建议;基于+Spring+AI+%2B+React+构建" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Noto+Sans+SC&weight=600&size=22&duration=3000&pause=1000&color=ED8B00&center=true&vCenter=true&width=600&lines=%E4%BD%A0%E7%9A%84%E6%81%8B%E7%88%B1+AI+%E5%B0%8F%E5%8A%A9%E6%89%8B;%E7%BA%AF%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%BC%8F%EF%BC%8C%E5%80%BE%E5%90%AC%E4%BD%A0%E7%9A%84%E5%BF%83%E5%A3%B0;AI+%E6%81%8B%E7%88%B1%E6%95%99%E7%BB%83%EF%BC%8C%E7%BB%99%E4%BD%A0%E6%9C%80%E6%87%82%E4%BA%BA%E5%BF%83%E7%9A%84%E5%BB%BA%E8%AE%AE;%E5%9F%BA%E4%BA%8E+Spring+AI+%2B+React+%E6%9E%84%E5%BB%BA" alt="Typing SVG" />
 </a>
 
 **基于 Spring AI + React 的全栈 AI 恋爱陪伴与教练应用**
