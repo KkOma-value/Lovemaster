@@ -64,3 +64,13 @@ artifacts/
 .codebuddy/
 .cursor/
 .gemini/
+
+# Temporary and build artifacts
+tmp/
+tmp-shared/
+tmp-classpath.txt
+*.zip
+*.lnk
+
+# Hash-named artifact directories
+tech-d*/
