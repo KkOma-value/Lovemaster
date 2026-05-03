@@ -1,0 +1,5 @@
+{
+  "installCommand": "cd springai-front-react && npm install",
+  "buildCommand": "cd springai-front-react && npm run build",
+  "outputDirectory": "springai-front-react/dist"
+}
