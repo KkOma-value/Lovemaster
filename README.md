@@ -1,16 +1,18 @@
 <div align="center">
 
-# 💕 Love Master
+# Love Master
 
-<a href="#">
-  <img src="https://readme-typing-svg.demolab.com?font=Noto+Sans+SC&weight=600&size=22&duration=3000&pause=1000&color=ED8B00&center=true&vCenter=true&width=600&lines=%E4%BD%A0%E7%9A%84%E6%81%8B%E7%88%B1+AI+%E5%B0%8F%E5%8A%A9%E6%89%8B;%E7%BA%AF%E8%81%8A%E5%A4%A9%E6%A8%A1%E5%BC%8F%EF%BC%8C%E5%80%BE%E5%90%AC%E4%BD%A0%E7%9A%84%E5%BF%83%E5%A3%B0;AI+%E6%81%8B%E7%88%B1%E6%95%99%E7%BB%83%EF%BC%8C%E7%BB%99%E4%BD%A0%E6%9C%80%E6%87%82%E4%BA%BA%E5%BF%83%E7%9A%84%E5%BB%BA%E8%AE%AE;%E5%9F%BA%E4%BA%8E+Spring+AI+%2B+React+%E6%9E%84%E5%BB%BA" alt="Typing SVG" />
+<a href="https://github.com/DenverCoder1/readme-typing-svg">
+  <img src="https://readme-typing-svg.demolab.com?font=Noto+Sans+SC&weight=700&size=24&duration=2600&pause=900&color=E85D75&center=true&vCenter=true&width=780&height=72&lines=Lovemaster+-+AI+%e6%81%8b%e7%88%b1%e9%99%aa%e4%bc%b4%e4%b8%8e%e6%95%99%e7%bb%83%e5%b9%b3%e5%8f%b0;%e6%88%aa%e5%9b%be%e7%90%86%e8%a7%a3+%2b+RAG+%e7%9f%a5%e8%af%86%e5%8f%ac%e5%9b%9e+%2b+Agent+%e5%b7%a5%e5%85%b7%e8%b0%83%e7%94%a8;Love+%e6%a8%a1%e5%bc%8f%e5%80%be%e5%90%ac%e9%99%aa%e4%bc%b4%ef%bc%8cCoach+%e6%a8%a1%e5%bc%8f%e6%8b%86%e8%a7%a3%e8%a1%8c%e5%8a%a8;Spring+AI+%2b+React+%2b+MCP+Server+%e5%85%a8%e6%a0%88%e5%ae%9e%e8%b7%b5" alt="Typing SVG" />
 </a>
 
-**基于 Spring AI + React 的全栈 AI 恋爱陪伴与教练应用**
+**一个面向恋爱沟通场景的 AI 陪伴、分析与行动建议系统。**
 
-🌐 **[简体中文](README.md)** | 🌍 **[English](README_EN.md)**
-<br/>
-[快速开始](#-快速开始) · [功能亮点](#-功能亮点) · [架构设计](#-架构概览)
+Lovemaster 把多模态输入理解、RAG 知识召回、Agent 工具调用和流式聊天体验组合在一起，让用户既能获得温柔的陪伴式回复，也能得到可执行的关系沟通建议。
+
+🌐 [简体中文](README.md) · 🌍 [English](README_EN.md)
+
+[快速开始](#快速开始) · [核心能力](#核心能力) · [架构概览](#架构概览) · [项目结构](#项目结构) · [开发指南](#开发指南)
 
 ---
 
@@ -18,292 +20,269 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.5-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Spring AI](https://img.shields.io/badge/Spring%20AI-1.0.0--M6-6DB33F?style=flat-square)](https://spring.io/projects/spring-ai)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
-[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vite.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL+PgVector-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-Storage-3FCF8E?style=flat-square&logo=supabase&logoColor=white)](https://supabase.com/)
+[![MCP](https://img.shields.io/badge/MCP-Server-111827?style=flat-square)](https://modelcontextprotocol.io/)
 [![License](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](LICENSE)
 
 </div>
 
-<br/>
-
 <p align="center">
-  <img src="bf2842354775bab871453344de9e4c4e.png" alt="Love Master 首页" width="900" />
+  <img src="bf2842354775bab871453344de9e4c4e.png" alt="Love Master 首页预览" width="900" />
 </p>
 
-<br/>
+## 项目亮点
 
-## ✨ 功能亮点
+Lovemaster 不是一个只会“生成一句话回复”的聊天 Demo。它围绕恋爱沟通场景做了完整链路：用户可以上传聊天截图，系统先做 OCR 与问题重写，再结合知识库、历史会话和工具调用能力，生成更贴合语境的建议。
 
-<table>
-<tr>
-<td width="50%">
+| 你可以用它做什么 | 系统如何支撑 |
+| --- | --- |
+| 和 AI 倾诉，获得自然、低压力的陪伴式回复 | Love 模式通过 SSE 返回流式回答，并结合会话上下文理解当前情绪 |
+| 分析聊天截图，判断对方信号和下一步话术 | 多模态输入链路负责截图理解、OCR 提取和问题重写 |
+| 让 AI 像教练一样先判断再行动 | Coach 模式由 Brain Agent 决策是否调用工具，再综合输出建议 |
+| 评估“有没有戏”“成功率多高” | Kiko 概率分析输出概率、正向信号、风险信号和下一步建议 |
+| 持续积累有效经验 | Wiki / Dify / PgVector 知识召回与反馈入库机制让建议逐步变准 |
 
-### 💬 恋爱陪伴 · Love 模式
+## 核心能力
 
-纯聊天模式，温柔地陪你聊天，不评判、不催促、只倾听。
+| 模块 | 说明 | 关键实现 |
+| --- | --- | --- |
+| Love Chat | 陪伴式聊天模式，适合倾诉、复盘和轻量建议 | `LoveChatOrchestrator`、SSE、聊天记忆 |
+| Coach Agent | 教练式模式，先分析问题，再决定是否调用工具 | `CoachChatOrchestrator`、`BrainAgentService`、`ToolsAgentService` |
+| Multimodal Intake | 处理文本与图片输入，把截图转成可推理的上下文 | OCR、截图理解、问题重写、图片存储 |
+| RAG Knowledge | 从外部知识库和本地 Wiki 中召回关系建议 | Dify Dataset API、PostgreSQL / PgVector、本地 Wiki |
+| Kiko Analysis | 针对成功率类问题生成结构化概率卡片 | `ProbabilityAnalysisService`、关键词意图识别 |
+| Tool Ecosystem | 为 Agent 提供搜索、网页抓取、文件、PDF、邮件等能力 | Spring AI Tools、独立 MCP Server |
+| Auth & Storage | 支持用户认证、会话持久化和图片云存储 | JWT、Google OAuth、Supabase Storage |
+| Background Runs | 支持后台运行状态恢复，减少长任务中断感 | `ChatRunService`、运行事件记录 |
 
-- 支持文本与截图输入
-- 智能截图理解：OCR 提取 + 问题重写
-- 自动补充上下文，精准理解你的困惑
-
-</td>
-<td width="50%">
-
-### 🧠 恋爱教练 · Coach 模式
-
-AI Agent 架构，先思考后行动，给你最懂人心的专业建议。
-
-- 按需调用工具：邮件、搜索、网页抓取、PDF 生成等 **10+ 工具**
-- MCP Server 扩展：独立模块，动态注册外部工具
-- 分析聊天记录，给你贴心且恰到好处的回复建议
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### 🎯 Kiko AI · 概率分析
-
-恋爱成功概率评估，让你心里有底。
-
-- 检测到"成功率""有没有戏"等意图自动触发
-- 输出结构化概率卡片：概率值 + 正面/风险信号
-- 下一步行动建议，助你步步为"赢"
-
-</td>
-<td width="50%">
-
-### 📚 知识与记忆
-
-懂得越多，建议越准。
-
-- RAG 检索增强（PostgreSQL + PgVector / Dify / 本地 Wiki）
-- 用户反馈驱动全自动知识入库，零人工审批
-- 会话持久化 + 后台运行状态恢复
-- Google OAuth + JWT 认证 / Supabase 云存储
-
-</td>
-</tr>
-</table>
-
-<br/>
-
-## 🏗 架构概览
-
-<details open>
-<summary><b>系统架构图</b></summary>
-
-<br/>
+## 架构概览
 
 ```mermaid
-graph TB
-    subgraph Frontend ["🖥 前端 React + Vite :5173"]
-        UI[页面组件]
-    end
+flowchart LR
+    User["用户输入<br/>文本 / 截图"] --> Frontend["React + Vite<br/>聊天界面"]
+    Frontend -->|SSE / REST| Backend["Spring Boot API<br/>/api"]
 
-    subgraph Backend ["⚙️ 后端 Spring Boot :8088"]
-        Intake[MultimodalIntake<br/>截图理解 / OCR / 问题重写]
-        RAG[RagKnowledgeService<br/>Dify + PgVector + Wiki]
-        Brain[BrainAgentService<br/>决策是否调用工具]
-        Tools[ToolsAgentService<br/>本地工具 + MCP]
-        Love[LoveChatOrchestrator]
-        Kiko[ProbabilityAnalysisService]
-        Coach[CoachChatOrchestrator]
-    end
+    Backend --> Intake["Multimodal Intake<br/>OCR / 图片理解 / 问题重写"]
+    Intake --> RAG["RAG Knowledge<br/>Dify / PgVector / Wiki"]
+    RAG --> Router{"聊天模式"}
 
-    subgraph MCP ["🔌 MCP Server :8127"]
-        MCPTools[MCP 工具集]
-    end
+    Router --> Love["Love Orchestrator<br/>陪伴式回复"]
+    Router --> Coach["Coach Orchestrator<br/>Agent 决策"]
+    Router --> Kiko["Kiko Probability<br/>概率分析卡片"]
 
-    subgraph Storage ["☁️ 外部服务"]
-        DB[(PostgreSQL + PgVector)]
-        Dify[Dify Dataset API]
-        Supa[Supabase Storage]
-        Wiki[本地 Wiki 知识库]
-    end
+    Coach --> Brain["Brain Agent<br/>判断是否需要工具"]
+    Brain -->|需要工具| Tools["Tools Agent<br/>搜索 / 抓取 / PDF / 邮件 / 文件"]
+    Brain -->|无需工具| Answer["流式综合回答"]
+    Tools --> Answer
+    Love --> Answer
+    Kiko --> Answer
 
-    UI -->|SSE| Intake
-    Intake --> RAG
-    RAG --> Brain
-    Brain -->|需要工具| Tools
-    Brain -->|直接回答| Coach
-    Tools --> MCPTools
-    Love --> Intake
-    Kiko --> Intake
-    RAG --> DB
-    RAG --> Dify
-    RAG --> Wiki
-    Tools --> Supa
+    Tools --> MCP["MCP Server :8127<br/>外部工具扩展"]
+    Backend --> DB[("PostgreSQL<br/>用户 / 会话 / 运行记录")]
+    RAG --> Knowledge[("知识库<br/>Dify / Wiki / PgVector")]
+    Backend --> Storage["Supabase Storage<br/>会话图片"]
 ```
 
-</details>
+### 聊天链路
 
-### 聊天链路一览
+| 模式 | 入口 | 处理流程 | 输出形态 |
+| --- | --- | --- | --- |
+| Love | `/api/ai/love_app/chat/sse` | 输入理解 -> RAG 召回 -> 陪伴式回答 | 流式文本 |
+| Coach | `/api/ai/manus/chat` | 输入理解 -> RAG -> Brain 决策 -> 工具调用或直接回答 | 流式建议 |
+| Kiko | 概率类意图自动触发 | 关键词识别 -> 信号聚合 -> 概率分析 | 概率卡片 |
 
-| 模式 | 处理流程 | 特点 |
-|:---:|:---|:---|
-| **Love** | `输入 → 截图理解 → RAG 知识召回 → 陪伴式回答` | 纯聊天，直接给建议 |
-| **Coach** | `输入 → 截图理解 → RAG → Brain 决策 → [直接回答 \| 工具调用] → 综合回答` | Agent 架构，先判断再行动 |
-| **Kiko** | `输入 → 意图识别 → ProbabilityAnalysisService → 概率卡片` | 结构化概率分析 |
+## 技术栈
 
-<br/>
+| 层级 | 技术 |
+| --- | --- |
+| 后端 | Java 21、Spring Boot 3.4.5、Spring AI、Spring Security、Spring Data JPA、Knife4j |
+| AI / Agent | DashScope、NVIDIA NIM OpenAI-compatible API、Spring AI Tools、MCP Client |
+| 知识库 | Dify Dataset API、PostgreSQL、PgVector、本地 Wiki、Caffeine Cache |
+| 存储与认证 | JWT、Google OAuth、Supabase Storage |
+| 前端 | React 19、Vite 7、Tailwind CSS 4、Framer Motion、Three.js、Axios |
+| MCP Server | Spring Boot 3.5.0、Spring AI MCP Server WebMVC |
+| 工程化 | Maven、ESLint、OpenSpec、JUnit 5 |
 
-## 🚀 快速开始
+## 快速开始
 
 ### 环境要求
 
-| 依赖 | 最低版本 |
-|:---|:---|
+| 依赖 | 版本 |
+| --- | --- |
 | Java | 21+ |
 | Maven | 3.6+ |
 | PostgreSQL | 12+ |
 | Node.js | 18+ |
 
-### 1️⃣ 配置
+### 1. 准备本地配置
 
-```bash
-cp src/main/resources/application-local.yml.example src/main/resources/application-local.yml
-# 编辑 application-local.yml，填入数据库、API Key 等配置
+所有密钥都应放在 `src/main/resources/application-local.yml` 或环境变量里，不要提交到仓库。
+
+```powershell
+Copy-Item src/main/resources/application-local.yml.example src/main/resources/application-local.yml
 ```
 
-> 💡 完整配置说明见 [docs/QUICKSTART.md](docs/QUICKSTART.md)
+至少需要配置数据库和一个可用的模型服务：
 
-### 2️⃣ 启动后端
+```yaml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/springai
+    username: your_db_username
+    password: your_db_password
+  ai:
+    dashscope:
+      api-key: your_dashscope_api_key
+    openai:
+      api-key: your_nvidia_api_key
+      base-url: https://integrate.api.nvidia.com
+```
 
-```bash
+更完整的 Dify、Supabase、Google OAuth、搜索 API 配置见 [docs/QUICKSTART.md](docs/QUICKSTART.md)。
+
+### 2. 启动后端
+
+```powershell
 mvn spring-boot:run -Dspring-boot.run.profiles=local
-# API: http://localhost:8088
 ```
 
-### 3️⃣ 启动前端
+默认地址：
 
-```bash
-cd springai-front-react
-npm install && npm run dev
-# UI: http://localhost:5173
+| 服务 | 地址 |
+| --- | --- |
+| API | `http://localhost:8088/api` |
+| Health | `http://localhost:8088/api/health` |
+| Swagger / Knife4j | `http://localhost:8088/api/swagger-ui.html` |
+
+### 3. 启动 React 前端
+
+```powershell
+Set-Location springai-front-react
+npm install
+npm run dev
 ```
 
-### 4️⃣ 启动 MCP Server（可选）
+前端默认运行在 `http://localhost:5173`，并将 `/api` 代理到 `http://localhost:8088`。
 
-```bash
-cd mcp-servers
+### 4. 启动 MCP Server（可选）
+
+```powershell
+Set-Location mcp-servers
 mvn spring-boot:run -Dspring-boot.run.profiles=local
-# MCP: http://localhost:8127
 ```
 
-> 📖 详细配置（NVIDIA NIM / Dify / Supabase / Google OAuth）请参考 [docs/QUICKSTART.md](docs/QUICKSTART.md)
+MCP Server 默认运行在 `http://localhost:8127`。如果只体验基础聊天，可以先不单独启动它；主应用也提供 MCP 自动启动相关配置。
 
-<br/>
+## 常用配置
 
-## 📁 项目结构
+| 配置项 | 用途 |
+| --- | --- |
+| `DB_POOLER_URL` / `DB_URL` | PostgreSQL 连接地址，使用 Supabase 时优先配置 Session Pooler |
+| `DASHSCOPE_API_KEY` | DashScope 模型调用 |
+| `NVIDIA_API_KEY` / `NVIDIA_BASE_URL` | NVIDIA NIM OpenAI-compatible 模型调用 |
+| `DIFY_DATASET_KEY` / `DIFY_DATASET_ID` | Dify 知识库检索 |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | 会话图片云存储 |
+| `GOOGLE_CLIENT_ID` | Google OAuth 登录 |
+| `SEARCH_API_KEY` | WebSearchTool 网络搜索 |
+| `PEXELS_API_KEY` | ImageSearchTool 图片搜索 |
+| `APP_FILE_SAVE_DIR` | 主程序与 MCP Server 共享文件目录 |
 
-<details>
-<summary><b>点击展开完整目录</b></summary>
+## 项目结构
 
-```
+```text
 Lovemaster/
-├── src/                           # Spring Boot 后端
-│   └── main/java/.../
-│       ├── controller/            # REST API + SSE
-│       ├── ai/                    # AI 核心模块
-│       │   ├── intake/            # 多模态输入处理
-│       │   ├── service/           # Brain / Tools / RAG 服务
-│       │   └── orchestrator/      # Love / Coach 编排器
-│       ├── app/                   # LoveApp 核心
-│       ├── auth/                  # 认证 + 图片存储
-│       ├── tools/                 # 工具注册与实现
-│       └── ChatMemory/            # 会话持久化
-├── springai-front-react/          # React 前端
+├── src/                         # Spring Boot 后端
+│   ├── main/java/org/example/springai_learn/
+│   │   ├── ai/                  # Intake / RAG / Agent / Orchestrator
+│   │   ├── auth/                # 用户、JWT、Google OAuth、图片存储
+│   │   ├── controller/          # REST API 与 SSE 入口
+│   │   ├── mcp/                 # MCP 自动启动与客户端支持
+│   │   └── tools/               # Spring AI 工具实现与注册
+│   └── main/resources/          # 配置、迁移脚本、MCP 配置
+├── mcp-servers/                 # 独立 Spring Boot MCP Server
+├── springai-front-react/        # React + Vite 前端
 │   └── src/
-│       ├── components/            # Chat / Sidebar / UI 组件
-│       ├── pages/                 # Home / Chat / Auth
-│       └── hooks/                 # 自定义 Hooks
-├── mcp-servers/                   # MCP Server 模块
-├── docs/                          # 详细文档
-├── knowledge/                     # 本地 Wiki 知识库
-└── scripts/                       # 自动化脚本
+│       ├── components/          # Chat、Sidebar、Auth、UI 组件
+│       ├── contexts/            # 认证与聊天运行时上下文
+│       ├── hooks/               # SSE、会话、图片上传等 Hooks
+│       ├── pages/               # Home、Chat、Auth、Admin
+│       └── services/            # API 客户端
+├── docs/                        # 快速开始、工作流、ADR 与展示文档
+├── knowledge/                   # 本地 Wiki 知识库
+└── scripts/                     # Wiki 更新、接口测试等脚本
 ```
 
-</details>
+## 开发指南
 
-<br/>
+### 常用命令
 
-## 🛠 常用命令
+| 场景 | 命令 |
+| --- | --- |
+| 后端测试 | `mvn test` |
+| 后端打包 | `mvn -DskipTests=true package` |
+| React Lint | `cd springai-front-react && npm run lint` |
+| React Build | `cd springai-front-react && npm run build` |
+| MCP Server 测试 | `cd mcp-servers && mvn test` |
 
-<details>
-<summary><b>后端命令</b></summary>
+### 推荐开发入口
 
-```bash
-mvn test                              # 运行测试
-mvn -DskipTests=true package          # 打包 JAR
-mvn spring-boot:run -Dspring-boot.run.profiles=local  # 启动应用
+| 你要改什么 | 优先看哪里 |
+| --- | --- |
+| 聊天接口 | `src/main/java/org/example/springai_learn/controller/AiController.java` |
+| Love / Coach 行为 | `src/main/java/org/example/springai_learn/ai/orchestrator/` |
+| Agent 决策与工具调用 | `src/main/java/org/example/springai_learn/ai/service/BrainAgentService.java`、`ToolsAgentService.java` |
+| 新增本地工具 | `src/main/java/org/example/springai_learn/tools/` 和 `ToolRegistration.java` |
+| 概率分析卡片 | `ProbabilityAnalysisService.java` 与前端 `ProbabilityCard.jsx` |
+| React 聊天体验 | `springai-front-react/src/components/Chat/` 和 `src/hooks/` |
+| 知识库与自动入库 | `RagKnowledgeService.java`、`WikiKnowledgeService.java`、`KnowledgeFeedbackService.java` |
+
+更完整的工程工作流见 [docs/WORKFLOW_GUIDE.md](docs/WORKFLOW_GUIDE.md)。
+
+## 文档索引
+
+| 文档 | 说明 |
+| --- | --- |
+| [docs/QUICKSTART.md](docs/QUICKSTART.md) | 本地启动与常见配置 |
+| [docs/WORKFLOW_GUIDE.md](docs/WORKFLOW_GUIDE.md) | 开发、验证与交付流程 |
+| [docs/adr](docs/adr) | 技术选型决策记录 |
+| [docs/showcases](docs/showcases) | 功能展示与可视化说明 |
+| [README_EN.md](README_EN.md) | 英文版 README |
+
+## 贡献
+
+欢迎提交 Issue 或 Pull Request。建议在提交前至少运行：
+
+```powershell
+mvn test
+mvn -DskipTests=true package
+Set-Location springai-front-react
+npm run lint
+npm run build
 ```
 
-</details>
+请保持改动聚焦，不要提交 `application-local.yml`、API Key、服务角色密钥或本地生成文件。
 
-<details>
-<summary><b>前端命令</b></summary>
+## README 设计参考
 
-```bash
-cd springai-front-react
-npm run dev                           # 开发模式
-npm run lint                          # 代码检查
-npm run build                         # 生产构建
-```
+本 README 的结构参考了以下公开资料与优秀项目实践：
 
-</details>
+- [GitHub Docs: About READMEs](https://docs.github.com/en/enterprise-cloud@latest/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes) - README 应帮助访问者快速理解项目、使用方式和维护信息。
+- [matiassingers/awesome-readme](https://github.com/matiassingers/awesome-readme) - 优秀 README 示例集合，强调清晰结构、截图、安装说明和贡献入口。
+- [othneildrew/Best-README-Template](https://github.com/othneildrew/Best-README-Template) - 常见 README 区块组织方式参考。
+- [DenverCoder1/readme-typing-svg](https://github.com/DenverCoder1/readme-typing-svg) - 顶部打字机 SVG 动效来源。
 
-<details>
-<summary><b>MCP Server</b></summary>
+## 开源协议
 
-```bash
-cd mcp-servers
-mvn test                              # 运行测试
-mvn spring-boot:run -Dspring-boot.run.profiles=local  # 启动 MCP
-```
-
-</details>
-
-<br/>
-
-## 🧩 开发指南
-
-| 场景 | 操作方式 |
-|:---|:---|
-| **添加新工具** | 在 `tools/` 下新建类，使用 `@Tool` 注解，在 `ToolRegistration` 中注册 |
-| **调整聊天链路** | 修改 `ai/orchestrator/` 和 `ai/service/` 下对应文件 |
-| **知识库更新** | `bash scripts/wiki-update.sh` 或 `bash scripts/setup-wiki-autoupdate.sh` |
-
-> 📖 详细开发文档见 [docs/WORKFLOW_GUIDE.md](docs/WORKFLOW_GUIDE.md)
-
-<br/>
-
-## 🤝 参与贡献
-
-欢迎各种形式的贡献！无论是提交 Bug、建议功能还是提交 PR，我们都非常感谢。
-
-1. Fork 本仓库
-2. 创建你的特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交改动 (`git commit -m 'Add some AmazingFeature'`)
-4. Push 到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
-
-<br/>
-
-## 📄 开源协议
-
-本项目基于 [MIT](LICENSE) 协议开源。
-
-<br/>
+本项目基于 [MIT License](LICENSE) 开源。
 
 <div align="center">
 
 ---
 
-**如果觉得有帮助，请给个 ⭐ Star 支持一下！**
+如果这个项目对你有帮助，欢迎 Star 支持。
 
-Made with ❤️ by Love Master Team
+Made with Love Master
 
 </div>
