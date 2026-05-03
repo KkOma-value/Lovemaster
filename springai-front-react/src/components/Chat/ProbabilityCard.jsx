@@ -77,12 +77,9 @@ const ProbabilityCard = ({
     };
 
     return (
-        <m.section
-            className="soft-card my-3"
+        <section
+            className="soft-card my-3 fade-up"
             style={{ padding: '20px 22px' }}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
             aria-label={`成功概率 ${clamped}%，${tier || ''}，${confidenceLabel}`}
         >
             <div className="flex flex-col md:flex-row items-center md:items-center text-center md:text-left gap-3.5 md:gap-5.5 pb-3.5">
@@ -250,7 +247,7 @@ const ProbabilityCard = ({
                     <span>该条回复已自动进入高质量知识蒸馏队列</span>
                 </div>
             )}
-        </m.section>
+        </section>
     );
 };
 

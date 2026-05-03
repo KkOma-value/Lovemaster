@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { m, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Home, Heart, BookOpen } from 'lucide-react';
 import { BrandMark } from '../ui/brand';
 import ChatMessages from './ChatMessages';
@@ -92,13 +92,9 @@ const ChatArea = ({
       <div className="flex-1 min-h-0 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {isWelcomeState ? (
-            <m.div
+            <div
               key="welcome"
-              className="h-full flex flex-col items-center justify-center px-6 pb-8 gap-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+              className="h-full flex flex-col items-center justify-center px-6 pb-8 gap-6 fade-up"
             >
               <div className="breathe">
                 <BrandMark size={64} />
@@ -151,15 +147,11 @@ const ChatArea = ({
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
                 Lovemaster 会犯错，重要的决定请由你来做
               </p>
-            </m.div>
+            </div>
           ) : (
-            <m.div
+            <div
               key="messages"
-              className="h-full flex flex-col"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+              className="h-full flex flex-col fade-up"
             >
               <RecoveryBanner status={recoveryStatus} onDismiss={onRecoveryDismiss} />
               <ChatMessages
@@ -169,7 +161,7 @@ const ChatArea = ({
                 chatType={chatType}
                 chatId={chatId}
               />
-            </m.div>
+            </div>
           )}
         </AnimatePresence>
       </div>

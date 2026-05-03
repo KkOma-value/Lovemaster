@@ -10,19 +10,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { BrandMark, Avatar } from '../ui/brand';
-import { m } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImageUpload } from '../../hooks/useImageUpload';
-
-const listVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -10 },
-  visible: { opacity: 1, x: 0 },
-};
 
 function ModeBtn({ active, onClick, icon, children }) {
   return (
@@ -293,19 +282,14 @@ const ChatSidebar = ({
       </div>
 
       {/* Session list */}
-      <m.div
-        className="flex-1 overflow-y-auto nice-scroll"
-        variants={listVariants}
-        initial="hidden"
-        animate="visible"
-      >
+      <div className="flex-1 overflow-y-auto nice-scroll">
         {chatList.length === 0 ? (
           <div className="text-[12px] px-2 py-4" style={{ color: 'var(--text-faint)' }}>
             还没有对话 · 点上方「开启」开始吧
           </div>
         ) : (
-          chatList.map((chat) => (
-            <m.div key={chat.id} variants={itemVariants}>
+          chatList.map((chat, idx) => (
+            <div key={chat.id} className="fade-up" style={{ animationDelay: `${idx * 0.05}s` }}>
               <SessionItem
                 chat={chat}
                 isActive={currentChatId === chat.id}
@@ -313,10 +297,10 @@ const ChatSidebar = ({
                 onDelete={onDeleteChat}
                 runStatus={backgroundRuns[chat.id] || null}
               />
-            </m.div>
+            </div>
           ))
         )}
-      </m.div>
+      </div>
 
       {/* User footer */}
       {user ? (

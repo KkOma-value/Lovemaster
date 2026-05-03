@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { AnimatePresence, m } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
 import { useChatSessions } from '../../hooks/useChatSessions';
@@ -191,13 +190,7 @@ const ChatPage = () => {
     }, [currentChatId, clearRun]);
 
     return (
-        <m.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.3 }}
-            className="w-screen h-screen flex relative overflow-hidden text-[var(--text-ink)] isolate z-[1]"
-        >
+        <div className="w-screen h-screen flex relative overflow-hidden text-[var(--text-ink)] isolate z-[1] fade-up">
             {/* Warm blurred background image layer */}
             <div className="absolute inset-0 z-0">
                 <img
@@ -255,7 +248,7 @@ const ChatPage = () => {
                     />
                 </div>
             </main>
-        </m.div>
+        </div>
     );
 };
 

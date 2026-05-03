@@ -2,10 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, FileText, X } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import {
-  m,
-  AnimatePresence,
-} from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { BrandMark, Avatar } from '../../components/ui/brand';
 
@@ -76,22 +73,12 @@ function LeftCard({ mode }) {
       </div>
 
       {/* Logo */}
-      <m.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="absolute top-8 left-8 z-10"
-      >
+      <div className="absolute top-8 left-8 z-10 pop-in">
         <BrandMark size={40} />
-      </m.div>
+      </div>
 
       {/* Content */}
-      <m.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.15 }}
-        className="relative z-10 px-12 xl:px-16 max-w-[480px] mx-auto"
-      >
+      <div className="relative z-10 px-12 xl:px-16 max-w-[480px] mx-auto fade-up" style={{ animationDelay: '0.15s' }}>
         <div
           className="inline-flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-semibold mb-6"
           style={{
@@ -108,13 +95,9 @@ function LeftCard({ mode }) {
         </div>
 
         <AnimatePresence mode="wait">
-          <m.h1
+          <h1
             key={mode + '-title'}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
-            className="display text-[38px] xl:text-[44px] leading-[1.12] mb-5"
+            className="display text-[38px] xl:text-[44px] leading-[1.12] mb-5 fade-up"
             style={{ color: '#3A2419' }}
           >
             {mode === 'login' ? (
@@ -130,23 +113,19 @@ function LeftCard({ mode }) {
                 由我来守护
               </>
             )}
-          </m.h1>
+          </h1>
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
-          <m.p
+          <p
             key={mode + '-body'}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.25, delay: 0.05 }}
-            className="text-[14px] leading-relaxed mb-10"
-            style={{ color: '#6B4A38' }}
+            className="text-[14px] leading-relaxed mb-10 fade-up"
+            style={{ color: '#6B4A38', animationDelay: '0.05s' }}
           >
             {mode === 'login'
               ? '登录后，你的聊天记录会被安全加密保存，只有你自己能看见。'
               : '建立账号，让所有的情绪和对话都有一个温暖的归宿。'}
-          </m.p>
+          </p>
         </AnimatePresence>
 
         <div className="flex items-center gap-3">
@@ -159,7 +138,7 @@ function LeftCard({ mode }) {
             已有 12,480+ 朋友在这里
           </span>
         </div>
-      </m.div>
+      </div>
     </div>
   );
 }
@@ -177,12 +156,7 @@ function RightCard({ mode, onModeSwitch }) {
         boxShadow: '0 8px 32px rgba(196, 123, 90, 0.12), 0 2px 8px rgba(196, 123, 90, 0.06)',
       }}
     >
-      <m.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="w-full max-w-[400px] mx-auto px-8 py-10 md:px-10 md:py-12"
-      >
+      <div className="w-full max-w-[400px] mx-auto px-8 py-10 md:px-10 md:py-12 fade-up">
         {/* Mobile logo */}
         <div className="lg:hidden flex justify-center mb-6">
           <BrandMark size={48} />
@@ -203,12 +177,9 @@ function RightCard({ mode, onModeSwitch }) {
 
         {/* Title */}
         <AnimatePresence mode="wait">
-          <m.div
+          <div
             key={mode + '-header'}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
+            className="fade-up"
           >
             <h2 className="display text-[24px] mb-1" style={{ color: '#3A2419' }}>
               {mode === 'login' ? '很高兴又见到你' : '创建一个新账号'}
@@ -216,12 +187,12 @@ function RightCard({ mode, onModeSwitch }) {
             <p className="text-[13px] mb-6" style={{ color: '#A98872' }}>
               {mode === 'login' ? '你的小助手已经在这里等着了' : '欢迎来到 Love Master'}
             </p>
-          </m.div>
+          </div>
         </AnimatePresence>
 
         {/* Key forces remount on mode change, clearing all form state */}
         <AuthForm key={mode} mode={mode} />
-      </m.div>
+      </div>
     </div>
   );
 }
@@ -308,12 +279,9 @@ function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShow
 
   return (
     <AnimatePresence mode="wait">
-      <m.div
+      <div
         key="login-form"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        className="fade-up"
       >
         {error && (
           <div
@@ -430,7 +398,7 @@ function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShow
             隐私政策
           </button>
         </div>
-      </m.div>
+      </div>
     </AnimatePresence>
   );
 }
@@ -485,12 +453,9 @@ function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setS
 
   return (
     <AnimatePresence mode="wait">
-      <m.div
+      <div
         key="register-form"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
+        className="fade-up"
       >
         {error && (
           <div
@@ -628,7 +593,7 @@ function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setS
             隐私政策
           </button>
         </div>
-      </m.div>
+      </div>
     </AnimatePresence>
   );
 }

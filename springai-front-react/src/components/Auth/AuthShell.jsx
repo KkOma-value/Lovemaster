@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Sparkles } from 'lucide-react';
-import { m } from 'framer-motion';
 import { BrandMark, Avatar } from '../ui/brand';
 
 export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
@@ -57,11 +56,8 @@ export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
       />
 
       {/* Left hero panel — full height on desktop */}
-      <m.div
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="relative z-10 flex flex-col justify-center p-8 md:p-10 md:w-1/2 md:h-screen"
+      <div
+        className="relative z-10 flex flex-col justify-center p-8 md:p-10 md:w-1/2 md:h-screen fade-up"
         style={{
           background: 'rgba(252,231,213,0.88)',
           backdropFilter: 'blur(8px)',
@@ -102,23 +98,21 @@ export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
             </span>
           </div>
         </div>
-      </m.div>
+      </div>
 
       {/* Right form panel */}
-      <m.div
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
-        className="relative z-10 flex-1 flex flex-col justify-center p-6 md:p-10 md:h-screen overflow-hidden"
+      <div
+        className="relative z-10 flex-1 flex flex-col justify-center p-6 md:p-10 md:h-screen overflow-hidden fade-up"
         style={{
           background: 'rgba(255, 253, 249, 0.82)',
           backdropFilter: 'blur(12px)',
+          animationDelay: '0.1s',
         }}
       >
         <div className="w-full max-w-[400px] mx-auto">
           {children}
         </div>
-      </m.div>
+      </div>
     </div>
   );
 }
