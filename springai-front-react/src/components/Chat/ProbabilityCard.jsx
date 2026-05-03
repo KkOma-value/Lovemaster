@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import {
-    motion as Motion,
+    m,
     useMotionValue,
     useTransform,
     useSpring,
@@ -52,7 +52,7 @@ const AnimatedNumber = ({ value }) => {
         return () => controls.stop();
     }, [motionValue, value]);
 
-    return <Motion.span>{display}</Motion.span>;
+    return <m.span>{display}</m.span>;
 };
 
 const ProbabilityCard = ({
@@ -77,7 +77,7 @@ const ProbabilityCard = ({
     };
 
     return (
-        <Motion.section
+        <m.section
             className="soft-card my-3"
             style={{ padding: '20px 22px' }}
             initial={{ opacity: 0, y: 8 }}
@@ -92,7 +92,7 @@ const ProbabilityCard = ({
                             className="fill-none stroke-[rgba(196,123,90,0.12)] stroke-[5px]"
                             cx="60" cy="60" r={RING_RADIUS}
                         />
-                        <Motion.circle
+                        <m.circle
                             className="fill-none stroke-[5px] transition-colors duration-300 ease-in-out"
                             style={{ stroke: color, strokeLinecap: 'round' }}
                             cx="60" cy="60" r={RING_RADIUS}
@@ -250,7 +250,7 @@ const ProbabilityCard = ({
                     <span>该条回复已自动进入高质量知识蒸馏队列</span>
                 </div>
             )}
-        </Motion.section>
+        </m.section>
     );
 };
 

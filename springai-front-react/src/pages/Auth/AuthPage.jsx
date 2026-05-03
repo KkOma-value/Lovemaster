@@ -3,8 +3,7 @@ import { useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Sparkles, Shield, FileText, X } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import {
-  // eslint-disable-next-line no-unused-vars
-  motion,
+  m,
   AnimatePresence,
 } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -77,17 +76,17 @@ function LeftCard({ mode }) {
       </div>
 
       {/* Logo */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="absolute top-8 left-8 z-10"
       >
         <BrandMark size={40} />
-      </motion.div>
+      </m.div>
 
       {/* Content */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.15 }}
@@ -109,7 +108,7 @@ function LeftCard({ mode }) {
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.h1
+          <m.h1
             key={mode + '-title'}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -131,11 +130,11 @@ function LeftCard({ mode }) {
                 由我来守护
               </>
             )}
-          </motion.h1>
+          </m.h1>
         </AnimatePresence>
 
         <AnimatePresence mode="wait">
-          <motion.p
+          <m.p
             key={mode + '-body'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -147,7 +146,7 @@ function LeftCard({ mode }) {
             {mode === 'login'
               ? '登录后，你的聊天记录会被安全加密保存，只有你自己能看见。'
               : '建立账号，让所有的情绪和对话都有一个温暖的归宿。'}
-          </motion.p>
+          </m.p>
         </AnimatePresence>
 
         <div className="flex items-center gap-3">
@@ -160,7 +159,7 @@ function LeftCard({ mode }) {
             已有 12,480+ 朋友在这里
           </span>
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -178,7 +177,7 @@ function RightCard({ mode, onModeSwitch }) {
         boxShadow: '0 8px 32px rgba(196, 123, 90, 0.12), 0 2px 8px rgba(196, 123, 90, 0.06)',
       }}
     >
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
@@ -204,7 +203,7 @@ function RightCard({ mode, onModeSwitch }) {
 
         {/* Title */}
         <AnimatePresence mode="wait">
-          <motion.div
+          <m.div
             key={mode + '-header'}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -217,12 +216,12 @@ function RightCard({ mode, onModeSwitch }) {
             <p className="text-[13px] mb-6" style={{ color: '#A98872' }}>
               {mode === 'login' ? '你的小助手已经在这里等着了' : '欢迎来到 Love Master'}
             </p>
-          </motion.div>
+          </m.div>
         </AnimatePresence>
 
         {/* Key forces remount on mode change, clearing all form state */}
         <AuthForm key={mode} mode={mode} />
-      </motion.div>
+      </m.div>
     </div>
   );
 }
@@ -309,7 +308,7 @@ function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShow
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         key="login-form"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -431,7 +430,7 @@ function LoginFormInner({ onError, onLoading, isLoading, error, showPwd, setShow
             隐私政策
           </button>
         </div>
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 }
@@ -486,7 +485,7 @@ function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setS
 
   return (
     <AnimatePresence mode="wait">
-      <motion.div
+      <m.div
         key="register-form"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -629,7 +628,7 @@ function RegisterFormInner({ onError, onLoading, isLoading, error, showPwd, setS
             隐私政策
           </button>
         </div>
-      </motion.div>
+      </m.div>
     </AnimatePresence>
   );
 }

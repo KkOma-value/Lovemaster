@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-// eslint-disable-next-line no-unused-vars
-import { motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import ChatSidebar from '../../components/Sidebar/ChatSidebar';
 import ChatArea from '../../components/Chat/ChatArea';
 import { useChatSessions } from '../../hooks/useChatSessions';
@@ -192,7 +191,7 @@ const ChatPage = () => {
     }, [currentChatId, clearRun]);
 
     return (
-        <motion.div
+        <m.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.98 }}
@@ -256,7 +255,7 @@ const ChatPage = () => {
                     />
                 </div>
             </main>
-        </motion.div>
+        </m.div>
     );
 };
 

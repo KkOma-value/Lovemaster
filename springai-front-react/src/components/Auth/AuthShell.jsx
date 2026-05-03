@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Sparkles } from 'lucide-react';
+import { m } from 'framer-motion';
 import { BrandMark, Avatar } from '../ui/brand';
 
 export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
@@ -56,7 +57,7 @@ export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
       />
 
       {/* Left hero panel — full height on desktop */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
@@ -101,10 +102,10 @@ export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
             </span>
           </div>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Right form panel */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut', delay: 0.1 }}
@@ -117,7 +118,7 @@ export function AuthShell({ children, heroEyebrow, heroTitle, heroBody }) {
         <div className="w-full max-w-[400px] mx-auto">
           {children}
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

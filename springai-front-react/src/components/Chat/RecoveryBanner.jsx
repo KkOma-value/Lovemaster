@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Check, AlertCircle, Loader } from 'lucide-react';
 
 /**
@@ -44,7 +44,7 @@ const RecoveryBanner = ({ status, onDismiss }) => {
     return (
         <AnimatePresence>
             {visible && (
-                <motion.div
+                <m.div
                     className={`flex items-center gap-2 px-4 py-2 rounded-[10px] text-[13px] font-medium my-2 mx-auto max-w-[400px] w-fit pointer-events-none border ${c.className}`}
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -55,7 +55,7 @@ const RecoveryBanner = ({ status, onDismiss }) => {
                 >
                     {c.icon}
                     <span className="leading-[1.2]">{c.text}</span>
-                </motion.div>
+                </m.div>
             )}
         </AnimatePresence>
     );

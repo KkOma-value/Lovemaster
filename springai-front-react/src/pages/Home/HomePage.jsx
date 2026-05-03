@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import {
   Heart,
   Sparkles,
@@ -123,7 +123,7 @@ const HomePage = () => {
       <div className="warm-bg fixed inset-0 z-0 pointer-events-none" />
       <AnimatePresence>
         {activeRunCount > 0 && (
-          <motion.button
+          <m.button
             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full cursor-pointer transition-all duration-200 hover:bg-[rgba(232,122,93,0.2)] hover:border-[rgba(232,122,93,0.35)]"
             onClick={() => {
               const run = activeRuns[0];
@@ -142,11 +142,11 @@ const HomePage = () => {
           >
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: '#E87A5D', animation: 'pillPulse 1.5s ease-in-out infinite' }} />
             <span className="text-[12px] md:text-[11px] font-medium leading-none" style={{ color: '#7A5C47' }}>正在后台生成 {activeRunCount} 个回复</span>
-          </motion.button>
+          </m.button>
         )}
       </AnimatePresence>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.98 }}
@@ -464,7 +464,7 @@ const HomePage = () => {
         <footer className="py-6 text-center text-xs" style={{ color: 'var(--text-faint)' }}>
           Love Master AI · 2026 · 愿每一段感情都被温柔以待
         </footer>
-      </motion.div>
+      </m.div>
     </div>
   );
 };

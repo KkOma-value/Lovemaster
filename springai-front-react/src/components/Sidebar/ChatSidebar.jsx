@@ -10,6 +10,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { BrandMark, Avatar } from '../ui/brand';
+import { m } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { useImageUpload } from '../../hooks/useImageUpload';
 
@@ -292,7 +293,7 @@ const ChatSidebar = ({
       </div>
 
       {/* Session list */}
-      <motion.div
+      <m.div
         className="flex-1 overflow-y-auto nice-scroll"
         variants={listVariants}
         initial="hidden"
@@ -304,7 +305,7 @@ const ChatSidebar = ({
           </div>
         ) : (
           chatList.map((chat) => (
-            <motion.div key={chat.id} variants={itemVariants}>
+            <m.div key={chat.id} variants={itemVariants}>
               <SessionItem
                 chat={chat}
                 isActive={currentChatId === chat.id}
@@ -312,10 +313,10 @@ const ChatSidebar = ({
                 onDelete={onDeleteChat}
                 runStatus={backgroundRuns[chat.id] || null}
               />
-            </motion.div>
+            </m.div>
           ))
         )}
-      </motion.div>
+      </m.div>
 
       {/* User footer */}
       {user ? (

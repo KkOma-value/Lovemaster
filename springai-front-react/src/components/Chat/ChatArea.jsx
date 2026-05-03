@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion as Motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { Home, Heart, BookOpen } from 'lucide-react';
 import { BrandMark } from '../ui/brand';
 import ChatMessages from './ChatMessages';
@@ -92,7 +92,7 @@ const ChatArea = ({
       <div className="flex-1 min-h-0 overflow-hidden relative">
         <AnimatePresence mode="wait">
           {isWelcomeState ? (
-            <Motion.div
+            <m.div
               key="welcome"
               className="h-full flex flex-col items-center justify-center px-6 pb-8 gap-6"
               initial={{ opacity: 0, y: 20 }}
@@ -151,9 +151,9 @@ const ChatArea = ({
               <p className="text-[11px]" style={{ color: 'var(--text-faint)' }}>
                 Lovemaster 会犯错，重要的决定请由你来做
               </p>
-            </Motion.div>
+            </m.div>
           ) : (
-            <Motion.div
+            <m.div
               key="messages"
               className="h-full flex flex-col"
               initial={{ opacity: 0 }}
@@ -169,7 +169,7 @@ const ChatArea = ({
                 chatType={chatType}
                 chatId={chatId}
               />
-            </Motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

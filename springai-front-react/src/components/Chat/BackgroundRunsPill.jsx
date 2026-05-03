@@ -1,12 +1,12 @@
 import React from 'react';
 // eslint-disable-next-line no-unused-vars
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 
 const BackgroundRunsPill = ({ activeCount, onNavigate }) => {
     return (
         <AnimatePresence>
             {activeCount > 0 && (
-                <motion.button
+                <m.button
                     onClick={onNavigate}
                     initial={{ opacity: 0, scale: 0.8, y: -4 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -30,7 +30,7 @@ const BackgroundRunsPill = ({ activeCount, onNavigate }) => {
                     <span className="text-[12px] md:text-[11px] font-medium leading-none" style={{ color: '#7A5C47' }}>
                         正在后台生成 {activeCount} 个回复
                     </span>
-                </motion.button>
+                </m.button>
             )}
         </AnimatePresence>
     );
