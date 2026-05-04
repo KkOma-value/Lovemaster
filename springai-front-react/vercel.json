@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://lovemaster-vercel-backend.vercel.app/api/$1"
+    }
+  ]
+}
